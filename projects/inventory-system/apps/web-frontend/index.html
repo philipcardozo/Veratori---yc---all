@@ -1,0 +1,1634 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard — Veratori</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-base:   #070b12;
+      --bg-bar:    rgba(11,17,32,0.92);
+      --bg-card:   #111827;
+      --bg-hover:  rgba(255,255,255,0.038);
+      --border:    rgba(255,255,255,0.055);
+      --border-md: rgba(255,255,255,0.09);
+      --border-lg: rgba(255,255,255,0.14);
+      --text-1:    #f1f5f9;
+      --text-2:    #94a3b8;
+      --text-3:    #64748b;
+      --text-4:    #475569;
+      --green:     #10b981;
+      --green-dim: rgba(16,185,129,0.10);
+      --blue:      #3b82f6;
+      --blue-dim:  rgba(59,130,246,0.10);
+      --amber:     #f59e0b;
+      --amber-dim: rgba(245,158,11,0.10);
+      --red:       #ef4444;
+      --red-dim:   rgba(239,68,68,0.10);
+      --nv:        #76b900;
+      --nv-dim:    rgba(118,185,0,0.09);
+      --nv-border: rgba(118,185,0,0.22);
+      --vera:      #6366f1;
+      --vera-dim:  rgba(99,102,241,0.10);
+      --topbar-h:  52px;
+      --ease: cubic-bezier(0.4,0,0.2,1);
+    }
+    *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+    html, body { height:100%; overflow:hidden; }
+    body {
+      font-family:'Inter',-apple-system,BlinkMacSystemFont,system-ui,sans-serif;
+      background:var(--bg-base); color:var(--text-1);
+      -webkit-font-smoothing:antialiased;
+    }
+
+    /* ═══════════════ TOP BAR ═══════════════ */
+    .topbar {
+      position:fixed; top:0; left:0; right:0; z-index:500;
+      height:var(--topbar-h);
+      background:var(--bg-bar);
+      backdrop-filter:blur(18px);
+      border-bottom:1px solid var(--border);
+      display:flex; align-items:center; padding:0 16px; gap:0;
+    }
+    .topbar-menu-btn {
+      width:34px; height:34px; border-radius:8px; flex-shrink:0;
+      background:transparent; border:1px solid var(--border);
+      display:flex; align-items:center; justify-content:center;
+      cursor:pointer; color:var(--text-3); transition:all .15s var(--ease);
+      margin-right:10px;
+    }
+    .topbar-menu-btn:hover { background:var(--bg-hover); color:var(--text-2); border-color:var(--border-md); }
+    .topbar-menu-btn svg { width:16px; height:16px; fill:currentColor; }
+    .topbar-brand {
+      display:flex; align-items:center; gap:8px; text-decoration:none; margin-right:28px;
+    }
+    .brand-icon {
+      width:28px; height:28px; border-radius:7px;
+      background:linear-gradient(135deg,#76b900,#3d6200);
+      display:flex; align-items:center; justify-content:center;
+    }
+    .brand-icon svg { width:14px; height:14px; fill:#fff; }
+    .brand-text { font-size:14px; font-weight:800; color:var(--text-1); letter-spacing:-.3px; }
+
+    .topbar-nav { display:flex; align-items:center; gap:2px; flex:1; }
+    .topbar-nav-link {
+      display:flex; align-items:center; gap:5px;
+      padding:5px 11px; border-radius:7px;
+      font-size:12px; font-weight:500; color:var(--text-3);
+      text-decoration:none; transition:all .14s var(--ease); white-space:nowrap;
+    }
+    .topbar-nav-link svg { width:13px; height:13px; fill:currentColor; }
+    .topbar-nav-link:hover { background:var(--bg-hover); color:var(--text-2); }
+    .topbar-nav-link.active { background:var(--green-dim); color:var(--green); font-weight:600; }
+
+    .topbar-right { display:flex; align-items:center; gap:7px; margin-left:auto; }
+    .status-pill {
+      display:flex; align-items:center; gap:5px;
+      padding:4px 10px; border-radius:20px;
+      background:var(--green-dim); border:1px solid rgba(16,185,129,.18);
+      font-size:10.5px; font-weight:600; color:var(--green);
+    }
+    .status-dot {
+      width:5px; height:5px; border-radius:50%; background:var(--green);
+      box-shadow:0 0 5px rgba(16,185,129,.7); animation:pulse 2s infinite;
+    }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+    .topbar-btn {
+      display:flex; align-items:center; gap:5px;
+      padding:5px 11px; border-radius:7px;
+      font-size:11.5px; font-weight:600; cursor:pointer;
+      font-family:'Inter',sans-serif; transition:all .15s var(--ease);
+      border:1px solid var(--border); background:transparent; color:var(--text-2);
+      text-decoration:none;
+    }
+    .topbar-btn:hover { background:var(--bg-hover); color:var(--text-1); border-color:var(--border-md); }
+    .topbar-btn.danger { color:var(--red); border-color:rgba(239,68,68,.18); }
+    .topbar-btn.danger:hover { background:var(--red-dim); }
+
+    /* Layout controls */
+    .layout-controls {
+      display:flex; align-items:center; gap:6px;
+      padding:4px 10px; background:rgba(255,255,255,0.03);
+      border:1px solid var(--border); border-radius:8px;
+    }
+    .layout-controls span { font-size:10px; font-weight:600; color:var(--text-4); letter-spacing:.4px; text-transform:uppercase; }
+    .layout-btn {
+      display:flex; align-items:center; gap:4px;
+      padding:3px 8px; border-radius:5px;
+      font-size:10.5px; font-weight:600; cursor:pointer;
+      font-family:'Inter',sans-serif; transition:all .14s var(--ease);
+      border:1px solid var(--border); background:transparent; color:var(--text-3);
+    }
+    .layout-btn:hover { background:var(--bg-hover); color:var(--text-2); }
+    .layout-btn svg { width:11px; height:11px; fill:currentColor; }
+
+    /* ═══════════════ SIDEBAR ═══════════════ */
+    .sidebar-overlay {
+      position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:1900;
+      opacity:0; pointer-events:none; transition:opacity .25s var(--ease);
+    }
+    .sidebar-overlay.visible { opacity:1; pointer-events:all; }
+    .sidebar {
+      position:fixed; top:0; left:0; width:268px; height:100vh; z-index:2000;
+      background:#0d1525; border-right:1px solid var(--border);
+      transform:translateX(-100%); transition:transform .28s var(--ease);
+      display:flex; flex-direction:column;
+    }
+    .sidebar.open { transform:translateX(0); }
+    .sidebar-hdr {
+      display:flex; align-items:center; justify-content:space-between;
+      padding:20px 18px 16px; border-bottom:1px solid var(--border);
+    }
+    .sidebar-brand-name { font-size:15px; font-weight:800; color:var(--text-1); }
+    .sidebar-close {
+      background:none; border:none; color:var(--text-3); font-size:20px;
+      cursor:pointer; padding:4px 7px; border-radius:6px; line-height:1;
+      transition:all .14s var(--ease);
+    }
+    .sidebar-close:hover { background:var(--bg-hover); color:var(--text-1); }
+    .sidebar-section-label {
+      padding:16px 18px 6px; font-size:10px; font-weight:700;
+      color:var(--text-4); text-transform:uppercase; letter-spacing:.9px;
+    }
+    .sidebar-nav { padding:0 10px; display:flex; flex-direction:column; gap:2px; }
+    .sidebar-link {
+      display:flex; align-items:center; gap:11px;
+      padding:9px 12px; color:var(--text-3); text-decoration:none;
+      border-radius:8px; font-size:13.5px; font-weight:500;
+      transition:all .14s var(--ease); position:relative;
+    }
+    .sidebar-link:hover { background:var(--bg-hover); color:var(--text-2); }
+    .sidebar-link.active {
+      background:var(--green-dim); color:var(--green); font-weight:600;
+    }
+    .sidebar-link.active::before {
+      content:''; position:absolute; left:0; top:50%; transform:translateY(-50%);
+      width:3px; height:18px; background:var(--green); border-radius:0 3px 3px 0;
+    }
+    .sidebar-link svg { width:17px; height:17px; fill:currentColor; flex-shrink:0; opacity:.8; }
+    .sidebar-link.active svg { opacity:1; }
+    .sidebar-footer { padding:14px 18px; border-top:1px solid var(--border); margin-top:auto; }
+    .sidebar-footer span { font-size:11px; color:var(--text-4); }
+
+    /* ═══════════════ CANVAS ═══════════════ */
+    .canvas {
+      position:fixed;
+      top:var(--topbar-h);
+      left:0; right:0; bottom:0;
+      overflow:hidden;
+      background:var(--bg-base);
+    }
+    /* subtle grid */
+    .canvas::before {
+      content:''; position:absolute; inset:0; pointer-events:none;
+      background-image:
+        linear-gradient(rgba(16,185,129,0.015) 1px,transparent 1px),
+        linear-gradient(90deg,rgba(16,185,129,0.015) 1px,transparent 1px);
+      background-size:44px 44px;
+    }
+
+    /* ═══════════════ PANELS ═══════════════ */
+    .panel {
+      position:absolute;
+      background:var(--bg-card);
+      border:1px solid var(--border-md);
+      border-radius:14px;
+      display:flex; flex-direction:column;
+      overflow:visible; /* must be visible so resize handles outside bounds are reachable */
+      box-shadow:0 4px 24px rgba(0,0,0,0.35);
+      min-width:220px; min-height:120px;
+      transition:box-shadow .15s var(--ease), border-color .15s var(--ease);
+      will-change:transform;
+    }
+    /* clip inner content to the panel's rounded corners without blocking outside handles */
+    .panel-header { border-radius:14px 14px 0 0; }
+    .panel-body   { border-radius:0 0 14px 14px; }
+    .panel:hover { border-color:var(--border-lg); }
+    .panel.dragging {
+      box-shadow:0 16px 48px rgba(0,0,0,0.55), 0 0 0 2px rgba(99,102,241,0.35);
+      border-color:rgba(99,102,241,0.4);
+      z-index:100 !important;
+      cursor:grabbing;
+    }
+    .panel.resizing { z-index:100 !important; }
+    .panel.minimized .panel-body { display:none !important; }
+    .panel.maximized {
+      top:8px !important; left:8px !important;
+      width:calc(100% - 16px) !important;
+      height:calc(100% - 16px) !important;
+      border-radius:14px;
+      z-index:90 !important;
+    }
+    /* bring to front on click */
+    .panel.focused { z-index:50; }
+
+    /* Panel header — drag handle */
+    .panel-header {
+      display:flex; align-items:center; gap:8px;
+      padding:10px 12px;
+      background:rgba(255,255,255,0.022);
+      border-bottom:1px solid var(--border);
+      cursor:grab; user-select:none; flex-shrink:0;
+    }
+    .panel-header:active { cursor:grabbing; }
+    .panel-header-icon {
+      width:22px; height:22px; border-radius:6px;
+      display:flex; align-items:center; justify-content:center; flex-shrink:0;
+    }
+    .panel-header-icon svg { width:12px; height:12px; fill:#fff; }
+    .panel-title {
+      font-size:12px; font-weight:700; color:var(--text-1); flex:1;
+      white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+      letter-spacing:-.1px;
+    }
+    .panel-subtitle { font-size:10px; color:var(--text-4); margin-left:auto; white-space:nowrap; }
+    .panel-controls { display:flex; align-items:center; gap:3px; margin-left:6px; }
+    .panel-ctrl {
+      width:22px; height:22px; border-radius:5px;
+      border:none; background:transparent; cursor:pointer;
+      display:flex; align-items:center; justify-content:center;
+      color:var(--text-4); transition:all .13s var(--ease);
+      font-size:13px; line-height:1;
+    }
+    .panel-ctrl:hover { background:var(--bg-hover); color:var(--text-2); }
+    .panel-ctrl.close:hover { background:var(--red-dim); color:var(--red); }
+    .panel-ctrl svg { width:11px; height:11px; fill:currentColor; }
+
+    /* Panel body */
+    .panel-body {
+      flex:1; overflow:auto; padding:14px;
+      scrollbar-width:thin; scrollbar-color:var(--border-md) transparent;
+    }
+    .panel-body::-webkit-scrollbar { width:4px; }
+    .panel-body::-webkit-scrollbar-thumb { background:var(--border-md); border-radius:4px; }
+
+    /* ═══════════════ RESIZE HANDLES ═══════════════ */
+    .resize-handle {
+      position:absolute; z-index:10;
+    }
+    /* Edges — 10px hit area, centred on the panel border */
+    .resize-handle[data-dir="n"]  { top:-5px; left:14px; right:14px; height:10px; cursor:n-resize; }
+    .resize-handle[data-dir="s"]  { bottom:-5px; left:14px; right:14px; height:10px; cursor:s-resize; }
+    .resize-handle[data-dir="e"]  { right:-5px; top:14px; bottom:14px; width:10px; cursor:e-resize; }
+    .resize-handle[data-dir="w"]  { left:-5px; top:14px; bottom:14px; width:10px; cursor:w-resize; }
+    /* Corners — 16px hit area */
+    .resize-handle[data-dir="nw"] { top:-5px; left:-5px; width:16px; height:16px; cursor:nw-resize; }
+    .resize-handle[data-dir="ne"] { top:-5px; right:-5px; width:16px; height:16px; cursor:ne-resize; }
+    .resize-handle[data-dir="sw"] { bottom:-5px; left:-5px; width:16px; height:16px; cursor:sw-resize; }
+    .resize-handle[data-dir="se"] { bottom:-5px; right:-5px; width:16px; height:16px; cursor:se-resize; }
+    /* Show a subtle visual on the SE corner so users know it's draggable */
+    .resize-handle[data-dir="se"]::after {
+      content:''; position:absolute; bottom:3px; right:3px;
+      width:8px; height:8px;
+      border-right:2px solid rgba(255,255,255,0.18);
+      border-bottom:2px solid rgba(255,255,255,0.18);
+      border-radius:0 0 3px 0;
+    }
+
+    /* Visual resize grip on SE corner */
+    .resize-grip {
+      position:absolute; bottom:5px; right:5px;
+      width:12px; height:12px;
+      display:grid; grid-template-columns:1fr 1fr 1fr; gap:2px;
+      opacity:.28; pointer-events:none;
+    }
+    .resize-grip span {
+      width:3px; height:3px; border-radius:1px; background:var(--text-3);
+    }
+    .resize-grip span:nth-child(-n+3) { opacity:0; } /* hide top row */
+    .resize-grip span:nth-child(3n+1) { opacity:0; } /* hide left col */
+
+    /* ═══════════════ PANEL CONTENT STYLES ═══════════════ */
+
+    /* Camera */
+    .video-wrapper {
+      flex:1; display:flex; align-items:center; justify-content:center;
+      background:var(--bg-base); border-radius:8px; overflow:hidden;
+      position:relative; border:1px solid var(--border); min-height:80px;
+    }
+    #videoFeed { max-width:100%; max-height:100%; display:none; }
+    .no-feed {
+      color:var(--text-4); font-size:13px; font-weight:500; text-align:center;
+      display:flex; flex-direction:column; align-items:center; gap:8px;
+    }
+    .no-feed-icon { font-size:28px; opacity:.4; }
+    .camera-controls { display:flex; gap:6px; align-items:center; flex-wrap:wrap; margin-bottom:10px; }
+    .cam-btn {
+      display:flex; align-items:center; gap:4px;
+      padding:4px 10px; border-radius:6px;
+      font-size:11px; font-weight:600; cursor:pointer;
+      font-family:'Inter',sans-serif; transition:all .14s var(--ease);
+      border:1px solid var(--border-md); background:transparent; color:var(--text-3);
+      white-space:nowrap;
+    }
+    .cam-btn:hover { background:var(--bg-hover); color:var(--text-2); }
+    .cam-btn.blue { background:var(--blue-dim); border-color:rgba(59,130,246,.2); color:var(--blue); }
+    .cam-btn svg { width:12px; height:12px; fill:currentColor; }
+    .camera-dropdown {
+      display:none; position:absolute; top:calc(100% + 4px); left:0; z-index:200;
+      min-width:220px; background:var(--bg-card); border:1px solid var(--border-lg);
+      border-radius:10px; box-shadow:0 12px 32px rgba(0,0,0,.5); overflow:hidden;
+    }
+    .camera-dropdown.open { display:block; }
+    .camera-dropdown-header {
+      display:flex; justify-content:space-between; align-items:center;
+      padding:10px 12px; border-bottom:1px solid var(--border);
+    }
+    .camera-dropdown-title { font-size:10px; font-weight:700; color:var(--text-4); text-transform:uppercase; letter-spacing:.6px; }
+    .camera-refresh-btn {
+      background:none; border:none; color:var(--blue); cursor:pointer;
+      font-size:10.5px; font-weight:600; padding:2px 6px; border-radius:4px; font-family:'Inter',sans-serif;
+    }
+    .camera-option {
+      display:flex; align-items:center; gap:8px;
+      padding:8px 12px; cursor:pointer; font-size:12.5px; color:var(--text-1);
+      background:none; border:none; width:100%; text-align:left; font-family:'Inter',sans-serif;
+      transition:background .12s var(--ease);
+    }
+    .camera-option:hover { background:var(--blue-dim); }
+    .camera-option.active { color:var(--blue); font-weight:600; }
+    .camera-option-dot { width:7px; height:7px; border-radius:50%; border:2px solid var(--text-4); flex-shrink:0; }
+    .camera-option.active .camera-option-dot { background:var(--blue); border-color:var(--blue); }
+    .camera-switcher { position:relative; }
+    .camera-no-items { padding:12px; font-size:12px; color:var(--text-4); text-align:center; }
+
+    /* Inventory */
+    .inventory-header-row {
+      display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;
+    }
+    .inv-total-badge {
+      display:flex; align-items:center; gap:6px;
+      padding:4px 10px; background:var(--green-dim); border:1px solid rgba(16,185,129,.18);
+      border-radius:6px; font-size:11px; font-weight:600; color:var(--green);
+    }
+    .inventory-item {
+      display:flex; justify-content:space-between; align-items:center;
+      padding:10px 12px; margin-bottom:6px;
+      background:rgba(255,255,255,0.025); border-radius:8px;
+      border-left:3px solid var(--green);
+      border-top:1px solid var(--border); border-right:1px solid var(--border); border-bottom:1px solid var(--border);
+      transition:all .15s var(--ease);
+    }
+    .inventory-item:hover { background:rgba(16,185,129,0.04); }
+    .item-info { flex:1; display:flex; flex-direction:column; gap:3px; }
+    .item-name { font-size:13px; font-weight:600; color:var(--text-1); }
+    .item-freshness { font-size:10.5px; color:var(--text-3); }
+    .item-freshness.expired { color:var(--red); font-weight:600; }
+    .item-count { font-size:18px; font-weight:800; color:var(--green); min-width:36px; text-align:right; }
+    .empty-inventory { text-align:center; color:var(--text-4); padding:40px 16px; font-size:13px; }
+
+    /* Sales Log */
+    .sales-count-badge {
+      display:flex; align-items:center; gap:5px;
+      padding:3px 9px; background:var(--blue-dim); border:1px solid rgba(59,130,246,.18);
+      border-radius:6px; font-size:11px; font-weight:600; color:var(--blue);
+    }
+    .sales-entry {
+      display:flex; justify-content:space-between; align-items:center;
+      padding:9px 12px; margin-bottom:5px;
+      background:rgba(255,255,255,0.025); border-radius:8px;
+      border-left:3px solid var(--blue);
+      border-top:1px solid var(--border); border-right:1px solid var(--border); border-bottom:1px solid var(--border);
+      transition:background .14s var(--ease);
+    }
+    .sales-entry:hover { background:rgba(59,130,246,0.04); }
+    .sales-product { font-size:12.5px; font-weight:600; color:var(--text-1); flex:1; }
+    .sales-time { font-size:10.5px; color:var(--text-3); font-family:'Monaco','Courier New',monospace; }
+    .empty-sales { text-align:center; color:var(--text-4); padding:30px 16px; font-size:13px; }
+
+    /* Alerts */
+    .alerts-count-badge {
+      display:flex; align-items:center; gap:5px;
+      padding:3px 9px; background:var(--amber-dim); border:1px solid rgba(245,158,11,.18);
+      border-radius:6px; font-size:11px; font-weight:600; color:var(--amber);
+    }
+    .alert-item {
+      margin-bottom:7px; padding:10px 12px; border-radius:8px;
+      border:1px solid transparent;
+    }
+    .alert-item.low_stock { background:var(--amber-dim); border-color:rgba(245,158,11,.2); }
+    .alert-item.expiration { background:var(--red-dim); border-color:rgba(239,68,68,.2); }
+    .alert-header { display:flex; justify-content:space-between; margin-bottom:5px; }
+    .alert-type { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.5px; }
+    .low_stock .alert-type { color:var(--amber); }
+    .expiration .alert-type { color:var(--red); }
+    .alert-time { font-size:10px; color:var(--text-4); }
+    .alert-message { font-size:12.5px; color:var(--text-2); line-height:1.45; }
+    .alert-product { font-weight:700; color:var(--text-1); }
+    .empty-alerts { text-align:center; color:var(--text-4); padding:30px 16px; font-size:13px; }
+
+    /* NVIDIA AI panel */
+    .nv-header {
+      display:flex; align-items:center; gap:8px; margin-bottom:10px;
+    }
+    .nv-badge {
+      display:flex; align-items:center; gap:5px;
+      padding:3px 8px; background:var(--nv-dim); border:1px solid var(--nv-border);
+      border-radius:20px; font-size:10px; font-weight:700; color:var(--nv);
+    }
+    .nv-dot { width:5px; height:5px; border-radius:50%; background:var(--nv); animation:pulse 2s infinite; }
+    .nv-mode-pill {
+      font-size:10px; font-weight:700; padding:2px 8px; border-radius:10px;
+      background:rgba(99,102,241,0.1); color:var(--vera); border:1px solid rgba(99,102,241,0.2);
+    }
+    .nv-generate-btn {
+      margin-left:auto; display:flex; align-items:center; gap:4px;
+      padding:4px 10px; border-radius:6px;
+      font-size:10.5px; font-weight:600; cursor:pointer;
+      font-family:'Inter',sans-serif; transition:all .15s var(--ease);
+      background:linear-gradient(135deg,var(--nv),#4a7500); border:none; color:#fff;
+    }
+    .nv-generate-btn:hover { transform:translateY(-1px); box-shadow:0 4px 12px rgba(118,185,0,0.3); }
+    .nv-generate-btn:disabled { opacity:.5; cursor:not-allowed; transform:none; }
+
+    .nv-stat-row { display:grid; grid-template-columns:repeat(3,1fr); gap:6px; margin-bottom:10px; }
+    .nv-stat {
+      background:rgba(255,255,255,0.03); border:1px solid var(--border);
+      border-radius:8px; padding:8px 10px;
+    }
+    .nv-stat-val { font-size:15px; font-weight:800; color:var(--text-1); }
+    .nv-stat-lbl { font-size:9px; color:var(--text-4); margin-top:2px; text-transform:uppercase; letter-spacing:.4px; }
+
+    .nv-chat { display:flex; flex-direction:column; gap:8px; }
+    .nv-msg {
+      display:flex; gap:8px; align-items:flex-start;
+      animation:fadeUp .3s var(--ease) both;
+    }
+    @keyframes fadeUp { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+    .nv-avatar {
+      width:24px; height:24px; border-radius:7px; flex-shrink:0;
+      display:flex; align-items:center; justify-content:center;
+      font-size:8px; font-weight:800; letter-spacing:0;
+    }
+    .nv-avatar.sys { background:rgba(255,255,255,0.07); color:var(--text-3); }
+    .nv-avatar.ai { background:linear-gradient(135deg,var(--nv),#4a7500); color:#fff; }
+    .nv-avatar.ai svg { width:11px; height:11px; fill:#fff; }
+    .nv-bubble {
+      flex:1; padding:9px 11px; border-radius:9px; font-size:12px; line-height:1.6; color:var(--text-2);
+      border-left:3px solid transparent;
+    }
+    .nv-bubble.info { background:rgba(59,130,246,0.07); border-left-color:var(--blue); color:var(--text-1); }
+    .nv-bubble.success { background:rgba(16,185,129,0.07); border-left-color:var(--green); }
+    .nv-bubble.warning { background:rgba(245,158,11,0.07); border-left-color:var(--amber); }
+    .nv-bubble.alert { background:rgba(239,68,68,0.07); border-left-color:var(--red); }
+    .nv-bubble strong { font-weight:700; color:var(--text-1); }
+    .nv-empty {
+      text-align:center; padding:30px 16px; color:var(--text-4); font-size:12.5px;
+      display:flex; flex-direction:column; align-items:center; gap:10px;
+    }
+    .nv-empty-icon {
+      width:44px; height:44px; border-radius:14px;
+      background:var(--nv-dim); border:1px solid var(--nv-border);
+      display:flex; align-items:center; justify-content:center;
+    }
+    .nv-empty-icon svg { width:22px; height:22px; fill:var(--nv); }
+    .nv-view-full {
+      display:block; margin-top:10px; text-align:center;
+      font-size:11px; font-weight:600; color:var(--vera); text-decoration:none;
+      padding:6px 14px; border-radius:6px; border:1px solid rgba(99,102,241,0.2);
+      background:var(--vera-dim); transition:all .14s var(--ease);
+    }
+    .nv-view-full:hover { background:var(--vera); color:#fff; }
+
+    /* Diagnostics */
+    .diag-item {
+      display:flex; justify-content:space-between; align-items:center;
+      padding:8px 0; border-bottom:1px solid var(--border); font-size:12px;
+    }
+    .diag-item:last-child { border-bottom:none; }
+    .diag-label { color:var(--text-2); font-weight:500; }
+    .diag-value { color:var(--green); font-weight:700; font-family:'Monaco','Courier New',monospace; font-size:11.5px; }
+
+    /* Tooltip for panel drag hint */
+    .drag-hint {
+      position:fixed; bottom:16px; left:50%; transform:translateX(-50%);
+      background:rgba(0,0,0,.75); color:var(--text-2); font-size:11px;
+      padding:6px 14px; border-radius:20px; pointer-events:none;
+      opacity:1; transition:opacity .4s; z-index:9999;
+      backdrop-filter:blur(8px); border:1px solid var(--border);
+    }
+    .drag-hint.hidden { opacity:0; }
+
+    /* Panel restore buttons (when panels are closed) */
+    .panel-restore-bar {
+      position:fixed; bottom:0; left:0; right:0; z-index:400;
+      display:flex; align-items:center; gap:6px; padding:8px 16px;
+      background:var(--bg-bar); border-top:1px solid var(--border);
+      backdrop-filter:blur(16px);
+    }
+    .panel-restore-bar.empty { display:none; }
+    .panel-restore-bar span { font-size:10px; color:var(--text-4); font-weight:600; text-transform:uppercase; letter-spacing:.5px; margin-right:4px; }
+    .restore-chip {
+      display:flex; align-items:center; gap:5px;
+      padding:4px 10px; border-radius:20px;
+      font-size:11px; font-weight:600; cursor:pointer;
+      border:1px solid var(--border-md); background:var(--bg-hover); color:var(--text-2);
+      transition:all .14s var(--ease); font-family:'Inter',sans-serif;
+    }
+    .restore-chip:hover { background:var(--bg-card); color:var(--text-1); }
+    .restore-chip svg { width:11px; height:11px; fill:currentColor; }
+  </style>
+</head>
+<body>
+
+<!-- ══════════════════ TOPBAR ══════════════════ -->
+<header class="topbar">
+  <button class="topbar-menu-btn" id="menuBtn">
+    <svg viewBox="0 0 24 24"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg>
+  </button>
+  <a href="home.html" class="topbar-brand">
+    <div class="brand-icon">
+      <svg viewBox="0 0 24 24"><path d="M3 3h8v8H3zm10 0h8v8h-8zM3 13h8v8H3zm13 0a4 4 0 100 8 4 4 0 000-8z"/></svg>
+    </div>
+    <span class="brand-text">Veratori</span>
+  </a>
+  <nav class="topbar-nav">
+    <a href="home.html" class="topbar-nav-link">
+      <svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>Hub
+    </a>
+    <a href="index.html" class="topbar-nav-link active">
+      <svg viewBox="0 0 24 24"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg>Dashboard
+    </a>
+    <a href="ai-analytics.html" class="topbar-nav-link">
+      <svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 110 20A10 10 0 0112 2zm-1 11h2v2h-2zm0-8h2v6h-2z"/></svg>AI Insights
+    </a>
+    <a href="analytics.html" class="topbar-nav-link">
+      <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/></svg>Analytics
+    </a>
+    <a href="upload.html" class="topbar-nav-link">
+      <svg viewBox="0 0 24 24"><path d="M9 16h6v-6h4l-7-7-7 7h4v6zm-4 2h14v2H5v-2z"/></svg>Upload
+    </a>
+  </nav>
+  <div class="topbar-right">
+    <div id="statusPill" class="status-pill">
+      <div class="status-dot"></div>
+      <span id="connectionStatus">Connecting…</span>
+    </div>
+    <div class="layout-controls">
+      <span>Layout</span>
+      <button class="layout-btn" onclick="resetLayout()" title="Reset to default layout">
+        <svg viewBox="0 0 24 24"><path d="M17.65 6.35A7.96 7.96 0 0012 4a8 8 0 000 16 8 8 0 007.3-4.75l-2.1-.85A5.99 5.99 0 0112 18a6 6 0 010-12c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
+        Reset
+      </button>
+      <button class="layout-btn" onclick="saveLayout()" title="Save current layout">
+        <svg viewBox="0 0 24 24"><path d="M17 3H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V7l-4-4zm2 16H5V5h11.17L19 7.83V19zm-7-7a3 3 0 100 6 3 3 0 000-6z"/></svg>
+        Save
+      </button>
+    </div>
+    <button class="topbar-btn" onclick="handleLogout()" style="color:var(--red);border-color:rgba(239,68,68,.18)">Logout</button>
+  </div>
+</header>
+
+<!-- ══════════════════ SIDEBAR ══════════════════ -->
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+<nav class="sidebar" id="sidebar">
+  <div class="sidebar-hdr">
+    <span class="sidebar-brand-name">Veratori</span>
+    <button class="sidebar-close" id="sidebarClose">×</button>
+  </div>
+  <div class="sidebar-section-label">Platform</div>
+  <div class="sidebar-nav">
+    <a href="home.html" class="sidebar-link"><svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg><span>Home</span></a>
+    <a href="index.html" class="sidebar-link active"><svg viewBox="0 0 24 24"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg><span>Dashboard</span></a>
+    <a href="upload.html" class="sidebar-link"><svg viewBox="0 0 24 24"><path d="M9 16h6v-6h4l-7-7-7 7h4v6zm-4 2h14v2H5v-2z"/></svg><span>Upload</span></a>
+    <a href="analytics.html" class="sidebar-link"><svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/></svg><span>Data &amp; Analytics</span></a>
+    <a href="ai-analytics.html" class="sidebar-link"><svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 110 20A10 10 0 0112 2zm-1 11h2v2h-2zm0-8h2v6h-2z"/></svg><span>AI Insights</span></a>
+  </div>
+  <div class="sidebar-section-label">Settings</div>
+  <div class="sidebar-nav" style="flex:0">
+    <a href="account.html" class="sidebar-link"><svg viewBox="0 0 24 24"><path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/></svg><span>Account</span></a>
+  </div>
+  <div class="sidebar-footer"><span>Veratori v2.0 · Jetson Orin</span></div>
+</nav>
+
+<!-- ══════════════════ CANVAS ══════════════════ -->
+<div class="canvas" id="canvas">
+
+  <!-- PANEL: Camera Feed -->
+  <div class="panel focused" id="panel-camera" data-panel="camera" style="z-index:10">
+    <div class="panel-header" data-drag="camera">
+      <div class="panel-header-icon" style="background:linear-gradient(135deg,#3b82f6,#1d4ed8)">
+        <svg viewBox="0 0 24 24"><path d="M20 4h-3.17L15 2H9L7.17 4H4a2 2 0 00-2 2v12a2 2 0 002 2h16a2 2 0 002-2V6a2 2 0 00-2-2zm-8 13a5 5 0 110-10 5 5 0 010 10z"/></svg>
+      </div>
+      <span class="panel-title" id="videoSourceTitle">Live Camera Feed</span>
+      <span class="panel-subtitle" id="cameraSubtitle">No source active</span>
+      <div class="panel-controls">
+        <button class="panel-ctrl" onclick="minimizePanel('camera')" title="Minimize">
+          <svg viewBox="0 0 24 24"><path d="M19 13H5v-2h14v2z"/></svg>
+        </button>
+        <button class="panel-ctrl" onclick="maximizePanel('camera')" title="Maximize / restore">
+          <svg viewBox="0 0 24 24"><path d="M4 8h4V4H4v4zm6 12h4v-4h-4v4zm-6 0h4v-4H4v4zm0-6h4v-4H4v4zm6 0h4v-4h-4v4zm6-10v4h4V4h-4zm-6 4h4V4h-4v4zm6 6h4v-4h-4v4zm0 6h4v-4h-4v4z"/></svg>
+        </button>
+        <button class="panel-ctrl close" onclick="closePanel('camera')" title="Close">
+          <svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </div>
+    </div>
+    <div class="panel-body" style="display:flex;flex-direction:column;gap:8px">
+      <div class="camera-controls">
+        <div class="camera-switcher" id="cameraSwitcher">
+          <button class="cam-btn blue" id="cameraSwitchBtn">
+            <svg viewBox="0 0 24 24"><path d="M20 4h-3.17L15 2H9L7.17 4H4a2 2 0 00-2 2v12a2 2 0 002 2h16a2 2 0 002-2V6a2 2 0 00-2-2zm-8 13a5 5 0 110-10 5 5 0 010 10zm0-8a3 3 0 100 6 3 3 0 000-6z"/></svg>
+            <span id="activeCameraLabel">Camera</span>
+          </button>
+          <div class="camera-dropdown" id="cameraDropdown">
+            <div class="camera-dropdown-header">
+              <span class="camera-dropdown-title">Camera Sources</span>
+              <button class="camera-refresh-btn" id="cameraRefreshBtn">Refresh</button>
+            </div>
+            <div id="cameraList"><div class="camera-no-items">Loading…</div></div>
+          </div>
+        </div>
+        <button class="cam-btn" id="loadVideoBtn" style="background:var(--green-dim);border-color:rgba(16,185,129,.2);color:var(--green)">
+          <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>Load Video
+        </button>
+        <input type="file" id="videoFileInput" accept="video/*" style="display:none">
+      </div>
+      <div class="video-wrapper">
+        <img id="videoFeed" alt="Live video feed">
+        <div class="no-feed" id="noFeed">
+          <span class="no-feed-icon">📷</span>
+          Waiting for camera feed…
+        </div>
+      </div>
+    </div>
+    <!-- Resize handles -->
+    <div class="resize-handle" data-dir="n" data-panel="camera"></div>
+    <div class="resize-handle" data-dir="s" data-panel="camera"></div>
+    <div class="resize-handle" data-dir="e" data-panel="camera"></div>
+    <div class="resize-handle" data-dir="w" data-panel="camera"></div>
+    <div class="resize-handle" data-dir="nw" data-panel="camera"></div>
+    <div class="resize-handle" data-dir="ne" data-panel="camera"></div>
+    <div class="resize-handle" data-dir="sw" data-panel="camera"></div>
+    <div class="resize-handle" data-dir="se" data-panel="camera"></div>
+    <div class="resize-grip"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
+  </div>
+
+  <!-- PANEL: NVIDIA AI Inference -->
+  <div class="panel" id="panel-nvidia" data-panel="nvidia" style="z-index:9">
+    <div class="panel-header" data-drag="nvidia">
+      <div class="panel-header-icon" style="background:linear-gradient(135deg,#76b900,#4a7500)">
+        <svg viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+      </div>
+      <span class="panel-title">NVIDIA AI Inference</span>
+      <span class="panel-subtitle" id="nvSubtitle">DeepStream · Jetson Orin</span>
+      <div class="panel-controls">
+        <button class="panel-ctrl" onclick="minimizePanel('nvidia')" title="Minimize">
+          <svg viewBox="0 0 24 24"><path d="M19 13H5v-2h14v2z"/></svg>
+        </button>
+        <button class="panel-ctrl" onclick="maximizePanel('nvidia')" title="Maximize / restore">
+          <svg viewBox="0 0 24 24"><path d="M4 8h4V4H4v4zm6 12h4v-4h-4v4zm-6 0h4v-4H4v4zm0-6h4v-4H4v4zm6 0h4v-4h-4v4zm6-10v4h4V4h-4zm-6 4h4V4h-4v4zm6 6h4v-4h-4v4zm0 6h4v-4h-4v4z"/></svg>
+        </button>
+        <button class="panel-ctrl close" onclick="closePanel('nvidia')" title="Close">
+          <svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </div>
+    </div>
+    <div class="panel-body">
+      <div class="nv-header">
+        <div class="nv-badge"><span class="nv-dot"></span>NVIDIA AI</div>
+        <span class="nv-mode-pill" id="nvModePill">Pre-Open</span>
+        <button class="nv-generate-btn" id="nvGenerateBtn" onclick="nvGenerate()">
+          <svg viewBox="0 0 24 24" style="width:11px;height:11px;fill:#fff"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+          Generate Report
+        </button>
+      </div>
+      <div class="nv-stat-row" id="nvStatRow" style="display:none">
+        <div class="nv-stat"><div class="nv-stat-val" id="nvStatFrames">—</div><div class="nv-stat-lbl">Frames</div></div>
+        <div class="nv-stat"><div class="nv-stat-val" id="nvStatConf">—</div><div class="nv-stat-lbl">Confidence</div></div>
+        <div class="nv-stat"><div class="nv-stat-val" id="nvStatGpu">—</div><div class="nv-stat-lbl">GPU Load</div></div>
+      </div>
+      <div class="nv-chat" id="nvChat">
+        <div class="nv-empty" id="nvEmpty">
+          <div class="nv-empty-icon">
+            <svg viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+          </div>
+          <div>Click <strong style="color:var(--nv)">Generate Report</strong> to run<br>DeepStream business inference</div>
+        </div>
+      </div>
+      <a href="ai-analytics.html" class="nv-view-full" id="nvViewFull" style="display:none">View full AI Analytics →</a>
+    </div>
+    <div class="resize-handle" data-dir="n" data-panel="nvidia"></div>
+    <div class="resize-handle" data-dir="s" data-panel="nvidia"></div>
+    <div class="resize-handle" data-dir="e" data-panel="nvidia"></div>
+    <div class="resize-handle" data-dir="w" data-panel="nvidia"></div>
+    <div class="resize-handle" data-dir="nw" data-panel="nvidia"></div>
+    <div class="resize-handle" data-dir="ne" data-panel="nvidia"></div>
+    <div class="resize-handle" data-dir="sw" data-panel="nvidia"></div>
+    <div class="resize-handle" data-dir="se" data-panel="nvidia"></div>
+    <div class="resize-grip"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
+  </div>
+
+  <!-- PANEL: Inventory -->
+  <div class="panel" id="panel-inventory" data-panel="inventory" style="z-index:8">
+    <div class="panel-header" data-drag="inventory">
+      <div class="panel-header-icon" style="background:linear-gradient(135deg,#10b981,#065f46)">
+        <svg viewBox="0 0 24 24"><path d="M20 3H4v10c0 2.21 1.79 4 4 4h6c2.21 0 4-1.79 4-4v-3h2c1.11 0 2-.89 2-2V5c0-1.11-.89-2-2-2zm0 5h-2V5h2v3zM4 19h16v2H4z"/></svg>
+      </div>
+      <span class="panel-title">Live Inventory</span>
+      <span class="panel-subtitle">YOLO · DeepStream</span>
+      <div class="panel-controls">
+        <button class="panel-ctrl" onclick="minimizePanel('inventory')" title="Minimize">
+          <svg viewBox="0 0 24 24"><path d="M19 13H5v-2h14v2z"/></svg>
+        </button>
+        <button class="panel-ctrl" onclick="maximizePanel('inventory')" title="Maximize / restore">
+          <svg viewBox="0 0 24 24"><path d="M4 8h4V4H4v4zm6 12h4v-4h-4v4zm-6 0h4v-4H4v4zm0-6h4v-4H4v4zm6 0h4v-4h-4v4zm6-10v4h4V4h-4zm-6 4h4V4h-4v4zm6 6h4v-4h-4v4zm0 6h4v-4h-4v4z"/></svg>
+        </button>
+        <button class="panel-ctrl close" onclick="closePanel('inventory')" title="Close">
+          <svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </div>
+    </div>
+    <div class="panel-body">
+      <div class="inventory-header-row">
+        <span style="font-size:11px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:.5px">Items detected</span>
+        <div class="inv-total-badge">Total: <span id="totalItems" style="margin-left:2px">0</span></div>
+      </div>
+      <div id="inventoryList"><div class="empty-inventory">No items detected</div></div>
+    </div>
+    <div class="resize-handle" data-dir="n" data-panel="inventory"></div>
+    <div class="resize-handle" data-dir="s" data-panel="inventory"></div>
+    <div class="resize-handle" data-dir="e" data-panel="inventory"></div>
+    <div class="resize-handle" data-dir="w" data-panel="inventory"></div>
+    <div class="resize-handle" data-dir="nw" data-panel="inventory"></div>
+    <div class="resize-handle" data-dir="ne" data-panel="inventory"></div>
+    <div class="resize-handle" data-dir="sw" data-panel="inventory"></div>
+    <div class="resize-handle" data-dir="se" data-panel="inventory"></div>
+    <div class="resize-grip"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
+  </div>
+
+  <!-- PANEL: Sales Log -->
+  <div class="panel" id="panel-sales" data-panel="sales" style="z-index:7">
+    <div class="panel-header" data-drag="sales">
+      <div class="panel-header-icon" style="background:linear-gradient(135deg,#3b82f6,#1d4ed8)">
+        <svg viewBox="0 0 24 24"><path d="M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z"/></svg>
+      </div>
+      <span class="panel-title">Sales Log</span>
+      <div class="sales-count-badge" style="margin-left:auto;margin-right:8px"><span id="salesCount">0</span>&nbsp;sales</div>
+      <div class="panel-controls">
+        <button class="panel-ctrl" onclick="minimizePanel('sales')" title="Minimize">
+          <svg viewBox="0 0 24 24"><path d="M19 13H5v-2h14v2z"/></svg>
+        </button>
+        <button class="panel-ctrl" onclick="maximizePanel('sales')" title="Maximize / restore">
+          <svg viewBox="0 0 24 24"><path d="M4 8h4V4H4v4zm6 12h4v-4h-4v4zm-6 0h4v-4H4v4zm0-6h4v-4H4v4zm6 0h4v-4h-4v4zm6-10v4h4V4h-4zm-6 4h4V4h-4v4zm6 6h4v-4h-4v4zm0 6h4v-4h-4v4z"/></svg>
+        </button>
+        <button class="panel-ctrl close" onclick="closePanel('sales')" title="Close">
+          <svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </div>
+    </div>
+    <div class="panel-body">
+      <div id="salesLogList"><div class="empty-sales">No sales recorded yet</div></div>
+    </div>
+    <div class="resize-handle" data-dir="n" data-panel="sales"></div>
+    <div class="resize-handle" data-dir="s" data-panel="sales"></div>
+    <div class="resize-handle" data-dir="e" data-panel="sales"></div>
+    <div class="resize-handle" data-dir="w" data-panel="sales"></div>
+    <div class="resize-handle" data-dir="nw" data-panel="sales"></div>
+    <div class="resize-handle" data-dir="ne" data-panel="sales"></div>
+    <div class="resize-handle" data-dir="sw" data-panel="sales"></div>
+    <div class="resize-handle" data-dir="se" data-panel="sales"></div>
+    <div class="resize-grip"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
+  </div>
+
+  <!-- PANEL: Alerts -->
+  <div class="panel" id="panel-alerts" data-panel="alerts" style="z-index:6">
+    <div class="panel-header" data-drag="alerts">
+      <div class="panel-header-icon" style="background:linear-gradient(135deg,#f59e0b,#92400e)">
+        <svg viewBox="0 0 24 24"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg>
+      </div>
+      <span class="panel-title">System Alerts</span>
+      <div class="alerts-count-badge" style="margin-left:auto;margin-right:8px"><span id="alertsCount">0</span>&nbsp;active</div>
+      <div class="panel-controls">
+        <button class="panel-ctrl" onclick="minimizePanel('alerts')" title="Minimize">
+          <svg viewBox="0 0 24 24"><path d="M19 13H5v-2h14v2z"/></svg>
+        </button>
+        <button class="panel-ctrl" onclick="maximizePanel('alerts')" title="Maximize / restore">
+          <svg viewBox="0 0 24 24"><path d="M4 8h4V4H4v4zm6 12h4v-4h-4v4zm-6 0h4v-4H4v4zm0-6h4v-4H4v4zm6 0h4v-4h-4v4zm6-10v4h4V4h-4zm-6 4h4V4h-4v4zm6 6h4v-4h-4v4zm0 6h4v-4h-4v4z"/></svg>
+        </button>
+        <button class="panel-ctrl close" onclick="closePanel('alerts')" title="Close">
+          <svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </div>
+    </div>
+    <div class="panel-body">
+      <div id="alertsList"><div class="empty-alerts">No alerts at this time ✓</div></div>
+    </div>
+    <div class="resize-handle" data-dir="n" data-panel="alerts"></div>
+    <div class="resize-handle" data-dir="s" data-panel="alerts"></div>
+    <div class="resize-handle" data-dir="e" data-panel="alerts"></div>
+    <div class="resize-handle" data-dir="w" data-panel="alerts"></div>
+    <div class="resize-handle" data-dir="nw" data-panel="alerts"></div>
+    <div class="resize-handle" data-dir="ne" data-panel="alerts"></div>
+    <div class="resize-handle" data-dir="sw" data-panel="alerts"></div>
+    <div class="resize-handle" data-dir="se" data-panel="alerts"></div>
+    <div class="resize-grip"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
+  </div>
+
+  <!-- PANEL: Diagnostics -->
+  <div class="panel" id="panel-diag" data-panel="diag" style="z-index:5">
+    <div class="panel-header" data-drag="diag">
+      <div class="panel-header-icon" style="background:linear-gradient(135deg,#8b5cf6,#4c1d95)">
+        <svg viewBox="0 0 24 24"><path d="M19.5 12c0-3.87-3.13-7-7-7S5.5 8.13 5.5 12H2l3.84 3.93.07.14L9.97 12H7c0-2.76 2.24-5 5-5s5 2.24 5 5-2.24 5-5 5c-1.38 0-2.63-.56-3.54-1.46l-1.42 1.42C8.27 18.99 10.05 19.5 12 19.5c3.87 0 7-3.13 7-7z"/></svg>
+      </div>
+      <span class="panel-title">Diagnostics</span>
+      <span class="panel-subtitle">System performance</span>
+      <div class="panel-controls">
+        <button class="panel-ctrl" onclick="minimizePanel('diag')" title="Minimize">
+          <svg viewBox="0 0 24 24"><path d="M19 13H5v-2h14v2z"/></svg>
+        </button>
+        <button class="panel-ctrl" onclick="maximizePanel('diag')" title="Maximize / restore">
+          <svg viewBox="0 0 24 24"><path d="M4 8h4V4H4v4zm6 12h4v-4h-4v4zm-6 0h4v-4H4v4zm0-6h4v-4H4v4zm6 0h4v-4h-4v4zm6-10v4h4V4h-4zm-6 4h4V4h-4v4zm6 6h4v-4h-4v4zm0 6h4v-4h-4v4z"/></svg>
+        </button>
+        <button class="panel-ctrl close" onclick="closePanel('diag')" title="Close">
+          <svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </div>
+    </div>
+    <div class="panel-body">
+      <div class="diag-item"><span class="diag-label">FPS</span><span class="diag-value" id="diagFPS">--</span></div>
+      <div class="diag-item"><span class="diag-label">Inference Time</span><span class="diag-value" id="diagInference">--</span></div>
+      <div class="diag-item"><span class="diag-label">Frames Processed</span><span class="diag-value" id="diagFrames">--</span></div>
+      <div class="diag-item"><span class="diag-label">Active Connections</span><span class="diag-value" id="diagConnections">--</span></div>
+      <div class="diag-item"><span class="diag-label">WebSocket</span><span class="diag-value" id="diagWS" style="color:var(--amber)">--</span></div>
+    </div>
+    <div class="resize-handle" data-dir="n" data-panel="diag"></div>
+    <div class="resize-handle" data-dir="s" data-panel="diag"></div>
+    <div class="resize-handle" data-dir="e" data-panel="diag"></div>
+    <div class="resize-handle" data-dir="w" data-panel="diag"></div>
+    <div class="resize-handle" data-dir="nw" data-panel="diag"></div>
+    <div class="resize-handle" data-dir="ne" data-panel="diag"></div>
+    <div class="resize-handle" data-dir="sw" data-panel="diag"></div>
+    <div class="resize-handle" data-dir="se" data-panel="diag"></div>
+    <div class="resize-grip"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
+  </div>
+
+</div><!-- /canvas -->
+
+<!-- Restore bar (for closed panels) -->
+<div class="panel-restore-bar empty" id="restoreBar">
+  <span>Closed</span>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════
+//  PANEL WINDOW MANAGER
+// ═══════════════════════════════════════════════════════
+
+const PANEL_MIN_W = 220;
+const PANEL_MIN_H = 120;
+const GAP = 10;
+const TOPBAR_H = 52;
+
+// Default layout (percentages of canvas at init)
+const DEFAULT_LAYOUT = {
+  camera:    { x:0,    y:0,    w:0.56, h:0.60 },
+  nvidia:    { x:0.57, y:0,    w:0.43, h:0.60 },
+  inventory: { x:0,    y:0.62, w:0.26, h:0.38 },
+  sales:     { x:0.27, y:0.62, w:0.35, h:0.38 },
+  alerts:    { x:0.63, y:0.62, w:0.20, h:0.38 },
+  diag:      { x:0.84, y:0.62, w:0.16, h:0.38 },
+};
+
+const PANEL_META = {
+  camera:    { label:'Camera Feed', icon:'📷' },
+  nvidia:    { label:'NVIDIA AI',   icon:'⚡' },
+  inventory: { label:'Inventory',   icon:'📦' },
+  sales:     { label:'Sales Log',   icon:'💵' },
+  alerts:    { label:'Alerts',      icon:'🚨' },
+  diag:      { label:'Diagnostics', icon:'📊' },
+};
+
+let zCounter = 20;
+let closedPanels = new Set();
+let maximizedPanel = null;
+let panelStates = {}; // stores pre-maximize geometry
+
+function canvasSize() {
+  const c = document.getElementById('canvas');
+  return { w: c.clientWidth, h: c.clientHeight };
+}
+
+function getPanel(id) { return document.getElementById('panel-' + id); }
+
+function applyGeometry(el, x, y, w, h) {
+  el.style.left   = Math.round(x) + 'px';
+  el.style.top    = Math.round(y) + 'px';
+  el.style.width  = Math.round(w) + 'px';
+  el.style.height = Math.round(h) + 'px';
+}
+
+function initLayout() {
+  const saved = tryLoadLayout();
+  const cs = canvasSize();
+
+  Object.keys(DEFAULT_LAYOUT).forEach(id => {
+    const el = getPanel(id);
+    if (!el) return;
+
+    let geo;
+    if (saved && saved[id]) {
+      geo = saved[id]; // absolute pixels saved
+    } else {
+      const d = DEFAULT_LAYOUT[id];
+      geo = {
+        x: Math.round(d.x * cs.w + (d.x > 0 ? GAP : GAP)),
+        y: Math.round(d.y * cs.h + (d.y > 0 ? GAP : GAP)),
+        w: Math.round(d.w * cs.w - GAP * 2),
+        h: Math.round(d.h * cs.h - GAP * 2),
+      };
+      // clamp
+      geo.x = Math.max(GAP, Math.min(geo.x, cs.w - geo.w - GAP));
+      geo.y = Math.max(GAP, Math.min(geo.y, cs.h - geo.h - GAP));
+    }
+
+    applyGeometry(el, geo.x, geo.y, geo.w, geo.h);
+    el.style.display = '';
+  });
+}
+
+// ── Drag ──────────────────────────────────────────────
+let drag = null;
+
+document.querySelectorAll('.panel-header[data-drag]').forEach(header => {
+  header.addEventListener('mousedown', e => {
+    if (e.target.closest('.panel-controls') || e.target.closest('.camera-switcher')) return;
+    const id = header.dataset.drag;
+    const panel = getPanel(id);
+    if (!panel) return;
+
+    bringToFront(id);
+
+    // If maximized, skip drag
+    if (panel.classList.contains('maximized')) return;
+
+    const rect = panel.getBoundingClientRect();
+    const canvas = document.getElementById('canvas').getBoundingClientRect();
+
+    drag = {
+      id,
+      panel,
+      startX: e.clientX - (rect.left - canvas.left),
+      startY: e.clientY - (rect.top  - canvas.top),
+    };
+
+    panel.classList.add('dragging');
+    document.body.style.cursor = 'grabbing';
+    document.body.style.userSelect = 'none';
+    e.preventDefault();
+  });
+});
+
+document.addEventListener('mousemove', e => {
+  if (drag) {
+    const cs = canvasSize();
+    let nx = e.clientX - drag.startX;
+    let ny = e.clientY - drag.startY;
+    const pw = drag.panel.offsetWidth;
+    const ph = drag.panel.offsetHeight;
+    nx = Math.max(0, Math.min(nx, cs.w - pw));
+    ny = Math.max(0, Math.min(ny, cs.h - ph));
+    drag.panel.style.left = nx + 'px';
+    drag.panel.style.top  = ny + 'px';
+  }
+  if (resz) handleResize(e);
+});
+
+document.addEventListener('mouseup', e => {
+  if (drag) {
+    drag.panel.classList.remove('dragging');
+    document.body.style.cursor = '';
+    document.body.style.userSelect = '';
+    drag = null;
+  }
+  if (resz) {
+    resz.panel.classList.remove('resizing');
+    document.body.style.cursor = '';
+    document.body.style.userSelect = '';
+    resz = null;
+  }
+});
+
+// ── Resize ────────────────────────────────────────────
+let resz = null;
+
+document.querySelectorAll('.resize-handle').forEach(handle => {
+  handle.addEventListener('mousedown', e => {
+    e.stopPropagation();
+    const id  = handle.dataset.panel;
+    const dir = handle.dataset.dir;
+    const panel = getPanel(id);
+    if (!panel || panel.classList.contains('maximized')) return;
+
+    bringToFront(id);
+
+    const rect   = panel.getBoundingClientRect();
+    const canvas = document.getElementById('canvas').getBoundingClientRect();
+
+    resz = {
+      id, dir, panel,
+      startX: e.clientX,
+      startY: e.clientY,
+      origL: rect.left - canvas.left,
+      origT: rect.top  - canvas.top,
+      origW: rect.width,
+      origH: rect.height,
+    };
+
+    panel.classList.add('resizing');
+    document.body.style.cursor = getComputedStyle(handle).cursor;
+    document.body.style.userSelect = 'none';
+    e.preventDefault();
+  });
+});
+
+function handleResize(e) {
+  const dx = e.clientX - resz.startX;
+  const dy = e.clientY - resz.startY;
+  const cs  = canvasSize();
+  let l = resz.origL, t = resz.origT, w = resz.origW, h = resz.origH;
+
+  if (resz.dir.includes('e')) { w = Math.max(PANEL_MIN_W, Math.min(resz.origW + dx, cs.w - l)); }
+  if (resz.dir.includes('s')) { h = Math.max(PANEL_MIN_H, Math.min(resz.origH + dy, cs.h - t)); }
+  if (resz.dir.includes('w')) {
+    const newW = Math.max(PANEL_MIN_W, resz.origW - dx);
+    l = Math.max(0, resz.origL + (resz.origW - newW));
+    w = newW;
+  }
+  if (resz.dir.includes('n')) {
+    const newH = Math.max(PANEL_MIN_H, resz.origH - dy);
+    t = Math.max(0, resz.origT + (resz.origH - newH));
+    h = newH;
+  }
+
+  applyGeometry(resz.panel, l, t, w, h);
+}
+
+// ── Click to bring to front ───────────────────────────
+document.querySelectorAll('.panel').forEach(panel => {
+  panel.addEventListener('mousedown', () => {
+    bringToFront(panel.dataset.panel);
+  });
+});
+
+function bringToFront(id) {
+  zCounter++;
+  const el = getPanel(id);
+  if (el) el.style.zIndex = zCounter;
+}
+
+// ── Minimize ──────────────────────────────────────────
+function minimizePanel(id) {
+  const el = getPanel(id);
+  if (!el) return;
+  el.classList.toggle('minimized');
+}
+
+// ── Maximize / restore ────────────────────────────────
+function maximizePanel(id) {
+  const el = getPanel(id);
+  if (!el) return;
+
+  if (el.classList.contains('maximized')) {
+    // Restore
+    el.classList.remove('maximized');
+    if (panelStates[id]) {
+      const s = panelStates[id];
+      applyGeometry(el, s.l, s.t, s.w, s.h);
+    }
+    maximizedPanel = null;
+  } else {
+    // Save current geometry
+    panelStates[id] = { l: el.offsetLeft, t: el.offsetTop, w: el.offsetWidth, h: el.offsetHeight };
+    el.classList.add('maximized');
+    bringToFront(id);
+    maximizedPanel = id;
+  }
+}
+
+// Double-click header to maximize/restore
+document.querySelectorAll('.panel-header[data-drag]').forEach(header => {
+  header.addEventListener('dblclick', () => {
+    maximizePanel(header.dataset.drag);
+  });
+});
+
+// ── Close / Restore ───────────────────────────────────
+function closePanel(id) {
+  const el = getPanel(id);
+  if (!el) return;
+  el.style.display = 'none';
+  closedPanels.add(id);
+  updateRestoreBar();
+}
+
+function restorePanel(id) {
+  const el = getPanel(id);
+  if (!el) return;
+  el.style.display = '';
+  closedPanels.delete(id);
+  bringToFront(id);
+  updateRestoreBar();
+}
+
+function updateRestoreBar() {
+  const bar = document.getElementById('restoreBar');
+  if (closedPanels.size === 0) {
+    bar.classList.add('empty');
+    return;
+  }
+  bar.classList.remove('empty');
+  // Keep span label, remove old chips
+  bar.querySelectorAll('.restore-chip').forEach(c => c.remove());
+  closedPanels.forEach(id => {
+    const m = PANEL_META[id];
+    const chip = document.createElement('button');
+    chip.className = 'restore-chip';
+    chip.innerHTML = `<svg viewBox="0 0 24 24" style="width:11px;height:11px;fill:currentColor"><path d="M19 3H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V5a2 2 0 00-2-2zm-7 3c1.93 0 3.5 1.57 3.5 3.5S13.93 13 12 13s-3.5-1.57-3.5-3.5S10.07 6 12 6z"/></svg>${m.icon} ${m.label}`;
+    chip.onclick = () => restorePanel(id);
+    bar.appendChild(chip);
+  });
+}
+
+// ── Save / Load ───────────────────────────────────────
+function saveLayout() {
+  const layout = {};
+  Object.keys(DEFAULT_LAYOUT).forEach(id => {
+    const el = getPanel(id);
+    if (!el) return;
+    layout[id] = { x: el.offsetLeft, y: el.offsetTop, w: el.offsetWidth, h: el.offsetHeight };
+  });
+  localStorage.setItem('veratori-dashboard-layout', JSON.stringify(layout));
+  showToast('Layout saved ✓');
+}
+
+function tryLoadLayout() {
+  try {
+    const s = localStorage.getItem('veratori-dashboard-layout');
+    return s ? JSON.parse(s) : null;
+  } catch { return null; }
+}
+
+function resetLayout() {
+  localStorage.removeItem('veratori-dashboard-layout');
+  // restore all closed panels
+  closedPanels.forEach(id => restorePanel(id));
+  // remove maximized
+  if (maximizedPanel) maximizePanel(maximizedPanel);
+  // re-init
+  initLayout();
+  showToast('Layout reset to default');
+}
+
+function showToast(msg) {
+  let t = document.getElementById('toast');
+  if (!t) {
+    t = document.createElement('div');
+    t.id = 'toast';
+    t.className = 'drag-hint';
+    document.body.appendChild(t);
+  }
+  t.textContent = msg;
+  t.classList.remove('hidden');
+  clearTimeout(t._to);
+  t._to = setTimeout(() => t.classList.add('hidden'), 2200);
+}
+
+// ═══════════════════════════════════════════════════════
+//  SIDEBAR
+// ═══════════════════════════════════════════════════════
+const sidebar        = document.getElementById('sidebar');
+const sidebarOverlay = document.getElementById('sidebarOverlay');
+document.getElementById('menuBtn').addEventListener('click', () => {
+  sidebar.classList.add('open');
+  sidebarOverlay.classList.add('visible');
+});
+document.getElementById('sidebarClose').addEventListener('click', () => {
+  sidebar.classList.remove('open');
+  sidebarOverlay.classList.remove('visible');
+});
+sidebarOverlay.addEventListener('click', () => {
+  sidebar.classList.remove('open');
+  sidebarOverlay.classList.remove('visible');
+});
+
+// ═══════════════════════════════════════════════════════
+//  WEBSOCKET & DATA
+// ═══════════════════════════════════════════════════════
+let ws = null;
+let reconnectInterval = null;
+let isConnected = false;
+
+const videoFeed  = document.getElementById('videoFeed');
+const noFeed     = document.getElementById('noFeed');
+const inventoryList = document.getElementById('inventoryList');
+const totalItems    = document.getElementById('totalItems');
+const salesLogList  = document.getElementById('salesLogList');
+const salesCount    = document.getElementById('salesCount');
+const alertsList    = document.getElementById('alertsList');
+const alertsCount   = document.getElementById('alertsCount');
+
+const TRACKED_PRODUCTS = ['passion fruit','maui custard','lemon cake','mango','watermelon','pineapple'];
+const EXPIRATION_DAYS  = 5;
+let freshnessState = {};
+let freshnessTimers = {};
+let previousInventoryTotal = 0;
+
+function getApiBaseUrl() {
+  const p = window.location.port;
+  if (p === '5500' || p === '') return `${window.location.protocol}//${window.location.hostname}:8080`;
+  return `${window.location.protocol}//${window.location.host}`;
+}
+
+function connect() {
+  const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+  const wsUrl = `${protocol}//${window.location.host}/ws`;
+  ws = new WebSocket(wsUrl);
+
+  ws.onopen = () => {
+    isConnected = true;
+    updateConnectionStatus(true);
+    clearInterval(reconnectInterval); reconnectInterval = null;
+    document.getElementById('diagWS').textContent = 'Connected';
+    document.getElementById('diagWS').style.color = 'var(--green)';
+  };
+  ws.onmessage = e => {
+    try { handleMessage(JSON.parse(e.data)); } catch {}
+  };
+  ws.onerror = () => {};
+  ws.onclose = () => {
+    isConnected = false;
+    updateConnectionStatus(false);
+    document.getElementById('diagWS').textContent = 'Disconnected';
+    document.getElementById('diagWS').style.color = 'var(--red)';
+    if (!reconnectInterval) {
+      reconnectInterval = setInterval(() => { connect(); }, 3000);
+    }
+  };
+}
+
+function handleMessage(msg) {
+  switch (msg.type) {
+    case 'frame':              updateVideoFeed(msg.data); break;
+    case 'inventory':          updateInventory(msg.data); break;
+    case 'stats':              updateStats(msg.data); break;
+    case 'freshness':          updateFreshness(msg.data); break;
+    case 'sales':              updateSalesFromServer(msg.data); break;
+    case 'alerts':             updateAlerts(msg.data); break;
+    case 'camera_switched':    onCameraSwitched(msg); break;
+    case 'camera_switch_result': onCameraSwitchResult(msg); break;
+    case 'video_ended':        handleVideoEnded(msg.session_id); break;
+  }
+}
+
+function updateVideoFeed(frameData) {
+  videoFeed.src = 'data:image/jpeg;base64,' + frameData;
+  videoFeed.style.display = 'block';
+  noFeed.style.display = 'none';
+  document.getElementById('cameraSubtitle').textContent = 'Live · 30fps';
+}
+
+function updateFreshness(data) { freshnessState = data || {}; }
+
+function startLiveTimer(productName, element, firstSeenUtc) {
+  if (freshnessTimers[productName]) clearInterval(freshnessTimers[productName]);
+  freshnessTimers[productName] = setInterval(() => {
+    const age = Date.now()/1000 - firstSeenUtc;
+    const w=Math.floor(age/604800), d=Math.floor((age%604800)/86400),
+          h=Math.floor((age%86400)/3600), m=Math.floor((age%3600)/60), s=Math.floor(age%60);
+    const parts=[]; if(w)parts.push(w+'w'); if(d)parts.push(d+'d'); if(h)parts.push(h+'h'); if(m)parts.push(m+'m'); parts.push(s+'s');
+    const expired = age > EXPIRATION_DAYS*86400;
+    if (element && document.contains(element)) {
+      element.textContent = expired ? parts.join(' ')+' - EXPIRED' : parts.join(' ');
+      element.classList.toggle('expired', expired);
+    } else { clearInterval(freshnessTimers[productName]); delete freshnessTimers[productName]; }
+  }, 1000);
+}
+
+function formatFreshness(productName) {
+  const norm = productName.toLowerCase();
+  let freshness = freshnessState[norm];
+  if (!freshness) for (const k in freshnessState) { if (k.includes(norm)||norm.includes(k)) { freshness=freshnessState[k]; break; } }
+  const firstSeenUtc = freshness?.first_seen_utc ?? Date.now()/1000;
+  const age = Date.now()/1000 - firstSeenUtc;
+  const w=Math.floor(age/604800), d=Math.floor((age%604800)/86400),
+        h=Math.floor((age%86400)/3600), m=Math.floor((age%3600)/60), s=Math.floor(age%60);
+  const parts=[]; if(w)parts.push(w+'w'); if(d)parts.push(d+'d'); if(h)parts.push(h+'h'); if(m)parts.push(m+'m'); parts.push(s+'s');
+  const expired = age > EXPIRATION_DAYS*86400;
+  return { text: expired ? parts.join(' ')+' - EXPIRED' : parts.join(' '), expired, firstSeenUtc };
+}
+
+function updateInventory(inventory) {
+  const total = Object.values(inventory).reduce((s,c)=>s+c,0);
+  totalItems.textContent = total;
+  inventoryList.innerHTML = '';
+  if (total === 0) { inventoryList.innerHTML = '<div class="empty-inventory">No items detected</div>'; previousInventoryTotal = 0; return; }
+  Object.entries(inventory).sort((a,b)=>b[1]-a[1]).forEach(([name,count]) => {
+    const item = document.createElement('div'); item.className='inventory-item';
+    const info = document.createElement('div'); info.className='item-info';
+    const nm   = document.createElement('div'); nm.className='item-name'; nm.textContent=name;
+    info.appendChild(nm);
+    const norm = name.toLowerCase();
+    if (TRACKED_PRODUCTS.some(t=>norm.includes(t)||t.includes(norm))) {
+      const fr = formatFreshness(name);
+      const fd = document.createElement('div'); fd.className='item-freshness'; fd.setAttribute('data-product',name);
+      if (fr.expired) fd.classList.add('expired');
+      fd.textContent = fr.text;
+      info.appendChild(fd);
+      startLiveTimer(name, fd, fr.firstSeenUtc);
+    }
+    const cnt = document.createElement('div'); cnt.className='item-count'; cnt.textContent=count;
+    item.appendChild(info); item.appendChild(cnt);
+    inventoryList.appendChild(item);
+  });
+  previousInventoryTotal = total;
+}
+
+function updateSalesFromServer(salesData) {
+  if (!salesData || !salesData.length) {
+    salesCount.textContent='0'; salesLogList.innerHTML='<div class="empty-sales">No sales recorded yet</div>'; return;
+  }
+  salesCount.textContent = salesData.length;
+  salesLogList.innerHTML = '';
+  salesData.forEach(sale => {
+    const entry = document.createElement('div'); entry.className='sales-entry';
+    const pd = document.createElement('div'); pd.className='sales-product';
+    const qty = sale.quantity_delta||1;
+    pd.textContent = qty>1 ? `${sale.product_name||'Unknown'} (x${qty})` : (sale.product_name||'Unknown');
+    const td = document.createElement('div'); td.className='sales-time';
+    td.textContent = sale.timestamp_est || new Date(sale.timestamp_utc*1000).toLocaleString();
+    entry.appendChild(pd); entry.appendChild(td);
+    salesLogList.appendChild(entry);
+  });
+}
+
+function updateAlerts(alerts) {
+  alertsCount.textContent = alerts.length;
+  if (!alerts.length) { alertsList.innerHTML='<div class="empty-alerts">No alerts at this time ✓</div>'; return; }
+  alertsList.innerHTML='';
+  alerts.forEach(alert => {
+    const d = document.createElement('div'); d.className=`alert-item ${alert.alert_type}`;
+    const hdr=document.createElement('div'); hdr.className='alert-header';
+    const tp=document.createElement('div'); tp.className='alert-type';
+    tp.textContent=alert.alert_type==='low_stock'?'Low Stock':'Expiration Warning';
+    const tm=document.createElement('div'); tm.className='alert-time';
+    tm.textContent=alert.timestamp_est||new Date(alert.timestamp_utc*1000).toLocaleString();
+    hdr.appendChild(tp); hdr.appendChild(tm);
+    const msg=document.createElement('div'); msg.className='alert-message';
+    msg.innerHTML=alert.message.replace(alert.product_name,`<span class="alert-product">${alert.product_name}</span>`);
+    d.appendChild(hdr); d.appendChild(msg);
+    alertsList.appendChild(d);
+  });
+}
+
+function updateStats(stats) {
+  if (stats.fps !== undefined) document.getElementById('diagFPS').textContent = stats.fps.toFixed(1);
+  if (stats.inference_time !== undefined) document.getElementById('diagInference').textContent = (stats.inference_time*1000).toFixed(0)+'ms';
+  if (stats.frame_count !== undefined) document.getElementById('diagFrames').textContent = stats.frame_count;
+  if (stats.active_connections !== undefined) document.getElementById('diagConnections').textContent = stats.active_connections;
+}
+
+function updateConnectionStatus(connected) {
+  const pill = document.getElementById('statusPill');
+  const status = document.getElementById('connectionStatus');
+  if (connected) {
+    status.textContent = 'Connected';
+    pill.style.background = 'var(--green-dim)';
+    pill.style.borderColor = 'rgba(16,185,129,.18)';
+    pill.querySelector('.status-dot').style.background = 'var(--green)';
+  } else {
+    status.textContent = 'Reconnecting…';
+    videoFeed.style.display='none'; noFeed.style.display='flex';
+    noFeed.innerHTML='<span class="no-feed-icon">🔄</span>Reconnecting…';
+    pill.style.background = 'var(--amber-dim)';
+    pill.style.borderColor = 'rgba(245,158,11,.18)';
+    pill.querySelector('.status-dot').style.background = 'var(--amber)';
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+//  CAMERA SWITCHER
+// ═══════════════════════════════════════════════════════
+const cameraSwitchBtn = document.getElementById('cameraSwitchBtn');
+const cameraDropdown  = document.getElementById('cameraDropdown');
+const cameraList      = document.getElementById('cameraList');
+const cameraRefreshBtn= document.getElementById('cameraRefreshBtn');
+const activeCameraLabel=document.getElementById('activeCameraLabel');
+let availableCameras = []; let activeCameraIndex=null; let cameraSwitching=false;
+
+cameraSwitchBtn.addEventListener('click', e => {
+  e.stopPropagation();
+  cameraDropdown.classList.toggle('open');
+  if (cameraDropdown.classList.contains('open') && availableCameras.length===0) fetchCameras(false);
+});
+document.addEventListener('click', e => {
+  if (!e.target.closest('#cameraSwitcher')) cameraDropdown.classList.remove('open');
+});
+cameraRefreshBtn.addEventListener('click', e => { e.stopPropagation(); fetchCameras(true); });
+
+function fetchCameras(refresh) {
+  cameraList.innerHTML='<div class="camera-no-items">Scanning…</div>';
+  fetch(refresh?'/api/cameras?refresh=1':'/api/cameras',{credentials:'same-origin'})
+    .then(r=>r.json()).then(data=>{
+      availableCameras=data.cameras||[]; activeCameraIndex=data.active_index;
+      renderCameraList(); updateActiveLabel();
+    }).catch(()=>{ cameraList.innerHTML='<div class="camera-no-items">Failed to load cameras</div>'; });
+}
+
+function renderCameraList() {
+  if (!availableCameras.length) { cameraList.innerHTML='<div class="camera-no-items">No cameras detected</div>'; return; }
+  cameraList.innerHTML='';
+  availableCameras.forEach((cam,i)=>{
+    const btn=document.createElement('button'); btn.className='camera-option'+(i===activeCameraIndex?' active':'');
+    const dot=document.createElement('span'); dot.className='camera-option-dot';
+    btn.appendChild(dot); btn.appendChild(document.createTextNode(cam.name||`Camera ${i}`));
+    btn.addEventListener('click',()=>{ cameraDropdown.classList.remove('open'); switchCamera(i); });
+    cameraList.appendChild(btn);
+  });
+}
+
+function updateActiveLabel() {
+  if (activeCameraIndex!==null && availableCameras[activeCameraIndex]) {
+    activeCameraLabel.textContent = availableCameras[activeCameraIndex].name||`Camera ${activeCameraIndex}`;
+  }
+}
+
+function switchCamera(index) {
+  if (cameraSwitching||!ws||ws.readyState!==WebSocket.OPEN) return;
+  cameraSwitching=true;
+  ws.send(JSON.stringify({type:'switch_camera',camera_index:index}));
+}
+
+function onCameraSwitched(msg) {
+  activeCameraIndex=msg.camera_index;
+  cameraSwitching=false;
+  if (availableCameras[msg.camera_index]) {
+    activeCameraLabel.textContent=availableCameras[msg.camera_index].name||`Camera ${msg.camera_index}`;
+    document.getElementById('videoSourceTitle').textContent=`Live Camera — ${availableCameras[msg.camera_index].name||'Camera '+msg.camera_index}`;
+  }
+  renderCameraList();
+}
+
+function onCameraSwitchResult(msg) {
+  if (!msg.success) { console.error('Camera switch failed:', msg.error); cameraSwitching=false; }
+}
+
+// Load video file
+const loadVideoBtn  = document.getElementById('loadVideoBtn');
+const videoFileInput= document.getElementById('videoFileInput');
+loadVideoBtn.addEventListener('click',()=>videoFileInput.click());
+videoFileInput.addEventListener('change', e=>{
+  const file=e.target.files[0]; if(!file)return;
+  if (ws&&ws.readyState===WebSocket.OPEN) {
+    const reader=new FileReader();
+    reader.onload=ev=>{
+      const b64=ev.target.result.split(',')[1];
+      ws.send(JSON.stringify({type:'load_video',filename:file.name,data:b64}));
+    };
+    reader.readAsDataURL(file);
+  }
+  videoFileInput.value='';
+});
+
+function handleVideoEnded(sessionId) {
+  console.log('Video ended:', sessionId);
+  videoFeed.style.display='none'; noFeed.style.display='flex';
+  noFeed.innerHTML='<span class="no-feed-icon">✅</span>Video playback complete';
+}
+
+// ═══════════════════════════════════════════════════════
+//  NVIDIA AI INFERENCE
+// ═══════════════════════════════════════════════════════
+let nvGenerating = false;
+
+async function nvGenerate() {
+  if (nvGenerating) return;
+  nvGenerating = true;
+  const btn = document.getElementById('nvGenerateBtn');
+  btn.disabled = true; btn.textContent = 'Generating…';
+
+  try {
+    const resp = await fetch('/api/nvidia/generate', {
+      method:'POST', credentials:'same-origin',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({mode:'auto'})
+    });
+    if (!resp.ok) throw new Error('API error');
+    const data = await resp.json();
+    nvRenderReport(data);
+  } catch(err) {
+    // Show mock report if backend not available
+    nvRenderMock();
+  } finally {
+    nvGenerating=false; btn.disabled=false;
+    btn.innerHTML='<svg viewBox="0 0 24 24" style="width:11px;height:11px;fill:#fff"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>Generate Report';
+  }
+}
+
+function nvRenderReport(data) {
+  const chat = document.getElementById('nvChat');
+  document.getElementById('nvEmpty').style.display = 'none';
+  document.getElementById('nvStatRow').style.display = 'grid';
+  document.getElementById('nvViewFull').style.display = 'block';
+
+  const mode = data.mode === 'pre_open' ? 'Pre-Open Briefing' : 'End-of-Day Report';
+  document.getElementById('nvModePill').textContent = mode;
+  document.getElementById('nvSubtitle').textContent = data.date || 'Today';
+
+  if (data.hardware) {
+    document.getElementById('nvStatFrames').textContent = (data.hardware.ds_frames||'—').toLocaleString();
+    document.getElementById('nvStatConf').textContent   = data.hardware.ds_confidence ? data.hardware.ds_confidence+'%' : '—';
+    document.getElementById('nvStatGpu').textContent    = data.hardware.gpu_load ? data.hardware.gpu_load+'%' : '—';
+  }
+
+  chat.innerHTML='';
+  (data.messages||[]).forEach((msg,i) => {
+    const d=document.createElement('div'); d.className='nv-msg'; d.style.animationDelay=(i*0.05)+'s';
+    const av=document.createElement('div'); av.className='nv-avatar '+(msg.role==='system'?'sys':'ai');
+    if (msg.role==='system') av.textContent='SYS';
+    else av.innerHTML='<svg viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>';
+    const bubble=document.createElement('div'); bubble.className='nv-bubble '+(msg.type||'info');
+    bubble.innerHTML=msg.content;
+    d.appendChild(av); d.appendChild(bubble); chat.appendChild(d);
+  });
+}
+
+function nvRenderMock() {
+  const h = new Date().getHours();
+  const isPreOpen = h < 9;
+  const mode = isPreOpen ? 'Pre-Open Briefing' : 'End-of-Day Report';
+  document.getElementById('nvModePill').textContent = mode;
+  document.getElementById('nvStatRow').style.display = 'grid';
+  document.getElementById('nvEmpty').style.display   = 'none';
+  document.getElementById('nvViewFull').style.display= 'block';
+  document.getElementById('nvStatFrames').textContent = '86,400';
+  document.getElementById('nvStatConf').textContent   = '91.4%';
+  document.getElementById('nvStatGpu').textContent    = '12%';
+
+  const today = new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+  document.getElementById('nvSubtitle').textContent = today;
+
+  const msgs = isPreOpen ? [
+    {role:'system',type:'info',content:`Good morning. Pre-open briefing for <strong>${today}</strong> — generated at ${new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'})} EST.`},
+    {role:'ai',type:'warning',content:`<strong>Freshness alert:</strong> Maui Custard has been on display for 4d 18h. Remove before opening.`},
+    {role:'ai',type:'success',content:`Yesterday's top seller was <strong>Mango Tango (47 units)</strong>. Ensure sufficient stock is available.`},
+    {role:'ai',type:'info',content:`DeepStream pipeline processed <strong>86,400 frames overnight</strong> at 91.4% avg confidence. Vision system is healthy.`},
+  ] : [
+    {role:'system',type:'info',content:`End-of-day report for <strong>${today}</strong>. Inference complete.`},
+    {role:'ai',type:'success',content:`Total units moved today: <strong>197</strong>. Revenue est: <strong>$2,756</strong>. Peak hour: 13:00–14:00.`},
+    {role:'ai',type:'warning',content:`<strong>Low stock:</strong> Passion Fruit (4 units remaining). Auto-reorder triggered.`},
+    {role:'ai',type:'info',content:`DeepStream processed <strong>86,400 frames</strong> today, 91.4% confidence. Jetson Orin GPU load avg 12%.`},
+  ];
+
+  const chat = document.getElementById('nvChat');
+  chat.innerHTML='';
+  msgs.forEach((msg,i) => {
+    const d=document.createElement('div'); d.className='nv-msg'; d.style.animationDelay=(i*0.08)+'s';
+    const av=document.createElement('div'); av.className='nv-avatar '+(msg.role==='system'?'sys':'ai');
+    if (msg.role==='system') av.textContent='SYS';
+    else av.innerHTML='<svg viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>';
+    const bubble=document.createElement('div'); bubble.className='nv-bubble '+(msg.type||'info');
+    bubble.innerHTML=msg.content;
+    d.appendChild(av); d.appendChild(bubble); chat.appendChild(d);
+  });
+}
+
+// Load latest on startup (non-blocking)
+async function nvLoadLatest() {
+  try {
+    const resp = await fetch('/api/nvidia/insights', {credentials:'same-origin'});
+    if (!resp.ok) return;
+    const data = await resp.json();
+    if (data && data.messages && data.messages.length) nvRenderReport(data);
+  } catch {}
+}
+
+// ═══════════════════════════════════════════════════════
+//  LOGOUT
+// ═══════════════════════════════════════════════════════
+function handleLogout() {
+  fetch('/api/logout',{method:'POST',credentials:'same-origin'})
+    .finally(()=>{ window.location.href='/login'; });
+}
+
+// ═══════════════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════════════
+initLayout();
+connect();
+nvLoadLatest();
+fetchCameras(false);
+
+// Show drag hint on first visit
+if (!localStorage.getItem('veratori-drag-hint-seen')) {
+  setTimeout(() => {
+    showToast('💡 Drag panel headers to move · Drag edges to resize · Double-click header to maximize');
+    localStorage.setItem('veratori-drag-hint-seen', '1');
+  }, 1200);
+}
+</script>
+</body>
+</html>

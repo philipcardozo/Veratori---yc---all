@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Insights Preview — Veratori</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-base: #070b12;
+            --bg-primary: #0b1120;
+            --bg-card: #111827;
+            --bg-hover: rgba(255,255,255,0.04);
+            --border: rgba(255,255,255,0.06);
+            --border-light: rgba(255,255,255,0.08);
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --text-dim: #475569;
+            --accent: #10b981;
+            --accent-glow: rgba(16,185,129,0.15);
+            --accent-blue: #3b82f6;
+            --accent-amber: #f59e0b;
+            --accent-red: #ef4444;
+            --radius-sm: 6px;
+            --radius-md: 8px;
+            --radius-lg: 12px;
+            --radius-xl: 16px;
+            --ease: cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+            background: var(--bg-base);
+            color: var(--text-primary);
+            -webkit-font-smoothing: antialiased;
+            padding: 32px 24px;
+        }
+
+        /* ── top-bar mockup ── */
+        .top-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 24px;
+            border-bottom: 1px solid var(--border);
+            background: var(--bg-primary);
+            border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+            margin-bottom: 0;
+        }
+        .brand { display: flex; align-items: center; gap: 8px; font-size: 16px; font-weight: 700; }
+        .brand-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 8px rgba(16,185,129,0.5); }
+        .status-pill {
+            display: flex; align-items: center; gap: 6px;
+            background: var(--accent-glow); border: 1px solid rgba(16,185,129,0.2);
+            border-radius: 20px; padding: 5px 12px;
+            font-size: 12px; color: var(--accent); font-weight: 600;
+        }
+        .status-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); animation: pulse 2s infinite; }
+        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+
+        .page { background: var(--bg-primary); border-radius: 0 0 var(--radius-xl) var(--radius-xl); padding: 24px; max-width: 900px; margin: 0 auto; }
+
+        /* ── NVIDIA section ── */
+        .nvidia-section {
+            background: var(--bg-card);
+            border-radius: var(--radius-xl);
+            padding: 22px;
+            border: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .nvidia-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 18px;
+            padding-bottom: 14px;
+            border-bottom: 1px solid var(--border);
+        }
+        .nvidia-header-left { display: flex; align-items: center; gap: 10px; }
+
+        .nvidia-logo-badge {
+            display: flex; align-items: center; gap: 6px;
+            background: rgba(118,185,0,0.1);
+            border: 1px solid rgba(118,185,0,0.22);
+            border-radius: var(--radius-sm);
+            padding: 4px 10px;
+            font-size: 11px; font-weight: 700; color: #76b900;
+            letter-spacing: 0.5px; text-transform: uppercase;
+        }
+        .nv-dot { width: 7px; height: 7px; border-radius: 50%; background: #76b900; box-shadow: 0 0 7px rgba(118,185,0,0.7); }
+
+        .section-title { font-size: 15px; font-weight: 600; color: var(--text-primary); }
+
+        .nvidia-mode-tabs { display: flex; gap: 6px; }
+        .nvidia-tab {
+            background: none; border: 1px solid var(--border); color: var(--text-muted);
+            font-size: 12px; font-weight: 500; padding: 5px 13px;
+            border-radius: var(--radius-sm); cursor: pointer; font-family: 'Inter', sans-serif;
+        }
+        .nvidia-tab.active {
+            background: rgba(118,185,0,0.1); border-color: rgba(118,185,0,0.28); color: #76b900;
+        }
+
+        .nvidia-generate-btn {
+            display: flex; align-items: center; gap: 6px;
+            background: rgba(118,185,0,0.12); border: 1px solid rgba(118,185,0,0.28);
+            color: #76b900; font-size: 12px; font-weight: 600; padding: 7px 14px;
+            border-radius: var(--radius-md); cursor: pointer; font-family: 'Inter', sans-serif;
+        }
+        .nvidia-generate-btn svg { width: 13px; height: 13px; fill: currentColor; }
+
+        /* chat */
+        .nvidia-chat { display: flex; flex-direction: column; gap: 10px; }
+
+        .nvidia-msg { display: flex; gap: 10px; align-items: flex-start; }
+
+        .nvidia-msg-avatar {
+            width: 30px; height: 30px; border-radius: 50%; flex-shrink: 0;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 10px; font-weight: 700; margin-top: 2px;
+        }
+        .nvidia-msg-avatar.system {
+            background: rgba(59,130,246,0.15); color: var(--accent-blue);
+            border: 1px solid rgba(59,130,246,0.2);
+        }
+        .nvidia-msg-avatar.assistant {
+            background: rgba(118,185,0,0.15); color: #76b900;
+            border: 1px solid rgba(118,185,0,0.2);
+        }
+
+        .nvidia-msg-body {
+            flex: 1; background: var(--bg-primary); border-radius: var(--radius-md);
+            padding: 10px 14px; border: 1px solid var(--border);
+        }
+        .nvidia-msg-body.info    { border-left: 3px solid var(--accent-blue); }
+        .nvidia-msg-body.success { border-left: 3px solid var(--accent); }
+        .nvidia-msg-body.warning { border-left: 3px solid var(--accent-amber); }
+        .nvidia-msg-body.alert   { border-left: 3px solid var(--accent-red); }
+
+        .nvidia-msg-text { font-size: 13px; color: var(--text-primary); line-height: 1.58; }
+        .nvidia-msg-time { font-size: 10px; color: var(--text-dim); margin-top: 5px; font-family: monospace; }
+
+        /* meta bar */
+        .nvidia-meta {
+            margin-top: 16px; padding-top: 13px; border-top: 1px solid var(--border);
+            display: flex; align-items: center; justify-content: space-between;
+        }
+        .nvidia-meta-left { display: flex; align-items: center; gap: 18px; }
+        .nvidia-hw-badge { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--text-dim); }
+        .hw-dot { width: 6px; height: 6px; border-radius: 50%; }
+        .hw-dot.on  { background: var(--accent); box-shadow: 0 0 4px rgba(16,185,129,0.5); }
+        .hw-dot.off { background: var(--text-dim); }
+        .nvidia-generated-at { font-size: 11px; color: var(--text-dim); font-family: monospace; }
+
+        /* mode switcher label */
+        .mode-label {
+            display: inline-flex; align-items: center; gap: 6px;
+            background: rgba(118,185,0,0.08); border: 1px solid rgba(118,185,0,0.15);
+            border-radius: 20px; padding: 3px 10px;
+            font-size: 11px; font-weight: 600; color: #76b900; margin-bottom: 16px;
+        }
+
+        .divider {
+            font-size: 11px; color: var(--text-dim); text-align: center;
+            padding: 6px 0; letter-spacing: 0.5px;
+        }
+
+        /* tabs row */
+        .header-right { display: flex; align-items: center; gap: 10px; }
+    </style>
+</head>
+<body>
+
+<div style="max-width:900px;margin:0 auto;">
+
+    <!-- top bar -->
+    <div class="top-bar">
+        <div class="brand"><span class="brand-dot"></span>Veratori</div>
+        <div class="status-pill"><span class="status-dot"></span>Camera Active · Live</div>
+    </div>
+
+    <div class="page">
+
+        <!-- ══ EXAMPLE 1: PRE-OPEN BRIEFING ══ -->
+        <div class="mode-label">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="#76b900"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z"/></svg>
+            Mode: Pre-Open Briefing — 08:14 EST
+        </div>
+
+        <div class="nvidia-section" style="margin-bottom:32px;">
+            <div class="nvidia-header">
+                <div class="nvidia-header-left">
+                    <div class="nvidia-logo-badge"><span class="nv-dot"></span>NVIDIA DeepStream</div>
+                    <span class="section-title">AI Business Insights</span>
+                </div>
+                <div class="header-right">
+                    <div class="nvidia-mode-tabs">
+                        <button class="nvidia-tab active">Pre-Open</button>
+                        <button class="nvidia-tab">End of Day</button>
+                    </div>
+                    <button class="nvidia-generate-btn">
+                        <svg viewBox="0 0 24 24"><path d="M17.65 6.35A7.958 7.958 0 0 0 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08A5.99 5.99 0 0 1 12 18c-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
+                        Generate
+                    </button>
+                </div>
+            </div>
+
+            <div class="nvidia-chat">
+
+                <!-- system header -->
+                <div class="nvidia-msg">
+                    <div class="nvidia-msg-avatar system">SYS</div>
+                    <div class="nvidia-msg-body info">
+                        <div class="nvidia-msg-text">Good morning. Pre-open briefing for 2026-04-08 — generated at 08:14 EST.</div>
+                        <div class="nvidia-msg-time">08:14:02</div>
+                    </div>
+                </div>
+
+                <!-- freshness alert -->
+                <div class="nvidia-msg">
+                    <div class="nvidia-msg-avatar assistant">AI</div>
+                    <div class="nvidia-msg-body alert">
+                        <div class="nvidia-msg-text">Freshness alert: Maui Custard expires today. Remove from display before opening.</div>
+                        <div class="nvidia-msg-time">08:14:02</div>
+                    </div>
+                </div>
+
+                <!-- expiring soon -->
+                <div class="nvidia-msg">
+                    <div class="nvidia-msg-avatar assistant">AI</div>
+                    <div class="nvidia-msg-body warning">
+                        <div class="nvidia-msg-text">Freshness warning: Lemon Cake will expire within 24 hours. Prioritise selling these first today.</div>
+                        <div class="nvidia-msg-time">08:14:02</div>
+                    </div>
+                </div>
+
+                <!-- low stock from yesterday close -->
+                <div class="nvidia-msg">
+                    <div class="nvidia-msg-avatar assistant">AI</div>
+                    <div class="nvidia-msg-body warning">
+                        <div class="nvidia-msg-text">Yesterday closed with low inventory on: Passion Fruit, Watermelon. Restock these before opening.</div>
+                        <div class="nvidia-msg-time">08:14:03</div>
+                    </div>
+                </div>
+
+                <!-- ok stock -->
+                <div class="nvidia-msg">
+                    <div class="nvidia-msg-avatar assistant">AI</div>
+                    <div class="nvidia-msg-body success">
+                        <div class="nvidia-msg-text">Adequate closing stock for: Mango, Pineapple, Cantaloupe, Island Passion Fruit.</div>
+                        <div class="nvidia-msg-time">08:14:03</div>
+                    </div>
+                </div>
+
+                <!-- top seller -->
+                <div class="nvidia-msg">
+                    <div class="nvidia-msg-avatar assistant">AI</div>
+                    <div class="nvidia-msg-body success">
+                        <div class="nvidia-msg-text">Yesterday's top seller was Mango (47 units). Ensure sufficient stock is available.</div>
+                        <div class="nvidia-msg-time">08:14:03</div>
+                    </div>
+                </div>
+
+                <!-- deepstream pipeline -->
+                <div class="nvidia-msg">
+                    <div class="nvidia-msg-avatar system">SYS</div>
+                    <div class="nvidia-msg-body info">
+                        <div class="nvidia-msg-text">DeepStream pipeline processed 86,400 frames overnight (avg confidence 91.4%). Vision system is healthy.</div>
+                        <div class="nvidia-msg-time">08:14:03</div>
+                    </div>
+                </div>
+
+                <!-- jetson hw -->
+                <div class="nvidia-msg">
+                    <div class="nvidia-msg-avatar system">SYS</div>
+                    <div class="nvidia-msg-body info">
+                        <div class="nvidia-msg-text">Jetson Orin: GPU 12% · CPU 8% · Temp 38°C. All thermal margins nominal.</div>
+                        <div class="nvidia-msg-time">08:14:04</div>
+                    </div>
+                </div>
+
+                <!-- recommendation -->
+                <div class="nvidia-msg">
+                    <div class="nvidia-msg-avatar assistant">AI</div>
+                    <div class="nvidia-msg-body info">
+                        <div class="nvidia-msg-text">Franchise opens at 09:00. Complete restocking and freshness checks, then confirm camera feed is live.</div>
+                        <div class="nvidia-msg-time">08:14:04</div>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="nvidia-meta">
+                <div class="nvidia-meta-left">
+                    <div class="nvidia-hw-badge"><span class="hw-dot on"></span>DeepStream</div>
+                    <div class="nvidia-hw-badge"><span class="hw-dot on"></span>GPU Compute</div>
+                    <div class="nvidia-hw-badge"><span class="hw-dot on"></span>Jetson Stats</div>
+                </div>
+                <span class="nvidia-generated-at">Generated 4/8/26, 8:14 AM</span>
+            </div>
+        </div>
+
+        <!-- ══ EXAMPLE 2: END-OF-DAY REPORT ══ -->
+        <div class="mode-label" style="background:rgba(59,130,246,0.08);border-color:rgba(59,130,246,0.15);color:var(--accent-blue);">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="#3b82f6"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 3c1.93 0 3.5 1.57 3.5 3.5S13.93 13 12 13s-3.5-1.57-3.5-3.5S10.07 6 12 6zm7 13H5v-.23c0-.62.28-1.2.76-1.58C7.47 15.82 9.64 15 12 15s4.53.82 6.24 2.19c.48.38.76.97.76 1.58V19z"/></svg>
+            Mode: End-of-Day Report — 21:55 EST
+        </div>
+
+        <div class="nvidia-section">
+            <div class="nvidia-header">
+                <div class="nvidia-header-left">
+                    <div class="nvidia-logo-badge"><span class="nv-dot"></span>NVIDIA DeepStream</div>
+                    <span class="section-title">AI Business Insights</span>
+                </div>
+                <div class="header-right">
+                    <div class="nvidia-mode-tabs">
+                        <button class="nvidia-tab">Pre-Open</button>
+                        <button class="nvidia-tab active">End of Day</button>
+                    </div>
+                    <button class="nvidia-generate-btn">
+                        <svg viewBox="0 0 24 24"><path d="M17.65 6.35A7.958 7.958 0 0 0 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08A5.99 5.99 0 0 1 12 18c-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
+                        Generate
+                    </button>
+                </div>
+            </div>
+
+            <div class="nvidia-chat">
+
+                <div class="nvidia-msg">
+                    <div class="nvidia-msg-avatar system">SYS</div>
+                    <div class="nvidia-msg-body info">
+                        <div class="nvidia-msg-text">End-of-day business intelligence report for 2026-04-08 — generated at 21:55 EST.</div>
+                        <div class="nvidia-msg-time">21:55:01</div>
+                    </div>
+                </div>
+
+                <div class="nvidia-msg">
+                    <div class="nvidia-msg-avatar assistant">AI</div>
+                    <div class="nvidia-msg-body success">
+                        <div class="nvidia-msg-text">Today's total units moved: 183. Top performer: Mango (52 units).</div>
+                        <div class="nvidia-msg-time">21:55:01</div>
+                    </div>
+                </div>
+
+                <div class="nvidia-msg">
+                    <div class="nvidia-msg-avatar assistant">AI</div>
+                    <div class="nvidia-msg-body warning">
+                        <div class="nvidia-msg-text">Slow movers today: Lemon Cake, Maui Custard. Consider promotional placement or earlier restocking.</div>
+                        <div class="nvidia-msg-time">21:55:01</div>
+                    </div>
+                </div>
+
+                <div class="nvidia-msg">
+                    <div class="nvidia-msg-avatar assistant">AI</div>
+                    <div class="nvidia-msg-body info">
+                        <div class="nvidia-msg-text">Peak sales hour: 12:00–13:00 (38 units). Ensure full staffing during this window tomorrow.</div>
+                        <div class="nvidia-msg-time">21:55:02</div>
+                    </div>
+                </div>
+
+                <div class="nvidia-msg">
+                    <div class="nvidia-msg-avatar assistant">AI</div>
+                    <div class="nvidia-msg-body warning">
+                        <div class="nvidia-msg-text">High-velocity items today — prioritise for tomorrow's restock: Mango (5.8 u/hr, fast), Pineapple (4.1 u/hr, fast).</div>
+                        <div class="nvidia-msg-time">21:55:02</div>
+                    </div>
+                </div>
+
+                <div class="nvidia-msg">
+                    <div class="nvidia-msg-avatar assistant">AI</div>
+                    <div class="nvidia-msg-body alert">
+                        <div class="nvidia-msg-text">Critical low stock at close: Passion Fruit, Watermelon. Restock before tomorrow's opening.</div>
+                        <div class="nvidia-msg-time">21:55:02</div>
+                    </div>
+                </div>
+
+                <div class="nvidia-msg">
+                    <div class="nvidia-msg-avatar assistant">AI</div>
+                    <div class="nvidia-msg-body warning">
+                        <div class="nvidia-msg-text">3 low-stock alerts fired today. Review restock submissions.</div>
+                        <div class="nvidia-msg-time">21:55:03</div>
+                    </div>
+                </div>
+
+                <div class="nvidia-msg">
+                    <div class="nvidia-msg-avatar assistant">AI</div>
+                    <div class="nvidia-msg-body info">
+                        <div class="nvidia-msg-text">Cumulative analytics data: $4,821.60 revenue across 1,204 units from uploaded reports. Top revenue product: Mango.</div>
+                        <div class="nvidia-msg-time">21:55:03</div>
+                    </div>
+                </div>
+
+                <div class="nvidia-msg">
+                    <div class="nvidia-msg-avatar system">SYS</div>
+                    <div class="nvidia-msg-body info">
+                        <div class="nvidia-msg-text">NVIDIA DeepStream processed 46,800 frames today (avg detection confidence 93.2%). GPU compute: CuPy/CUDA.</div>
+                        <div class="nvidia-msg-time">21:55:03</div>
+                    </div>
+                </div>
+
+                <div class="nvidia-msg">
+                    <div class="nvidia-msg-avatar system">SYS</div>
+                    <div class="nvidia-msg-body info">
+                        <div class="nvidia-msg-text">Jetson Orin: GPU 34% · CPU 21% · Temp 51°C. All thermal margins nominal.</div>
+                        <div class="nvidia-msg-time">21:55:04</div>
+                    </div>
+                </div>
+
+                <div class="nvidia-msg">
+                    <div class="nvidia-msg-avatar assistant">AI</div>
+                    <div class="nvidia-msg-body info">
+                        <div class="nvidia-msg-text">End-of-day complete. Run restock review, check freshness labels, and confirm all camera feeds are secured for the night.</div>
+                        <div class="nvidia-msg-time">21:55:04</div>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="nvidia-meta">
+                <div class="nvidia-meta-left">
+                    <div class="nvidia-hw-badge"><span class="hw-dot on"></span>DeepStream</div>
+                    <div class="nvidia-hw-badge"><span class="hw-dot on"></span>GPU Compute</div>
+                    <div class="nvidia-hw-badge"><span class="hw-dot on"></span>Jetson Stats</div>
+                </div>
+                <span class="nvidia-generated-at">Generated 4/8/26, 9:55 PM</span>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,1202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Veratori — Franchise Intelligence</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:        #060a11;
+      --surface:   #0c1420;
+      --card:      #101c2e;
+      --card-alt:  #0e1828;
+      --border:    rgba(255,255,255,0.055);
+      --border-md: rgba(255,255,255,0.085);
+      --text-1:    #e2e8f0;
+      --text-2:    #8899aa;
+      --text-3:    #556070;
+      --text-4:    #3d4f60;
+      --green:     #10b981;
+      --green-s:   rgba(16,185,129,0.08);
+      --green-b:   rgba(16,185,129,0.15);
+      --amber:     #d97706;
+      --amber-s:   rgba(217,119,6,0.08);
+      --red:       #dc2626;
+      --red-s:     rgba(220,38,38,0.08);
+      --blue:      #3b82f6;
+      --blue-s:    rgba(59,130,246,0.08);
+      --nv:        #5d9200;
+      --nv-s:      rgba(93,146,0,0.08);
+      --sidebar-w: 256px;
+      --topbar-h:  52px;
+      --ease:      cubic-bezier(0.4,0,0.2,1);
+      --r:         8px;
+    }
+
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { height: 100%; overflow: hidden; }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text-1);
+      -webkit-font-smoothing: antialiased;
+      font-size: 13px;
+    }
+
+    /* ─── Topbar ─── */
+    .topbar {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 300;
+      height: var(--topbar-h);
+      background: rgba(6,10,17,0.95);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center;
+      padding: 0 20px; gap: 0;
+    }
+    .topbar-brand {
+      display: flex; align-items: center; gap: 9px;
+      text-decoration: none; width: var(--sidebar-w);
+      flex-shrink: 0; padding-right: 16px;
+    }
+    .brand-mark {
+      width: 28px; height: 28px; border-radius: 6px;
+      background: var(--nv); display: flex; align-items: center; justify-content: center;
+    }
+    .brand-mark svg { width: 14px; height: 14px; fill: #fff; }
+    .brand-name { font-size: 14px; font-weight: 700; color: var(--text-1); letter-spacing: -.3px; }
+    .brand-tier {
+      font-size: 9px; font-weight: 600; letter-spacing: .6px; text-transform: uppercase;
+      color: var(--text-3); margin-left: 2px;
+    }
+    .topbar-nav {
+      flex: 1; display: flex; align-items: center; gap: 1px;
+    }
+    .nav-a {
+      padding: 5px 11px; border-radius: 6px;
+      font-size: 12.5px; font-weight: 500; color: var(--text-3);
+      text-decoration: none; transition: color .14s var(--ease), background .14s var(--ease);
+      white-space: nowrap;
+    }
+    .nav-a:hover { color: var(--text-2); background: rgba(255,255,255,0.04); }
+    .nav-a.active { color: var(--text-1); font-weight: 600; background: rgba(255,255,255,0.06); }
+    .topbar-right {
+      display: flex; align-items: center; gap: 12px;
+    }
+    .network-status {
+      display: flex; align-items: center; gap: 7px;
+      font-size: 12px; color: var(--text-2);
+    }
+    .ns-dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--green); flex-shrink: 0;
+      box-shadow: 0 0 0 2px rgba(16,185,129,.2);
+      animation: blink 2.4s ease infinite;
+    }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.4} }
+    .topbar-divider { width: 1px; height: 18px; background: var(--border); }
+    .topbar-action {
+      font-size: 12px; font-weight: 500; color: var(--text-3);
+      background: none; border: none; cursor: pointer;
+      font-family: inherit; padding: 4px 8px; border-radius: 5px;
+      transition: color .14s var(--ease);
+      text-decoration: none;
+    }
+    .topbar-action:hover { color: var(--text-2); background: rgba(255,255,255,0.04); }
+    .topbar-action.danger:hover { color: var(--red); }
+
+    /* ─── Shell ─── */
+    .shell {
+      display: flex;
+      height: 100vh;
+      padding-top: var(--topbar-h);
+    }
+
+    /* ─── Sidebar ─── */
+    .sidebar {
+      width: var(--sidebar-w); flex-shrink: 0;
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      display: flex; flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* New conversation */
+    .sidebar-new {
+      padding: 14px 14px 12px;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .new-conv-btn {
+      width: 100%; display: flex; align-items: center; gap: 8px;
+      padding: 8px 12px; border-radius: var(--r);
+      background: rgba(255,255,255,0.05); border: 1px solid var(--border-md);
+      color: var(--text-2); font-size: 12.5px; font-weight: 500;
+      cursor: pointer; font-family: inherit;
+      transition: all .15s var(--ease);
+      text-align: left;
+    }
+    .new-conv-btn:hover { background: rgba(255,255,255,0.08); color: var(--text-1); border-color: rgba(255,255,255,0.13); }
+    .new-conv-btn svg { width: 14px; height: 14px; fill: currentColor; flex-shrink: 0; opacity: .7; }
+    .new-conv-shortcut {
+      margin-left: auto; font-size: 10px; color: var(--text-4);
+      background: rgba(255,255,255,0.05); border: 1px solid var(--border);
+      border-radius: 4px; padding: 1px 5px; font-family: inherit;
+    }
+
+    /* Search */
+    .sidebar-search {
+      padding: 10px 14px 0;
+    }
+    .search-input-wrap {
+      position: relative;
+    }
+    .search-input-wrap svg {
+      position: absolute; left: 9px; top: 50%; transform: translateY(-50%);
+      width: 13px; height: 13px; fill: var(--text-4); pointer-events: none;
+    }
+    .search-input {
+      width: 100%; padding: 6px 10px 6px 30px;
+      background: rgba(255,255,255,0.03); border: 1px solid var(--border);
+      border-radius: 6px; color: var(--text-2); font-size: 12px;
+      font-family: inherit; outline: none; transition: border-color .14s var(--ease);
+    }
+    .search-input::placeholder { color: var(--text-4); }
+    .search-input:focus { border-color: rgba(255,255,255,0.14); }
+
+    /* Sidebar body */
+    .sidebar-body { flex: 1; overflow-y: auto; padding: 10px 8px 12px; }
+    .sidebar-body::-webkit-scrollbar { width: 3px; }
+    .sidebar-body::-webkit-scrollbar-thumb { background: var(--border-md); border-radius: 3px; }
+
+    .sidebar-label {
+      font-size: 10px; font-weight: 600; color: var(--text-4);
+      letter-spacing: .7px; text-transform: uppercase;
+      padding: 10px 8px 5px;
+    }
+
+    /* Franchise item */
+    .fi {
+      display: flex; align-items: center; gap: 10px;
+      padding: 8px 9px; border-radius: var(--r);
+      cursor: pointer; transition: background .14s var(--ease);
+      border: 1px solid transparent; margin-bottom: 1px;
+    }
+    .fi:hover { background: rgba(255,255,255,0.04); }
+    .fi.active { background: rgba(255,255,255,0.06); border-color: var(--border); }
+
+    .fi-indicator {
+      width: 3px; height: 32px; border-radius: 2px; flex-shrink: 0;
+    }
+    .fi-indicator.live  { background: var(--green); }
+    .fi-indicator.warn  { background: var(--amber); }
+    .fi-indicator.alert { background: var(--red); }
+
+    .fi-body { flex: 1; min-width: 0; }
+    .fi-name {
+      font-size: 12.5px; font-weight: 600; color: var(--text-1);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      line-height: 1.2;
+    }
+    .fi-sub { font-size: 10.5px; color: var(--text-3); margin-top: 2px; }
+
+    .fi-right { text-align: right; flex-shrink: 0; }
+    .fi-rev { font-size: 12px; font-weight: 600; color: var(--text-1); }
+    .fi-flag {
+      font-size: 10px; font-weight: 500; margin-top: 2px;
+    }
+    .fi-flag.warn  { color: var(--amber); }
+    .fi-flag.alert { color: var(--red); }
+    .fi-flag.ok    { color: var(--text-4); }
+
+    .sidebar-sep { height: 1px; background: var(--border); margin: 10px 8px; }
+
+    /* VERA history items */
+    .hi {
+      display: flex; align-items: flex-start; gap: 9px;
+      padding: 7px 9px; border-radius: var(--r);
+      cursor: pointer; transition: background .14s var(--ease); margin-bottom: 1px;
+    }
+    .hi:hover { background: rgba(255,255,255,0.04); }
+    .hi-icon {
+      width: 20px; height: 20px; border-radius: 5px;
+      background: rgba(255,255,255,0.06); border: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px;
+    }
+    .hi-icon svg { width: 10px; height: 10px; fill: var(--text-3); }
+    .hi-text { flex: 1; min-width: 0; }
+    .hi-title { font-size: 12px; font-weight: 500; color: var(--text-2); line-height: 1.3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .hi-sub { font-size: 10.5px; color: var(--text-4); margin-top: 2px; }
+
+    /* Sidebar footer */
+    .sidebar-foot {
+      padding: 12px 14px;
+      border-top: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .sf-row { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 2px; }
+    .sf-label { font-size: 10px; color: var(--text-4); font-weight: 500; text-transform: uppercase; letter-spacing: .5px; }
+    .sf-val { font-size: 14px; font-weight: 700; color: var(--text-1); }
+    .sf-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 10px; }
+    .sf-cell {
+      background: rgba(255,255,255,0.03); border: 1px solid var(--border);
+      border-radius: 6px; padding: 6px 8px;
+    }
+    .sf-cell-val { font-size: 13px; font-weight: 700; color: var(--text-1); }
+    .sf-cell-lbl { font-size: 9.5px; color: var(--text-4); margin-top: 1px; text-transform: uppercase; letter-spacing: .4px; }
+
+    /* ─── Main ─── */
+    .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; background: var(--bg); }
+
+    /* ══ VERA VIEW ══ */
+    .vera-view { display: flex; flex-direction: column; height: 100%; }
+    .vera-view.hidden { display: none; }
+
+    .vera-topbar {
+      padding: 16px 28px 14px;
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; gap: 16px; flex-shrink: 0;
+    }
+    .vera-title-block h2 {
+      font-size: 15px; font-weight: 700; color: var(--text-1); letter-spacing: -.2px;
+    }
+    .vera-title-block p { font-size: 12px; color: var(--text-3); margin-top: 2px; }
+    .vera-meta {
+      margin-left: auto; display: flex; align-items: center; gap: 8px;
+    }
+    .vera-meta-chip {
+      font-size: 10.5px; font-weight: 500; color: var(--text-3);
+      padding: 3px 8px; border-radius: 20px;
+      border: 1px solid var(--border); background: rgba(255,255,255,0.03);
+    }
+    .vera-meta-chip.live { color: var(--green); border-color: rgba(16,185,129,.2); background: var(--green-s); }
+
+    .vera-body { flex: 1; overflow-y: auto; padding: 0; display: flex; flex-direction: column; }
+    .vera-body::-webkit-scrollbar { width: 4px; }
+    .vera-body::-webkit-scrollbar-thumb { background: var(--border-md); border-radius: 4px; }
+
+    /* Welcome */
+    .vera-welcome {
+      flex: 1; display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      padding: 48px 32px; text-align: center;
+      animation: fadeUp .35s var(--ease) both;
+    }
+    @keyframes fadeUp { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
+
+    .vera-welcome-logo {
+      width: 48px; height: 48px; border-radius: 12px;
+      background: var(--nv); display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 20px;
+    }
+    .vera-welcome-logo svg { width: 24px; height: 24px; fill: #fff; }
+
+    .vera-welcome h1 {
+      font-size: 22px; font-weight: 700; color: var(--text-1);
+      letter-spacing: -.5px; margin-bottom: 8px;
+    }
+    .vera-welcome p {
+      font-size: 13px; color: var(--text-3); max-width: 420px;
+      line-height: 1.65; margin-bottom: 32px;
+    }
+
+    .vera-prompts {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+      width: 100%; max-width: 540px;
+    }
+    .vera-prompt {
+      padding: 12px 14px; border-radius: var(--r);
+      background: var(--card); border: 1px solid var(--border-md);
+      cursor: pointer; text-align: left; font-family: inherit;
+      transition: all .15s var(--ease);
+    }
+    .vera-prompt:hover { border-color: rgba(255,255,255,0.13); background: var(--card-alt); }
+    .vera-prompt-q { font-size: 12.5px; font-weight: 600; color: var(--text-1); line-height: 1.4; }
+    .vera-prompt-sub { font-size: 11px; color: var(--text-3); margin-top: 3px; }
+
+    /* Chat messages */
+    .chat-thread { padding: 20px 28px; display: flex; flex-direction: column; gap: 16px; }
+    .chat-msg { display: flex; gap: 12px; align-items: flex-start; animation: fadeUp .25s var(--ease) both; }
+    .chat-msg.user { flex-direction: row-reverse; }
+
+    .chat-avatar {
+      width: 28px; height: 28px; border-radius: 7px; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 10px; font-weight: 700;
+    }
+    .chat-avatar.vera { background: var(--nv); }
+    .chat-avatar.vera svg { width: 14px; height: 14px; fill: #fff; }
+    .chat-avatar.user { background: rgba(255,255,255,0.07); border: 1px solid var(--border-md); color: var(--text-3); }
+
+    .chat-bubble {
+      max-width: 600px; padding: 11px 14px; border-radius: 10px;
+      font-size: 13px; line-height: 1.65; color: var(--text-1);
+    }
+    .chat-bubble.vera {
+      background: var(--card); border: 1px solid var(--border-md);
+      border-top-left-radius: 3px;
+    }
+    .chat-bubble.user {
+      background: rgba(255,255,255,0.07); border: 1px solid var(--border-md);
+      color: var(--text-1); border-top-right-radius: 3px;
+    }
+    .chat-bubble strong { font-weight: 600; }
+    .chat-bubble .data-row {
+      display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; margin-top: 12px;
+    }
+    .data-cell {
+      background: rgba(255,255,255,0.04); border: 1px solid var(--border);
+      border-radius: 6px; padding: 8px 10px;
+    }
+    .data-cell-val { font-size: 15px; font-weight: 700; color: var(--text-1); }
+    .data-cell-lbl { font-size: 9.5px; color: var(--text-4); margin-top: 2px; text-transform: uppercase; letter-spacing: .4px; }
+    .chat-ts { font-size: 10px; color: var(--text-4); margin-top: 5px; }
+
+    .typing-row { display: flex; gap: 12px; align-items: center; }
+    .typing-dots {
+      padding: 11px 14px; background: var(--card); border: 1px solid var(--border-md);
+      border-radius: 10px; border-top-left-radius: 3px;
+      display: flex; gap: 4px; align-items: center;
+    }
+    .typing-dots span {
+      width: 5px; height: 5px; border-radius: 50%; background: var(--text-3);
+      animation: typeBlink 1.2s ease infinite;
+    }
+    .typing-dots span:nth-child(2) { animation-delay: .18s; }
+    .typing-dots span:nth-child(3) { animation-delay: .36s; }
+    @keyframes typeBlink { 0%,60%,100%{opacity:.25;transform:translateY(0)} 30%{opacity:1;transform:translateY(-3px)} }
+
+    /* Input */
+    .vera-input-zone {
+      padding: 14px 28px 18px;
+      border-top: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .vera-input-box {
+      display: flex; align-items: flex-end; gap: 8px;
+      background: var(--card); border: 1px solid var(--border-md);
+      border-radius: 10px; padding: 8px 8px 8px 14px;
+      transition: border-color .14s var(--ease);
+    }
+    .vera-input-box:focus-within { border-color: rgba(255,255,255,0.15); }
+    .vera-textarea {
+      flex: 1; background: none; border: none; outline: none;
+      color: var(--text-1); font-family: inherit; font-size: 13px;
+      resize: none; max-height: 120px; line-height: 1.55; padding: 3px 0;
+    }
+    .vera-textarea::placeholder { color: var(--text-4); }
+    .vera-send {
+      width: 32px; height: 32px; border-radius: 7px; flex-shrink: 0;
+      background: var(--nv); border: none; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: opacity .14s var(--ease);
+    }
+    .vera-send:hover { opacity: .85; }
+    .vera-send:disabled { opacity: .3; cursor: not-allowed; }
+    .vera-send svg { width: 14px; height: 14px; fill: #fff; }
+    .input-hint { font-size: 10.5px; color: var(--text-4); margin-top: 8px; text-align: center; }
+    .input-hint kbd {
+      font-size: 9.5px; background: rgba(255,255,255,0.05);
+      border: 1px solid var(--border); border-radius: 3px; padding: 1px 4px; font-family: inherit;
+    }
+
+    /* ══ FRANCHISE VIEW ══ */
+    .fran-view { display: flex; flex-direction: column; height: 100%; overflow: hidden; }
+    .fran-view.hidden { display: none; }
+
+    .fran-topbar {
+      padding: 14px 28px; border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; gap: 12px; flex-shrink: 0;
+    }
+    .fran-topbar-left { flex: 1; min-width: 0; }
+    .fran-topbar-left h2 {
+      font-size: 15px; font-weight: 700; color: var(--text-1); letter-spacing: -.2px;
+    }
+    .fran-topbar-left p { font-size: 11.5px; color: var(--text-3); margin-top: 2px; }
+    .fran-topbar-status {
+      display: flex; align-items: center; gap: 6px;
+      font-size: 11.5px; color: var(--text-2);
+    }
+    .fran-status-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+    .fran-status-dot.live  { background: var(--green); box-shadow: 0 0 0 2px rgba(16,185,129,.18); animation: blink 2.4s infinite; }
+    .fran-status-dot.warn  { background: var(--amber); }
+    .fran-status-dot.alert { background: var(--red); }
+    .fran-topbar-actions { display: flex; gap: 6px; }
+    .fran-btn {
+      display: flex; align-items: center; gap: 5px;
+      padding: 6px 12px; border-radius: 6px;
+      font-size: 12px; font-weight: 500; cursor: pointer;
+      font-family: inherit; transition: all .14s var(--ease);
+      border: 1px solid var(--border); background: none; color: var(--text-2);
+      text-decoration: none; white-space: nowrap;
+    }
+    .fran-btn:hover { background: rgba(255,255,255,0.05); color: var(--text-1); border-color: var(--border-md); }
+    .fran-btn svg { width: 13px; height: 13px; fill: currentColor; }
+    .fran-btn.primary { background: var(--nv-s); border-color: rgba(93,146,0,.25); color: var(--nv); }
+    .fran-btn.primary:hover { background: var(--nv); color: #fff; border-color: var(--nv); }
+
+    .fran-body { flex: 1; overflow-y: auto; padding: 24px 28px; display: flex; flex-direction: column; gap: 20px; }
+    .fran-body::-webkit-scrollbar { width: 4px; }
+    .fran-body::-webkit-scrollbar-thumb { background: var(--border-md); border-radius: 4px; }
+
+    /* KPI strip */
+    .kpi-strip { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; }
+    .kpi-card {
+      background: var(--card); border: 1px solid var(--border-md);
+      border-radius: 10px; padding: 16px 18px;
+      transition: border-color .15s var(--ease);
+    }
+    .kpi-card:hover { border-color: rgba(255,255,255,0.12); }
+    .kpi-label {
+      font-size: 10px; font-weight: 600; color: var(--text-3);
+      text-transform: uppercase; letter-spacing: .6px; margin-bottom: 10px;
+    }
+    .kpi-value { font-size: 24px; font-weight: 700; color: var(--text-1); letter-spacing: -.6px; line-height: 1; }
+    .kpi-delta { font-size: 11px; margin-top: 5px; font-weight: 500; }
+    .kpi-delta.pos { color: var(--green); }
+    .kpi-delta.neg { color: var(--red); }
+    .kpi-delta.neu { color: var(--text-3); }
+
+    /* VERA insight card */
+    .vera-insight {
+      background: var(--card); border: 1px solid var(--border-md);
+      border-left: 3px solid var(--nv); border-radius: 10px; padding: 16px 18px;
+    }
+    .vera-insight-head {
+      display: flex; align-items: center; gap: 10px; margin-bottom: 10px;
+    }
+    .vera-insight-logo {
+      width: 24px; height: 24px; border-radius: 6px;
+      background: var(--nv); display: flex; align-items: center; justify-content: center;
+    }
+    .vera-insight-logo svg { width: 12px; height: 12px; fill: #fff; }
+    .vera-insight-title { font-size: 12px; font-weight: 600; color: var(--text-2); }
+    .vera-insight-time { font-size: 10.5px; color: var(--text-4); margin-left: auto; }
+    .vera-insight-body { font-size: 13px; color: var(--text-2); line-height: 1.68; }
+    .vera-insight-body strong { color: var(--text-1); font-weight: 600; }
+    .vera-insight-link {
+      display: inline-block; margin-top: 10px;
+      font-size: 12px; font-weight: 500; color: var(--nv); text-decoration: none;
+    }
+    .vera-insight-link:hover { text-decoration: underline; }
+
+    /* 2-col grid */
+    .fran-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+    .section-panel {
+      background: var(--card); border: 1px solid var(--border-md);
+      border-radius: 10px; padding: 16px 18px;
+    }
+    .section-head {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 12px; padding-bottom: 10px; border-bottom: 1px solid var(--border);
+    }
+    .section-head-title { font-size: 11.5px; font-weight: 600; color: var(--text-2); text-transform: uppercase; letter-spacing: .5px; }
+    .section-head-link { font-size: 11px; color: var(--text-3); text-decoration: none; transition: color .14s; }
+    .section-head-link:hover { color: var(--text-2); }
+
+    /* Alert items */
+    .alert-row {
+      display: flex; align-items: flex-start; gap: 10px;
+      padding: 9px 10px; border-radius: 7px; margin-bottom: 6px;
+      border: 1px solid transparent;
+    }
+    .alert-row:last-child { margin-bottom: 0; }
+    .alert-row.critical { background: var(--red-s); border-color: rgba(220,38,38,.18); }
+    .alert-row.warning  { background: var(--amber-s); border-color: rgba(217,119,6,.18); }
+    .alert-row.info     { background: var(--blue-s); border-color: rgba(59,130,246,.18); }
+    .alert-row-bar { width: 3px; height: 100%; min-height: 32px; border-radius: 2px; flex-shrink: 0; align-self: stretch; }
+    .alert-row.critical .alert-row-bar { background: var(--red); }
+    .alert-row.warning  .alert-row-bar { background: var(--amber); }
+    .alert-row.info     .alert-row-bar { background: var(--blue); }
+    .alert-row-body { flex: 1; }
+    .alert-row-text { font-size: 12.5px; color: var(--text-1); line-height: 1.45; }
+    .alert-row-time { font-size: 10.5px; color: var(--text-4); margin-top: 2px; }
+    .no-alerts { font-size: 12.5px; color: var(--text-4); text-align: center; padding: 20px 0; }
+
+    /* Activity */
+    .activity-row {
+      display: flex; align-items: flex-start; gap: 10px;
+      padding: 8px 0; border-bottom: 1px solid var(--border);
+    }
+    .activity-row:last-child { border-bottom: none; }
+    .act-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; margin-top: 5px; }
+    .act-dot.green { background: var(--green); }
+    .act-dot.amber { background: var(--amber); }
+    .act-dot.blue  { background: var(--blue); }
+    .act-dot.red   { background: var(--red); }
+    .act-dot.gray  { background: var(--text-4); }
+    .act-body { flex: 1; }
+    .act-text { font-size: 12.5px; color: var(--text-2); line-height: 1.45; }
+    .act-text strong { color: var(--text-1); font-weight: 600; }
+    .act-time { font-size: 10.5px; color: var(--text-4); margin-top: 2px; }
+
+    /* Products table */
+    .prod-row {
+      display: flex; align-items: center; gap: 10px;
+      padding: 8px 0; border-bottom: 1px solid var(--border);
+    }
+    .prod-row:last-child { border-bottom: none; }
+    .prod-rank { font-size: 10.5px; font-weight: 600; color: var(--text-4); width: 14px; flex-shrink: 0; }
+    .prod-name { flex: 1; font-size: 12.5px; font-weight: 500; color: var(--text-1); }
+    .prod-bar-track { width: 72px; height: 3px; background: rgba(255,255,255,0.06); border-radius: 3px; }
+    .prod-bar-fill  { height: 3px; background: var(--nv); border-radius: 3px; }
+    .prod-rev { font-size: 12px; font-weight: 600; color: var(--text-1); width: 52px; text-align: right; }
+    .prod-units { font-size: 10.5px; color: var(--text-3); width: 44px; text-align: right; }
+
+    /* Network row */
+    .net-row {
+      display: grid; grid-template-columns: repeat(5,1fr); gap: 8px;
+    }
+    .net-cell {
+      display: flex; flex-direction: column; align-items: center; gap: 5px;
+      padding: 10px 6px; border-radius: var(--r);
+      cursor: pointer; border: 1px solid transparent;
+      transition: all .14s var(--ease); text-decoration: none;
+    }
+    .net-cell:hover { background: rgba(255,255,255,0.04); border-color: var(--border-md); }
+    .net-cell.current { background: rgba(255,255,255,0.05); border-color: var(--border-md); }
+    .net-cell-init {
+      width: 32px; height: 32px; border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 11px; font-weight: 700; color: var(--text-2);
+      background: rgba(255,255,255,0.05); border: 1px solid var(--border);
+    }
+    .net-cell-name { font-size: 10px; font-weight: 500; color: var(--text-3); text-align: center; line-height: 1.25; }
+    .net-cell-rev  { font-size: 11px; font-weight: 700; color: var(--text-1); }
+    .net-cell-status { font-size: 9px; font-weight: 500; }
+    .net-cell-status.live  { color: var(--green); }
+    .net-cell-status.warn  { color: var(--amber); }
+  </style>
+</head>
+<body>
+
+<!-- ═══ TOPBAR ═══ -->
+<header class="topbar">
+  <a href="home.html" class="topbar-brand">
+    <div class="brand-mark">
+      <svg viewBox="0 0 24 24"><path d="M3 3h8v8H3zm10 0h8v8h-8zM3 13h8v8H3zm13 0a4 4 0 100 8 4 4 0 000-8z"/></svg>
+    </div>
+    <span class="brand-name">Veratori</span>
+    <span class="brand-tier">Enterprise</span>
+  </a>
+
+  <nav class="topbar-nav">
+    <a href="home.html" class="nav-a active">Hub</a>
+    <a href="index.html"       class="nav-a">Dashboard</a>
+    <a href="ai-analytics.html" class="nav-a">AI Insights</a>
+    <a href="analytics.html"   class="nav-a">Analytics</a>
+    <a href="upload.html"      class="nav-a">Upload</a>
+  </nav>
+
+  <div class="topbar-right">
+    <div class="network-status">
+      <div class="ns-dot"></div>
+      <span>5 locations active</span>
+    </div>
+    <div class="topbar-divider"></div>
+    <a href="account.html" class="topbar-action">Account</a>
+    <button class="topbar-action danger" onclick="handleLogout()">Sign out</button>
+  </div>
+</header>
+
+<!-- ═══ SHELL ═══ -->
+<div class="shell">
+
+  <!-- ─── Sidebar ─── -->
+  <aside class="sidebar">
+    <div class="sidebar-new">
+      <button class="new-conv-btn" onclick="showVera()">
+        <svg viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+        Ask VERA
+        <span class="new-conv-shortcut">⌘K</span>
+      </button>
+      <div class="sidebar-search" style="margin-top:8px;">
+        <div class="search-input-wrap">
+          <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.47 6.47 0 0016 9.5 6.5 6.5 0 109.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+          <input class="search-input" type="text" placeholder="Search locations…" oninput="filterFranchises(this.value)">
+        </div>
+      </div>
+    </div>
+
+    <div class="sidebar-body" id="sidebarBody">
+      <div class="sidebar-label">Locations</div>
+
+      <div class="fi active" onclick="showFranchise('canal')" id="fi-canal">
+        <div class="fi-indicator live"></div>
+        <div class="fi-body">
+          <div class="fi-name">Canal Street</div>
+          <div class="fi-sub">Manhattan · Flagship</div>
+        </div>
+        <div class="fi-right">
+          <div class="fi-rev">$8,240</div>
+          <div class="fi-flag warn">2 alerts</div>
+        </div>
+      </div>
+
+      <div class="fi" onclick="showFranchise('f43')" id="fi-f43">
+        <div class="fi-indicator live"></div>
+        <div class="fi-body">
+          <div class="fi-name">43rd Street</div>
+          <div class="fi-sub">Midtown</div>
+        </div>
+        <div class="fi-right">
+          <div class="fi-rev">$6,150</div>
+          <div class="fi-flag ok">No alerts</div>
+        </div>
+      </div>
+
+      <div class="fi" onclick="showFranchise('f44')" id="fi-f44">
+        <div class="fi-indicator warn"></div>
+        <div class="fi-body">
+          <div class="fi-name">44th Street</div>
+          <div class="fi-sub">Midtown East</div>
+        </div>
+        <div class="fi-right">
+          <div class="fi-rev">$4,890</div>
+          <div class="fi-flag warn">1 alert</div>
+        </div>
+      </div>
+
+      <div class="fi" onclick="showFranchise('f45')" id="fi-f45">
+        <div class="fi-indicator alert"></div>
+        <div class="fi-body">
+          <div class="fi-name">45th Street</div>
+          <div class="fi-sub">Hell's Kitchen</div>
+        </div>
+        <div class="fi-right">
+          <div class="fi-rev">$7,320</div>
+          <div class="fi-flag alert">3 alerts</div>
+        </div>
+      </div>
+
+      <div class="fi" onclick="showFranchise('f46')" id="fi-f46">
+        <div class="fi-indicator live"></div>
+        <div class="fi-body">
+          <div class="fi-name">46th Street</div>
+          <div class="fi-sub">Times Square</div>
+        </div>
+        <div class="fi-right">
+          <div class="fi-rev">$3,210</div>
+          <div class="fi-flag ok">No alerts</div>
+        </div>
+      </div>
+
+      <div class="sidebar-sep"></div>
+      <div class="sidebar-label">VERA — Recent</div>
+
+      <div class="hi" onclick="showVera('network')">
+        <div class="hi-icon">
+          <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/></svg>
+        </div>
+        <div class="hi-text">
+          <div class="hi-title">Network performance overview</div>
+          <div class="hi-sub">Today · 3 exchanges</div>
+        </div>
+      </div>
+
+      <div class="hi" onclick="showVera('restock')">
+        <div class="hi-icon">
+          <svg viewBox="0 0 24 24"><path d="M20 3H4v10c0 2.21 1.79 4 4 4h6c2.21 0 4-1.79 4-4v-3h2c1.11 0 2-.89 2-2V5c0-1.11-.89-2-2-2zm0 5h-2V5h2v3z"/></svg>
+        </div>
+        <div class="hi-text">
+          <div class="hi-title">Restock recommendations</div>
+          <div class="hi-sub">Yesterday · 7 exchanges</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sidebar-foot">
+      <div class="sf-row">
+        <span class="sf-label">Network revenue today</span>
+      </div>
+      <div class="sf-val">$29,810</div>
+      <div class="sf-grid">
+        <div class="sf-cell"><div class="sf-cell-val">694</div><div class="sf-cell-lbl">Units Sold</div></div>
+        <div class="sf-cell"><div class="sf-cell-val">5 / 5</div><div class="sf-cell-lbl">Online</div></div>
+        <div class="sf-cell"><div class="sf-cell-val">6</div><div class="sf-cell-lbl">Alerts</div></div>
+        <div class="sf-cell"><div class="sf-cell-val">91.4%</div><div class="sf-cell-lbl">DS Accuracy</div></div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ─── Main ─── -->
+  <main class="main">
+
+    <!-- ══ VERA VIEW ══ -->
+    <div class="vera-view hidden" id="veraView">
+      <div class="vera-topbar">
+        <div class="vera-title-block">
+          <h2>VERA — Veratori Enterprise Retail AI</h2>
+          <p>Real-time intelligence across all franchise locations</p>
+        </div>
+        <div class="vera-meta">
+          <span class="vera-meta-chip live">5 locations connected</span>
+          <span class="vera-meta-chip">DeepStream · Jetson Orin</span>
+          <span class="vera-meta-chip">VERA v2.1</span>
+        </div>
+      </div>
+
+      <div class="vera-body" id="veraBody">
+        <div class="vera-welcome" id="veraWelcome">
+          <div class="vera-welcome-logo">
+            <svg viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+          </div>
+          <h1>Good <span id="veraGreeting">morning</span>, Manager</h1>
+          <p>I have live access to all five franchise locations. Ask me about performance, inventory, alerts, sales trends, or any aspect of your business.</p>
+          <div class="vera-prompts">
+            <button class="vera-prompt" onclick="askVera('How is the network performing today compared to yesterday?')">
+              <div class="vera-prompt-q">Network performance summary</div>
+              <div class="vera-prompt-sub">Revenue, units, and trends across all 5 locations</div>
+            </button>
+            <button class="vera-prompt" onclick="askVera('Which location is performing best today and why?')">
+              <div class="vera-prompt-q">Top performing location</div>
+              <div class="vera-prompt-sub">Revenue ranking with analysis</div>
+            </button>
+            <button class="vera-prompt" onclick="askVera('What inventory needs to be restocked across all locations today?')">
+              <div class="vera-prompt-q">Restock requirements</div>
+              <div class="vera-prompt-sub">Critical and low-stock items by location</div>
+            </button>
+            <button class="vera-prompt" onclick="askVera('Give me a summary of all active alerts across every location.')">
+              <div class="vera-prompt-q">Active alerts — all locations</div>
+              <div class="vera-prompt-sub">Prioritized issues requiring attention</div>
+            </button>
+          </div>
+        </div>
+        <div class="chat-thread" id="chatThread" style="display:none"></div>
+      </div>
+
+      <div class="vera-input-zone">
+        <div class="vera-input-box">
+          <textarea class="vera-textarea" id="veraInput" rows="1"
+            placeholder="Ask VERA about your business…"
+            onkeydown="handleKey(event)" oninput="autoGrow(this)"></textarea>
+          <button class="vera-send" id="veraSendBtn" onclick="sendVera()">
+            <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+          </button>
+        </div>
+        <div class="input-hint">
+          <kbd>Enter</kbd> to send &nbsp;·&nbsp; <kbd>Shift+Enter</kbd> for new line &nbsp;·&nbsp; <kbd>⌘K</kbd> to focus
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ FRANCHISE VIEW ══ -->
+    <div class="fran-view" id="franView">
+      <!-- Rendered by JS -->
+    </div>
+
+  </main>
+</div>
+
+<script>
+// ── Data ──────────────────────────────────────────────────────────
+const FRANCHISES = {
+  canal: {
+    id:'canal', initials:'CS', status:'live',
+    name:'Canal Street', sub:'264 Canal St, Manhattan, NY 10013', role:'Flagship',
+    rev:'$8,240', revDelta:'+12%', revDir:'pos',
+    units:197,   unitDelta:'+18', unitDir:'pos',
+    customers:312, avgTicket:'$26.41',
+    alerts:[
+      {type:'critical', text:'Passion Fruit stock critically low — 4 units remaining', time:'08:31 EST'},
+      {type:'warning',  text:'Maui Custard freshness expires today. Remove from display before noon.', time:'08:14 EST'},
+    ],
+    activity:[
+      {dot:'green', text:'<strong>Pre-open briefing</strong> generated via NVIDIA DeepStream', time:'08:14'},
+      {dot:'blue',  text:'<strong>DeepStream pipeline</strong> active — 30fps, 91.4% confidence', time:'07:01'},
+      {dot:'red',   text:'<strong>Stock alert triggered</strong> — Passion Fruit below threshold', time:'Yesterday 21:44'},
+      {dot:'green', text:'<strong>Daily milestone</strong> — Mango led at 47 units sold', time:'Yesterday 21:47'},
+      {dot:'gray',  text:'<strong>End-of-day report</strong> completed — peak window 13:00–14:00', time:'Yesterday 21:47'},
+    ],
+    products:[
+      {name:'Mango Tango', units:47, rev:'$658', pct:100},
+      {name:'Strawberry Bliss', units:39, rev:'$546', pct:83},
+      {name:'Coconut Dream', units:31, rev:'$434', pct:66},
+      {name:'Passion Fruit', units:28, rev:'$392', pct:60},
+      {name:'Guava Breeze', units:24, rev:'$336', pct:51},
+    ],
+    vera:'Canal Street is the <strong>top-grossing location</strong> today at $8,240. NVIDIA DeepStream processed 86,400 frames overnight with 91.4% confidence. Immediate action required: Passion Fruit inventory will not last the day at current velocity.',
+  },
+  f43: {
+    id:'f43', initials:'43', status:'live',
+    name:'43rd Street', sub:'350 W 43rd St, Midtown, NY 10036', role:'Standard',
+    rev:'$6,150', revDelta:'+7%', revDir:'pos',
+    units:143, unitDelta:'+9', unitDir:'pos',
+    customers:234, avgTicket:'$26.28',
+    alerts:[],
+    activity:[
+      {dot:'green', text:'<strong>All systems nominal</strong> — no intervention required', time:'08:01'},
+      {dot:'blue',  text:'<strong>DeepStream pipeline</strong> active — 30fps', time:'07:00'},
+      {dot:'green', text:'<strong>Revenue milestone</strong> — crossed $6k at 16:30', time:'16:30'},
+      {dot:'gray',  text:'<strong>Inventory sync</strong> completed — 143 units confirmed', time:'Yesterday 22:00'},
+    ],
+    products:[
+      {name:'Strawberry Bliss', units:42, rev:'$588', pct:100},
+      {name:'Mango Tango',      units:36, rev:'$504', pct:86},
+      {name:'Lychee Rose',      units:29, rev:'$406', pct:69},
+      {name:'Coconut Dream',    units:21, rev:'$294', pct:50},
+      {name:'Watermelon Wave',  units:15, rev:'$210', pct:36},
+    ],
+    vera:'43rd Street is operating cleanly — no active alerts. Strawberry Bliss leads here today, outperforming the network average. Revenue is up 7% over the same period yesterday. This location consistently peaks during the midtown lunch window, 12:00–13:30.',
+  },
+  f44: {
+    id:'f44', initials:'44', status:'warn',
+    name:'44th Street', sub:'200 E 44th St, Midtown East, NY 10017', role:'Standard',
+    rev:'$4,890', revDelta:'−3%', revDir:'neg',
+    units:112, unitDelta:'−5', unitDir:'neg',
+    customers:198, avgTicket:'$24.70',
+    alerts:[
+      {type:'warning', text:'Revenue trending 8% below Monday average. Monitor through 15:00.', time:'13:45 EST'},
+    ],
+    activity:[
+      {dot:'amber', text:'<strong>Revenue alert</strong> — trending below weekly average', time:'13:45'},
+      {dot:'blue',  text:'<strong>DeepStream pipeline</strong> running normally', time:'07:00'},
+      {dot:'gray',  text:'<strong>Morning restock</strong> completed — 200 units loaded', time:'07:30'},
+    ],
+    products:[
+      {name:'Coconut Dream', units:33, rev:'$462', pct:100},
+      {name:'Mango Tango',   units:28, rev:'$392', pct:85},
+      {name:'Passion Fruit', units:22, rev:'$308', pct:67},
+      {name:'Lychee Rose',   units:17, rev:'$238', pct:52},
+      {name:'Strawberry Bliss', units:12, rev:'$168', pct:36},
+    ],
+    vera:'44th Street is having a softer day — revenue is down 3% versus yesterday. VERA attributes this partially to lower recorded foot traffic this morning. Consider activating a loyalty push notification to local customers in the Midtown East catchment area.',
+  },
+  f45: {
+    id:'f45', initials:'45', status:'alert',
+    name:'45th Street', sub:'519 W 45th St, Hell\'s Kitchen, NY 10036', role:'Standard',
+    rev:'$7,320', revDelta:'+21%', revDir:'pos',
+    units:168, unitDelta:'+34', unitDir:'pos',
+    customers:287, avgTicket:'$25.53',
+    alerts:[
+      {type:'critical', text:'Coconut Dream sold out — removed from display. Restock required immediately.', time:'14:22 EST'},
+      {type:'warning',  text:'Lychee Rose below 10 units — automated reorder triggered.', time:'15:01 EST'},
+      {type:'info',     text:'DeepStream is recording elevated foot traffic: 287 customers vs. 210 average.', time:'Ongoing'},
+    ],
+    activity:[
+      {dot:'red',   text:'<strong>Coconut Dream sold out</strong> — removed from menu board at 14:22', time:'14:22'},
+      {dot:'amber', text:'<strong>Lychee Rose alert</strong> — auto-reorder triggered', time:'15:01'},
+      {dot:'green', text:'<strong>Revenue record</strong> — best Tuesday performance in 3 months', time:'13:00'},
+      {dot:'blue',  text:'<strong>Elevated traffic detected</strong> — DeepStream logging above-average counts', time:'12:00'},
+    ],
+    products:[
+      {name:'Mango Tango',   units:56, rev:'$784', pct:100},
+      {name:'Passion Fruit', units:44, rev:'$616', pct:79},
+      {name:'Coconut Dream', units:38, rev:'$532', pct:68},
+      {name:'Strawberry Bliss', units:19, rev:'$266', pct:34},
+      {name:'Guava Breeze',  units:11, rev:'$154', pct:20},
+    ],
+    vera:'45th Street is the strongest growth story today at +21%, but stock depletion is becoming a constraint. Coconut Dream is already out. At current velocity, two more SKUs will reach zero before close. VERA recommends an emergency restock run before 16:00 to capture remaining revenue opportunity.',
+  },
+  f46: {
+    id:'f46', initials:'46', status:'live',
+    name:'46th Street', sub:'700 8th Ave, Times Square, NY 10036', role:'Standard',
+    rev:'$3,210', revDelta:'+2%', revDir:'pos',
+    units:74, unitDelta:'+3', unitDir:'pos',
+    customers:141, avgTicket:'$22.75',
+    alerts:[],
+    activity:[
+      {dot:'green', text:'<strong>All systems nominal</strong>', time:'08:01'},
+      {dot:'blue',  text:'<strong>Camera calibration</strong> updated overnight', time:'02:00'},
+      {dot:'gray',  text:'<strong>Inventory loaded</strong> — 180 units for the day', time:'07:30'},
+    ],
+    products:[
+      {name:'Guava Breeze',    units:24, rev:'$336', pct:100},
+      {name:'Watermelon Wave', units:20, rev:'$280', pct:83},
+      {name:'Mango Tango',     units:16, rev:'$224', pct:67},
+      {name:'Lychee Rose',     units:9,  rev:'$126', pct:38},
+      {name:'Strawberry Bliss',units:5,  rev:'$70',  pct:21},
+    ],
+    vera:'46th Street is the most consistent performer — low variability, no issues. Revenue is slightly up (+2%). Times Square foot traffic peaks after 20:00 due to theater crowds; this location has additional revenue potential in the evening window.',
+  },
+};
+
+const VERA_RESPONSES = {
+  'How is the network performing today compared to yesterday?': `Your network generated <strong>$29,810 today</strong>, up <strong style="color:var(--green)">8.2%</strong> from yesterday's $27,546.<div class="data-row"><div class="data-cell"><div class="data-cell-val">$29,810</div><div class="data-cell-lbl">Network Revenue</div></div><div class="data-cell"><div class="data-cell-val">694</div><div class="data-cell-lbl">Units Sold</div></div><div class="data-cell"><div class="data-cell-val" style="color:var(--amber)">6</div><div class="data-cell-lbl">Active Alerts</div></div></div><br>Canal Street leads at $8,240. 45th Street is the fastest mover (+21%), driven by elevated foot traffic detected via DeepStream. 44th Street is the only underperformer today, down 3% — worth monitoring this afternoon.`,
+
+  'Which location is performing best today and why?': `<strong>Canal Street</strong> leads the network at <strong>$8,240</strong>, driven by strong morning traffic and Mango Tango as the lead SKU at 47 units sold. NVIDIA DeepStream processed 86,400 frames overnight with 91.4% accuracy, and inventory levels were adequate for the day.<br><br>However, <strong>45th Street</strong> represents the most significant growth story today at +21%. DeepStream cameras recorded 287 customer entries versus the 210 average. The constraint there is inventory, not demand — two SKUs are already depleted.`,
+
+  'What inventory needs to be restocked across all locations today?': `Based on live DeepStream tracking across all five locations, the following require immediate action:<br><br><strong style="color:var(--red)">Critical</strong><br>· 45th Street — Coconut Dream: Sold out. Remove from display.<br>· Canal Street — Passion Fruit: 4 units remaining. Will not last the day.<br><br><strong style="color:var(--amber)">Low Stock</strong><br>· 45th Street — Lychee Rose: Under 10 units. Auto-reorder triggered.<br>· Canal Street — Maui Custard: Expiring today. Remove by noon.<br><br><strong>Recommended action:</strong> Dispatch a restock run to 45th Street and Canal Street with Coconut Dream and Passion Fruit as the priority SKUs.`,
+
+  'Give me a summary of all active alerts across every location.': `<strong>6 active alerts</strong> across the network as of now.<br><br><strong>Canal Street (2)</strong><br>· Passion Fruit critically low — 4 units<br>· Maui Custard expiring today<br><br><strong>44th Street (1)</strong><br>· Revenue trending 8% below weekly average<br><br><strong>45th Street (3)</strong><br>· Coconut Dream sold out<br>· Lychee Rose below threshold — auto-reorder triggered<br>· Elevated foot traffic — DeepStream logging 287 entries<br><br><strong>43rd Street, 46th Street:</strong> No active alerts.`,
+};
+
+// ── State ─────────────────────────────────────────────────────────
+let currentView = 'franchise';
+let veraTyping = false;
+
+// ── View switching ────────────────────────────────────────────────
+function showVera(context) {
+  currentView = 'vera';
+  document.getElementById('veraView').classList.remove('hidden');
+  document.getElementById('franView').classList.add('hidden');
+  document.querySelectorAll('.fi').forEach(el => el.classList.remove('active'));
+  updateGreeting();
+
+  if (context === 'network')  setTimeout(() => askVera('How is the network performing today compared to yesterday?'), 200);
+  if (context === 'restock')  setTimeout(() => askVera('What inventory needs to be restocked across all locations today?'), 200);
+  setTimeout(() => document.getElementById('veraInput').focus(), 60);
+}
+
+function showFranchise(id) {
+  currentView = id;
+  document.getElementById('veraView').classList.add('hidden');
+  document.getElementById('franView').classList.remove('hidden');
+  document.querySelectorAll('.fi').forEach(el => el.classList.remove('active'));
+  const fi = document.getElementById('fi-' + id);
+  if (fi) fi.classList.add('active');
+  renderFranchise(FRANCHISES[id]);
+}
+
+function renderFranchise(f) {
+  const alertsHtml = !f.alerts.length
+    ? '<div class="no-alerts">No active alerts</div>'
+    : f.alerts.map(a => `
+        <div class="alert-row ${a.type}">
+          <div class="alert-row-bar"></div>
+          <div class="alert-row-body">
+            <div class="alert-row-text">${a.text}</div>
+            <div class="alert-row-time">${a.time}</div>
+          </div>
+        </div>`).join('');
+
+  const activityHtml = f.activity.map(a => `
+    <div class="activity-row">
+      <div class="act-dot ${a.dot}" style="margin-top:6px"></div>
+      <div class="act-body">
+        <div class="act-text">${a.text}</div>
+        <div class="act-time">${a.time}</div>
+      </div>
+    </div>`).join('');
+
+  const productsHtml = f.products.map((p,i) => `
+    <div class="prod-row">
+      <div class="prod-rank">${i+1}</div>
+      <div class="prod-name">${p.name}</div>
+      <div class="prod-units">${p.units} units</div>
+      <div class="prod-bar-track"><div class="prod-bar-fill" style="width:${p.pct}%"></div></div>
+      <div class="prod-rev">${p.rev}</div>
+    </div>`).join('');
+
+  const networkHtml = Object.values(FRANCHISES).map(fr => `
+    <div class="net-cell ${fr.id === f.id ? 'current' : ''}" onclick="showFranchise('${fr.id}')">
+      <div class="net-cell-init">${fr.initials}</div>
+      <div class="net-cell-name">${fr.name}</div>
+      <div class="net-cell-rev">${fr.rev}</div>
+      <div class="net-cell-status ${fr.status === 'alert' ? 'warn' : fr.status}">${fr.status === 'alert' ? 'Attention' : fr.status === 'warn' ? 'Watch' : 'Live'}</div>
+    </div>`).join('');
+
+  const now = new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
+
+  document.getElementById('franView').innerHTML = `
+    <div class="fran-topbar">
+      <div class="fran-topbar-left">
+        <h2>${f.name} <span style="font-weight:400;color:var(--text-3);font-size:13px;margin-left:4px">${f.role}</span></h2>
+        <p>${f.sub}</p>
+      </div>
+      <div class="fran-topbar-status">
+        <div class="fran-status-dot ${f.status}"></div>
+        ${f.status === 'live' ? 'Operational' : f.status === 'warn' ? 'Attention required' : 'Immediate attention required'}
+      </div>
+      <div class="fran-topbar-actions">
+        <a href="index.html" class="fran-btn">
+          <svg viewBox="0 0 24 24"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg>
+          Live Dashboard
+        </a>
+        <a href="ai-analytics.html" class="fran-btn">
+          <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2z"/></svg>
+          Full Report
+        </a>
+        <button class="fran-btn primary" onclick="showVera(); setTimeout(()=>askVera('Give me a full analysis of ${f.name} — performance, alerts, and recommendations.'), 300)">
+          <svg viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+          Ask VERA
+        </button>
+      </div>
+    </div>
+
+    <div class="fran-body">
+      <div class="kpi-strip">
+        <div class="kpi-card">
+          <div class="kpi-label">Revenue Today</div>
+          <div class="kpi-value">${f.rev}</div>
+          <div class="kpi-delta ${f.revDir}">${f.revDelta} vs yesterday</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Units Sold</div>
+          <div class="kpi-value">${f.units}</div>
+          <div class="kpi-delta ${f.unitDir}">${f.unitDelta} vs yesterday</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Customers</div>
+          <div class="kpi-value">${f.customers}</div>
+          <div class="kpi-delta neu">Avg. ${f.avgTicket} / visit</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Active Alerts</div>
+          <div class="kpi-value" style="color:${f.alerts.length > 0 ? 'var(--amber)' : 'var(--green)'}">${f.alerts.length}</div>
+          <div class="kpi-delta ${f.alerts.length > 0 ? 'neg' : 'pos'}">${f.alerts.length > 0 ? 'Requires attention' : 'All clear'}</div>
+        </div>
+      </div>
+
+      <div class="vera-insight">
+        <div class="vera-insight-head">
+          <div class="vera-insight-logo"><svg viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg></div>
+          <div class="vera-insight-title">VERA Intelligence — ${f.name}</div>
+          <div class="vera-insight-time">Generated ${now} EST · DeepStream · Jetson Orin</div>
+        </div>
+        <div class="vera-insight-body">${f.vera}</div>
+        <a class="vera-insight-link" href="#" onclick="event.preventDefault();showVera();setTimeout(()=>askVera('Give me a full analysis of ${f.name} — performance, alerts, and recommendations.'),300)">Ask VERA a follow-up →</a>
+      </div>
+
+      <div class="fran-grid">
+        <div class="section-panel">
+          <div class="section-head">
+            <span class="section-head-title">Active Alerts</span>
+            <a href="index.html" class="section-head-link">View dashboard</a>
+          </div>
+          ${alertsHtml}
+        </div>
+
+        <div class="section-panel">
+          <div class="section-head">
+            <span class="section-head-title">Recent Activity</span>
+          </div>
+          ${activityHtml}
+        </div>
+
+        <div class="section-panel">
+          <div class="section-head">
+            <span class="section-head-title">Top Products — Today</span>
+            <a href="ai-analytics.html" class="section-head-link">Full report</a>
+          </div>
+          ${productsHtml}
+        </div>
+
+        <div class="section-panel">
+          <div class="section-head">
+            <span class="section-head-title">All Locations</span>
+          </div>
+          <div class="net-row">${networkHtml}</div>
+          <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:baseline">
+            <span style="font-size:11px;color:var(--text-3);text-transform:uppercase;letter-spacing:.5px;font-weight:600">Network Total</span>
+            <span style="font-size:16px;font-weight:700;color:var(--text-1)">$29,810</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+// ── VERA chat ─────────────────────────────────────────────────────
+function askVera(q) {
+  document.getElementById('veraInput').value = q;
+  sendVera();
+}
+
+function sendVera() {
+  const input = document.getElementById('veraInput');
+  const q = input.value.trim();
+  if (!q || veraTyping) return;
+  input.value = ''; autoGrow(input);
+
+  document.getElementById('veraWelcome').style.display = 'none';
+  const thread = document.getElementById('chatThread');
+  thread.style.display = 'flex';
+
+  appendMsg('user', q);
+
+  veraTyping = true;
+  const typingEl = document.createElement('div');
+  typingEl.className = 'typing-row';
+  typingEl.id = 'typingIndicator';
+  typingEl.innerHTML = `
+    <div class="chat-avatar vera"><svg viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg></div>
+    <div class="typing-dots"><span></span><span></span><span></span></div>`;
+  thread.appendChild(typingEl);
+  scrollChat();
+
+  setTimeout(() => {
+    typingEl.remove();
+    veraTyping = false;
+    appendMsg('vera', getVeraResponse(q));
+    scrollChat();
+  }, 850 + Math.random() * 600);
+}
+
+function appendMsg(role, html) {
+  const thread = document.getElementById('chatThread');
+  const d = document.createElement('div');
+  d.className = `chat-msg ${role}`;
+  const now = new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
+  if (role === 'vera') {
+    d.innerHTML = `
+      <div class="chat-avatar vera"><svg viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg></div>
+      <div><div class="chat-bubble vera">${html}</div><div class="chat-ts">${now} EST · VERA v2.1</div></div>`;
+  } else {
+    d.innerHTML = `
+      <div class="chat-avatar user">Me</div>
+      <div><div class="chat-bubble user">${escHtml(html)}</div></div>`;
+  }
+  thread.appendChild(d);
+}
+
+function scrollChat() {
+  const body = document.getElementById('veraBody');
+  body.scrollTop = body.scrollHeight;
+}
+
+function getVeraResponse(q) {
+  if (VERA_RESPONSES[q]) return VERA_RESPONSES[q];
+  const ql = q.toLowerCase();
+  if (ql.includes('network') || ql.includes('overview') || ql.includes('today')) return VERA_RESPONSES['How is the network performing today compared to yesterday?'];
+  if (ql.includes('best') || ql.includes('top') || ql.includes('perform')) return VERA_RESPONSES['Which location is performing best today and why?'];
+  if (ql.includes('restock') || ql.includes('inventory') || ql.includes('stock')) return VERA_RESPONSES['What inventory needs to be restocked across all locations today?'];
+  if (ql.includes('alert') || ql.includes('issue') || ql.includes('problem')) return VERA_RESPONSES['Give me a summary of all active alerts across every location.'];
+  const ids = ['canal','f43','f44','f45','f46'];
+  for (const id of ids) {
+    const f = FRANCHISES[id];
+    if (ql.includes(f.name.toLowerCase()) || ql.includes(f.initials.toLowerCase())) {
+      return `<strong>${f.name}</strong> — ${f.rev} today (${f.revDelta} vs. yesterday), ${f.units} units sold, ${f.alerts.length} active alert${f.alerts.length !== 1 ? 's' : ''}.<br><br>${f.vera}`;
+    }
+  }
+  return `I have real-time data across all five franchise locations. Your network generated <strong>$29,810 today</strong> across 694 units — up 8.2% from yesterday. Six alerts are active, primarily at 45th Street and Canal Street.<br><br>Could you be more specific? I can deep-dive into individual locations, product performance, restock priorities, or trend analysis.`;
+}
+
+function handleKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendVera(); }
+}
+function autoGrow(el) { el.style.height = 'auto'; el.style.height = Math.min(el.scrollHeight, 120) + 'px'; }
+function escHtml(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function filterFranchises(q) {
+  document.querySelectorAll('.fi[id^="fi-"]').forEach(el => {
+    const name = el.querySelector('.fi-name')?.textContent.toLowerCase() || '';
+    el.style.display = (!q || name.includes(q.toLowerCase())) ? '' : 'none';
+  });
+}
+
+function updateGreeting() {
+  const h = new Date().getHours();
+  const el = document.getElementById('veraGreeting');
+  if (el) el.textContent = h < 12 ? 'morning' : h < 17 ? 'afternoon' : 'evening';
+}
+
+document.addEventListener('keydown', e => {
+  if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+    e.preventDefault(); showVera();
+  }
+});
+
+function handleLogout() {
+  fetch('/api/auth/logout', { method: 'POST' }).catch(() => {});
+  window.location.href = 'index.html';
+}
+
+// Init
+showFranchise('canal');
+</script>
+</body>
+</html>
