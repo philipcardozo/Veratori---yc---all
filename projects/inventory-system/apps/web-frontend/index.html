@@ -374,45 +374,49 @@
     .item-count { font-size:18px; font-weight:800; color:var(--green); min-width:36px; text-align:right; }
     .empty-inventory { text-align:center; color:var(--text-4); padding:40px 16px; font-size:13px; }
 
-    /* Sales Log */
-    .sales-count-badge {
-      display:flex; align-items:center; gap:5px;
-      padding:3px 9px; background:var(--blue-dim); border:1px solid rgba(59,130,246,.18);
-      border-radius:6px; font-size:11px; font-weight:600; color:var(--blue);
-    }
-    .sales-entry {
-      display:flex; justify-content:space-between; align-items:center;
-      padding:9px 12px; margin-bottom:5px;
-      background:rgba(255,255,255,0.025); border-radius:8px;
-      border-left:3px solid var(--blue);
-      border-top:1px solid var(--border); border-right:1px solid var(--border); border-bottom:1px solid var(--border);
-      transition:background .14s var(--ease);
-    }
-    .sales-entry:hover { background:rgba(59,130,246,0.04); }
-    .sales-product { font-size:12.5px; font-weight:600; color:var(--text-1); flex:1; }
-    .sales-time { font-size:10.5px; color:var(--text-3); font-family:'Monaco','Courier New',monospace; }
-    .empty-sales { text-align:center; color:var(--text-4); padding:30px 16px; font-size:13px; }
-
     /* Alerts */
     .alerts-count-badge {
       display:flex; align-items:center; gap:5px;
-      padding:3px 9px; background:var(--amber-dim); border:1px solid rgba(245,158,11,.18);
-      border-radius:6px; font-size:11px; font-weight:600; color:var(--amber);
+      padding:3px 9px; border-radius:6px; font-size:11px; font-weight:600;
+      background:var(--amber-dim); border:1px solid rgba(245,158,11,.18); color:var(--amber);
+      transition:all .2s var(--ease);
+    }
+    .alerts-count-badge.clear {
+      background:var(--green-dim); border-color:rgba(16,185,129,.18); color:var(--green);
     }
     .alert-item {
-      margin-bottom:7px; padding:10px 12px; border-radius:8px;
-      border:1px solid transparent;
+      margin-bottom:6px; padding:10px 12px; border-radius:8px;
+      border:1px solid transparent; transition:background .14s var(--ease);
     }
-    .alert-item.low_stock { background:var(--amber-dim); border-color:rgba(245,158,11,.2); }
-    .alert-item.expiration { background:var(--red-dim); border-color:rgba(239,68,68,.2); }
-    .alert-header { display:flex; justify-content:space-between; margin-bottom:5px; }
-    .alert-type { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.5px; }
-    .low_stock .alert-type { color:var(--amber); }
-    .expiration .alert-type { color:var(--red); }
+    .alert-item.critical  { background:var(--red-dim);   border-color:rgba(239,68,68,.25);   border-left:3px solid var(--red);   }
+    .alert-item.warning   { background:var(--amber-dim); border-color:rgba(245,158,11,.22);  border-left:3px solid var(--amber); }
+    .alert-item.info      { background:var(--blue-dim);  border-color:rgba(59,130,246,.18);  border-left:3px solid var(--blue);  }
+    .alert-item.low_stock { background:var(--amber-dim); border-color:rgba(245,158,11,.22);  border-left:3px solid var(--amber); }
+    .alert-item.expiration{ background:var(--red-dim);   border-color:rgba(239,68,68,.25);   border-left:3px solid var(--red);   }
+    .alert-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:4px; }
+    .alert-priority {
+      display:flex; align-items:center; gap:5px;
+      font-size:10px; font-weight:800; text-transform:uppercase; letter-spacing:.6px;
+    }
+    .critical  .alert-priority, .expiration .alert-priority { color:var(--red); }
+    .warning   .alert-priority, .low_stock  .alert-priority { color:var(--amber); }
+    .info      .alert-priority                              { color:var(--blue); }
+    .alert-priority-dot { width:5px; height:5px; border-radius:50%; background:currentColor; flex-shrink:0; }
     .alert-time { font-size:10px; color:var(--text-4); }
-    .alert-message { font-size:12.5px; color:var(--text-2); line-height:1.45; }
+    .alert-message { font-size:12px; color:var(--text-2); line-height:1.45; }
     .alert-product { font-weight:700; color:var(--text-1); }
-    .empty-alerts { text-align:center; color:var(--text-4); padding:30px 16px; font-size:13px; }
+    .alerts-clear {
+      display:flex; flex-direction:column; align-items:center; justify-content:center;
+      gap:10px; padding:32px 16px; text-align:center;
+    }
+    .alerts-clear-icon {
+      width:36px; height:36px; border-radius:50%;
+      background:var(--green-dim); border:1px solid rgba(16,185,129,.2);
+      display:flex; align-items:center; justify-content:center;
+    }
+    .alerts-clear-icon svg { width:18px; height:18px; fill:var(--green); }
+    .alerts-clear-title { font-size:13px; font-weight:700; color:var(--green); }
+    .alerts-clear-sub   { font-size:11.5px; color:var(--text-3); }
 
     /* NVIDIA AI panel */
     .nv-header {
@@ -486,15 +490,6 @@
       background:var(--vera-dim); transition:all .14s var(--ease);
     }
     .nv-view-full:hover { background:var(--vera); color:#fff; }
-
-    /* Diagnostics */
-    .diag-item {
-      display:flex; justify-content:space-between; align-items:center;
-      padding:8px 0; border-bottom:1px solid var(--border); font-size:12px;
-    }
-    .diag-item:last-child { border-bottom:none; }
-    .diag-label { color:var(--text-2); font-weight:500; }
-    .diag-value { color:var(--green); font-weight:700; font-family:'Monaco','Courier New',monospace; font-size:11.5px; }
 
     /* Tooltip for panel drag hint */
     .drag-hint {
@@ -717,40 +712,6 @@
     <div class="resize-grip"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
   </div>
 
-  <!-- PANEL: Sales Log -->
-  <div class="panel" id="panel-sales" data-panel="sales" style="z-index:7">
-    <div class="panel-header" data-drag="sales">
-      <div class="panel-header-icon" style="background:linear-gradient(135deg,#3b82f6,#1d4ed8)">
-        <svg viewBox="0 0 24 24"><path d="M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z"/></svg>
-      </div>
-      <span class="panel-title">Sales Log</span>
-      <div class="sales-count-badge" style="margin-left:auto;margin-right:8px"><span id="salesCount">0</span>&nbsp;sales</div>
-      <div class="panel-controls">
-        <button class="panel-ctrl" onclick="minimizePanel('sales')" title="Minimize">
-          <svg viewBox="0 0 24 24"><path d="M19 13H5v-2h14v2z"/></svg>
-        </button>
-        <button class="panel-ctrl" onclick="maximizePanel('sales')" title="Maximize / restore">
-          <svg viewBox="0 0 24 24"><path d="M4 8h4V4H4v4zm6 12h4v-4h-4v4zm-6 0h4v-4H4v4zm0-6h4v-4H4v4zm6 0h4v-4h-4v4zm6-10v4h4V4h-4zm-6 4h4V4h-4v4zm6 6h4v-4h-4v4zm0 6h4v-4h-4v4z"/></svg>
-        </button>
-        <button class="panel-ctrl close" onclick="closePanel('sales')" title="Close">
-          <svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
-        </button>
-      </div>
-    </div>
-    <div class="panel-body">
-      <div id="salesLogList"><div class="empty-sales">No sales recorded yet</div></div>
-    </div>
-    <div class="resize-handle" data-dir="n" data-panel="sales"></div>
-    <div class="resize-handle" data-dir="s" data-panel="sales"></div>
-    <div class="resize-handle" data-dir="e" data-panel="sales"></div>
-    <div class="resize-handle" data-dir="w" data-panel="sales"></div>
-    <div class="resize-handle" data-dir="nw" data-panel="sales"></div>
-    <div class="resize-handle" data-dir="ne" data-panel="sales"></div>
-    <div class="resize-handle" data-dir="sw" data-panel="sales"></div>
-    <div class="resize-handle" data-dir="se" data-panel="sales"></div>
-    <div class="resize-grip"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
-  </div>
-
   <!-- PANEL: Alerts -->
   <div class="panel" id="panel-alerts" data-panel="alerts" style="z-index:6">
     <div class="panel-header" data-drag="alerts">
@@ -758,7 +719,9 @@
         <svg viewBox="0 0 24 24"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg>
       </div>
       <span class="panel-title">System Alerts</span>
-      <div class="alerts-count-badge" style="margin-left:auto;margin-right:8px"><span id="alertsCount">0</span>&nbsp;active</div>
+      <div class="alerts-count-badge clear" id="alertsBadge" style="margin-left:auto;margin-right:8px">
+        <span id="alertsCount">0</span>&nbsp;active
+      </div>
       <div class="panel-controls">
         <button class="panel-ctrl" onclick="minimizePanel('alerts')" title="Minimize">
           <svg viewBox="0 0 24 24"><path d="M19 13H5v-2h14v2z"/></svg>
@@ -772,7 +735,7 @@
       </div>
     </div>
     <div class="panel-body">
-      <div id="alertsList"><div class="empty-alerts">No alerts at this time ✓</div></div>
+      <div id="alertsList"></div>
     </div>
     <div class="resize-handle" data-dir="n" data-panel="alerts"></div>
     <div class="resize-handle" data-dir="s" data-panel="alerts"></div>
@@ -785,43 +748,6 @@
     <div class="resize-grip"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
   </div>
 
-  <!-- PANEL: Diagnostics -->
-  <div class="panel" id="panel-diag" data-panel="diag" style="z-index:5">
-    <div class="panel-header" data-drag="diag">
-      <div class="panel-header-icon" style="background:linear-gradient(135deg,#8b5cf6,#4c1d95)">
-        <svg viewBox="0 0 24 24"><path d="M19.5 12c0-3.87-3.13-7-7-7S5.5 8.13 5.5 12H2l3.84 3.93.07.14L9.97 12H7c0-2.76 2.24-5 5-5s5 2.24 5 5-2.24 5-5 5c-1.38 0-2.63-.56-3.54-1.46l-1.42 1.42C8.27 18.99 10.05 19.5 12 19.5c3.87 0 7-3.13 7-7z"/></svg>
-      </div>
-      <span class="panel-title">Diagnostics</span>
-      <span class="panel-subtitle">System performance</span>
-      <div class="panel-controls">
-        <button class="panel-ctrl" onclick="minimizePanel('diag')" title="Minimize">
-          <svg viewBox="0 0 24 24"><path d="M19 13H5v-2h14v2z"/></svg>
-        </button>
-        <button class="panel-ctrl" onclick="maximizePanel('diag')" title="Maximize / restore">
-          <svg viewBox="0 0 24 24"><path d="M4 8h4V4H4v4zm6 12h4v-4h-4v4zm-6 0h4v-4H4v4zm0-6h4v-4H4v4zm6 0h4v-4h-4v4zm6-10v4h4V4h-4zm-6 4h4V4h-4v4zm6 6h4v-4h-4v4zm0 6h4v-4h-4v4z"/></svg>
-        </button>
-        <button class="panel-ctrl close" onclick="closePanel('diag')" title="Close">
-          <svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
-        </button>
-      </div>
-    </div>
-    <div class="panel-body">
-      <div class="diag-item"><span class="diag-label">FPS</span><span class="diag-value" id="diagFPS">--</span></div>
-      <div class="diag-item"><span class="diag-label">Inference Time</span><span class="diag-value" id="diagInference">--</span></div>
-      <div class="diag-item"><span class="diag-label">Frames Processed</span><span class="diag-value" id="diagFrames">--</span></div>
-      <div class="diag-item"><span class="diag-label">Active Connections</span><span class="diag-value" id="diagConnections">--</span></div>
-      <div class="diag-item"><span class="diag-label">WebSocket</span><span class="diag-value" id="diagWS" style="color:var(--amber)">--</span></div>
-    </div>
-    <div class="resize-handle" data-dir="n" data-panel="diag"></div>
-    <div class="resize-handle" data-dir="s" data-panel="diag"></div>
-    <div class="resize-handle" data-dir="e" data-panel="diag"></div>
-    <div class="resize-handle" data-dir="w" data-panel="diag"></div>
-    <div class="resize-handle" data-dir="nw" data-panel="diag"></div>
-    <div class="resize-handle" data-dir="ne" data-panel="diag"></div>
-    <div class="resize-handle" data-dir="sw" data-panel="diag"></div>
-    <div class="resize-handle" data-dir="se" data-panel="diag"></div>
-    <div class="resize-grip"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
-  </div>
 
 </div><!-- /canvas -->
 
@@ -844,19 +770,15 @@ const TOPBAR_H = 52;
 const DEFAULT_LAYOUT = {
   camera:    { x:0,    y:0,    w:0.56, h:0.60 },
   nvidia:    { x:0.57, y:0,    w:0.43, h:0.60 },
-  inventory: { x:0,    y:0.62, w:0.26, h:0.38 },
-  sales:     { x:0.27, y:0.62, w:0.35, h:0.38 },
-  alerts:    { x:0.63, y:0.62, w:0.20, h:0.38 },
-  diag:      { x:0.84, y:0.62, w:0.16, h:0.38 },
+  inventory: { x:0,    y:0.62, w:0.49, h:0.38 },
+  alerts:    { x:0.51, y:0.62, w:0.49, h:0.38 },
 };
 
 const PANEL_META = {
   camera:    { label:'Camera Feed' },
   nvidia:    { label:'NVIDIA AI'   },
   inventory: { label:'Inventory'   },
-  sales:     { label:'Sales Log'   },
   alerts:    { label:'Alerts'      },
-  diag:      { label:'Diagnostics' },
 };
 
 let zCounter = 20;
@@ -1157,38 +1079,19 @@ function showToast(msg) {
 }
 
 // ═══════════════════════════════════════════════════════
-//  SIDEBAR
-// ═══════════════════════════════════════════════════════
-const sidebar        = document.getElementById('sidebar');
-const sidebarOverlay = document.getElementById('sidebarOverlay');
-document.getElementById('menuBtn').addEventListener('click', () => {
-  sidebar.classList.add('open');
-  sidebarOverlay.classList.add('visible');
-});
-document.getElementById('sidebarClose').addEventListener('click', () => {
-  sidebar.classList.remove('open');
-  sidebarOverlay.classList.remove('visible');
-});
-sidebarOverlay.addEventListener('click', () => {
-  sidebar.classList.remove('open');
-  sidebarOverlay.classList.remove('visible');
-});
-
-// ═══════════════════════════════════════════════════════
 //  WEBSOCKET & DATA
 // ═══════════════════════════════════════════════════════
 let ws = null;
 let reconnectInterval = null;
 let isConnected = false;
 
-const videoFeed  = document.getElementById('videoFeed');
-const noFeed     = document.getElementById('noFeed');
+const videoFeed     = document.getElementById('videoFeed');
+const noFeed        = document.getElementById('noFeed');
 const inventoryList = document.getElementById('inventoryList');
 const totalItems    = document.getElementById('totalItems');
-const salesLogList  = document.getElementById('salesLogList');
-const salesCount    = document.getElementById('salesCount');
 const alertsList    = document.getElementById('alertsList');
 const alertsCount   = document.getElementById('alertsCount');
+const alertsBadge   = document.getElementById('alertsBadge');
 
 const TRACKED_PRODUCTS = ['passion fruit','maui custard','lemon cake','mango','watermelon','pineapple'];
 const EXPIRATION_DAYS  = 5;
@@ -1211,8 +1114,6 @@ function connect() {
     isConnected = true;
     updateConnectionStatus(true);
     clearInterval(reconnectInterval); reconnectInterval = null;
-    document.getElementById('diagWS').textContent = 'Connected';
-    document.getElementById('diagWS').style.color = 'var(--green)';
   };
   ws.onmessage = e => {
     try { handleMessage(JSON.parse(e.data)); } catch {}
@@ -1221,8 +1122,6 @@ function connect() {
   ws.onclose = () => {
     isConnected = false;
     updateConnectionStatus(false);
-    document.getElementById('diagWS').textContent = 'Disconnected';
-    document.getElementById('diagWS').style.color = 'var(--red)';
     if (!reconnectInterval) {
       reconnectInterval = setInterval(() => { connect(); }, 3000);
     }
@@ -1233,9 +1132,7 @@ function handleMessage(msg) {
   switch (msg.type) {
     case 'frame':              updateVideoFeed(msg.data); break;
     case 'inventory':          updateInventory(msg.data); break;
-    case 'stats':              updateStats(msg.data); break;
     case 'freshness':          updateFreshness(msg.data); break;
-    case 'sales':              updateSalesFromServer(msg.data); break;
     case 'alerts':             updateAlerts(msg.data); break;
     case 'camera_switched':    onCameraSwitched(msg); break;
     case 'camera_switch_result': onCameraSwitchResult(msg); break;
@@ -1306,48 +1203,68 @@ function updateInventory(inventory) {
   previousInventoryTotal = total;
 }
 
-function updateSalesFromServer(salesData) {
-  if (!salesData || !salesData.length) {
-    salesCount.textContent='0'; salesLogList.innerHTML='<div class="empty-sales">No sales recorded yet</div>'; return;
-  }
-  salesCount.textContent = salesData.length;
-  salesLogList.innerHTML = '';
-  salesData.forEach(sale => {
-    const entry = document.createElement('div'); entry.className='sales-entry';
-    const pd = document.createElement('div'); pd.className='sales-product';
-    const qty = sale.quantity_delta||1;
-    pd.textContent = qty>1 ? `${sale.product_name||'Unknown'} (x${qty})` : (sale.product_name||'Unknown');
-    const td = document.createElement('div'); td.className='sales-time';
-    td.textContent = sale.timestamp_est || new Date(sale.timestamp_utc*1000).toLocaleString();
-    entry.appendChild(pd); entry.appendChild(td);
-    salesLogList.appendChild(entry);
-  });
+const ALERT_PRIORITY = { critical:0, expiration:1, warning:2, low_stock:3, info:4 };
+
+function alertPriorityLabel(type) {
+  const labels = { critical:'Critical', expiration:'Expiration Warning', warning:'Warning', low_stock:'Low Stock', info:'Info' };
+  return labels[type] || type.replace(/_/g,' ');
 }
 
 function updateAlerts(alerts) {
-  alertsCount.textContent = alerts.length;
-  if (!alerts.length) { alertsList.innerHTML='<div class="empty-alerts">No alerts at this time ✓</div>'; return; }
-  alertsList.innerHTML='';
-  alerts.forEach(alert => {
-    const d = document.createElement('div'); d.className=`alert-item ${alert.alert_type}`;
-    const hdr=document.createElement('div'); hdr.className='alert-header';
-    const tp=document.createElement('div'); tp.className='alert-type';
-    tp.textContent=alert.alert_type==='low_stock'?'Low Stock':'Expiration Warning';
-    const tm=document.createElement('div'); tm.className='alert-time';
-    tm.textContent=alert.timestamp_est||new Date(alert.timestamp_utc*1000).toLocaleString();
-    hdr.appendChild(tp); hdr.appendChild(tm);
-    const msg=document.createElement('div'); msg.className='alert-message';
-    msg.innerHTML=alert.message.replace(alert.product_name,`<span class="alert-product">${alert.product_name}</span>`);
+  const count = alerts ? alerts.length : 0;
+  alertsCount.textContent = count;
+
+  // Badge color: green when clear, amber when active
+  if (count === 0) {
+    alertsBadge.classList.add('clear');
+    alertsList.innerHTML = `
+      <div class="alerts-clear">
+        <div class="alerts-clear-icon">
+          <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg>
+        </div>
+        <div class="alerts-clear-title">All systems clear</div>
+        <div class="alerts-clear-sub">No active alerts across this location</div>
+      </div>`;
+    return;
+  }
+
+  alertsBadge.classList.remove('clear');
+  alertsList.innerHTML = '';
+
+  // Sort by priority: critical → expiration → warning → low_stock → info
+  const sorted = [...alerts].sort((a, b) =>
+    (ALERT_PRIORITY[a.alert_type] ?? 9) - (ALERT_PRIORITY[b.alert_type] ?? 9)
+  );
+
+  sorted.forEach(alert => {
+    const d   = document.createElement('div');
+    d.className = `alert-item ${alert.alert_type}`;
+
+    const hdr = document.createElement('div'); hdr.className = 'alert-header';
+    const lbl = document.createElement('div'); lbl.className = 'alert-priority';
+    lbl.innerHTML = `<span class="alert-priority-dot"></span>${alertPriorityLabel(alert.alert_type)}`;
+    const tm  = document.createElement('div'); tm.className = 'alert-time';
+    tm.textContent = alert.timestamp_est || new Date(alert.timestamp_utc * 1000).toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
+    hdr.appendChild(lbl); hdr.appendChild(tm);
+
+    const msg = document.createElement('div'); msg.className = 'alert-message';
+    const productName = alert.product_name || '';
+    msg.innerHTML = productName
+      ? alert.message.replace(productName, `<span class="alert-product">${productName}</span>`)
+      : alert.message;
+
     d.appendChild(hdr); d.appendChild(msg);
     alertsList.appendChild(d);
   });
 }
 
-function updateStats(stats) {
-  if (stats.fps !== undefined) document.getElementById('diagFPS').textContent = stats.fps.toFixed(1);
-  if (stats.inference_time !== undefined) document.getElementById('diagInference').textContent = (stats.inference_time*1000).toFixed(0)+'ms';
-  if (stats.frame_count !== undefined) document.getElementById('diagFrames').textContent = stats.frame_count;
-  if (stats.active_connections !== undefined) document.getElementById('diagConnections').textContent = stats.active_connections;
+function initDemoAlerts() {
+  updateAlerts([
+    { alert_type:'critical',   product_name:'Passion Fruit',  message:'Passion Fruit stock critically low — 4 units remaining. Will not last the day at current velocity.',          timestamp_est:'08:31 EST' },
+    { alert_type:'expiration', product_name:'Maui Custard',   message:'Maui Custard has been on display for 4d 18h. Remove from display before noon to comply with freshness policy.', timestamp_est:'08:14 EST' },
+    { alert_type:'warning',    product_name:'Coconut Dream',  message:'Coconut Dream below 12 units at 45th Street. Automated reorder triggered — estimated delivery 14:00.',           timestamp_est:'09:05 EST' },
+    { alert_type:'info',       product_name:'',               message:'DeepStream pipeline healthy — 86,400 frames processed overnight at 91.4% avg confidence. Jetson Orin GPU load: 12%.', timestamp_est:'07:01 EST' },
+  ]);
 }
 
 function updateConnectionStatus(connected) {
@@ -1581,6 +1498,7 @@ window.addEventListener('load', initLayout); // re-apply once all resources are 
 connect();
 nvLoadLatest();
 fetchCameras(false);
+initDemoAlerts();
 
 // Show drag hint on first visit
 if (!localStorage.getItem('veratori-drag-hint-seen')) {
