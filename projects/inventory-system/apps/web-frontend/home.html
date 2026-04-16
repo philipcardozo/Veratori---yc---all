@@ -910,9 +910,63 @@ const VERA_RESPONSES = {
   'Give me a summary of all active alerts across every location.': `<strong>6 active alerts</strong> across the network as of now.<br><br><strong>Canal Street (2)</strong><br>· Passion Fruit critically low — 4 units<br>· Maui Custard expiring today<br><br><strong>44th Street (1)</strong><br>· Revenue trending 8% below weekly average<br><br><strong>45th Street (3)</strong><br>· Coconut Dream sold out<br>· Lychee Rose below threshold — auto-reorder triggered<br>· Elevated foot traffic — DeepStream logging 287 entries<br><br><strong>43rd Street, 46th Street:</strong> No active alerts.`,
 };
 
+// ── VERA AI config ─────────────────────────────────────────────────
+const VERA_API_KEY = 'sk-api-J1Kq_xGwJPEktcIcjjPJb1rPVUoHuvJAtqtq39dpRV2_TSI-aoT0KZItHiA2Rxw3Zg74dKkemwI_g_-PfPCw4lFJUJ93vaIvzlhmAKKTHXlJp2-cQjTttzw';
+const VERA_ENDPOINT = 'https://api.minimax.io/v1/chat/completions';
+const VERA_MODEL    = 'MiniMax-Text-01';
+
+function buildVeraSystemPrompt() {
+  const now     = new Date();
+  const dateStr = now.toLocaleDateString('en-US', { weekday:'long', month:'long', day:'numeric', year:'numeric' });
+  const timeStr = now.toLocaleTimeString('en-US', { hour:'2-digit', minute:'2-digit' });
+
+  const locationSummary = Object.values(FRANCHISES).map(f => {
+    const alertList  = f.alerts.length
+      ? f.alerts.map(a => `    [${a.type.toUpperCase()}] ${a.text} (${a.time})`).join('\n')
+      : '    None';
+    const topProducts = f.products.slice(0,3).map(p => `    ${p.name}: ${p.units} units, ${p.rev}`).join('\n');
+    const statusLabel = f.status === 'live' ? 'All systems normal' : f.status === 'warn' ? 'Warning' : 'Alert active';
+    return `LOCATION: ${f.name} (${f.sub})
+  Status: ${statusLabel}
+  Revenue today: ${f.rev} (${f.revDelta} vs yesterday)
+  Units sold: ${f.units} (${f.unitDelta})
+  Customers: ${f.customers} | Avg ticket: ${f.avgTicket}
+  Active alerts:
+${alertList}
+  Top products:
+${topProducts}
+  VERA insight: ${f.vera.replace(/<[^>]+>/g, '')}`;
+  }).join('\n\n');
+
+  return `You are VERA — Veratori's AI business intelligence assistant embedded in the Veratori operations platform. You are powered by advanced AI but are branded exclusively as VERA by Veratori. Never mention MiniMax, OpenAI, Claude, or any other AI company or model. If asked who made you or what model you are, say you were built by the Veratori engineering team.
+
+Today is ${dateStr}, current time ${timeStr} EST.
+
+Veratori operates a network of 5 franchise frozen yogurt / açaí bowl locations in New York City. Each location runs NVIDIA DeepStream computer vision pipelines (YOLO object detection at 30 fps on Jetson Orin hardware) to count customers, track real-time inventory depletion, and trigger automated stock and freshness alerts.
+
+LIVE BUSINESS DATA — ${dateStr}:
+Network total revenue: $29,810 (+8.2% vs yesterday)
+Network units sold: 694
+Active alerts across network: 6
+DeepStream pipeline: Active — 86,400 frames processed overnight, 91.4% avg confidence, GPU load avg 12%
+
+${locationSummary}
+
+PRODUCT CATALOG (network-wide, $14.00 each):
+Mango Tango, Strawberry Bliss, Coconut Dream, Passion Fruit, Lychee Rose, Guava Breeze, Watermelon Wave, Maui Custard (seasonal)
+
+RESPONSE FORMAT RULES — follow these exactly:
+- Use HTML tags only: <strong> for bold, <br> for line breaks, no markdown
+- Replace bullet lists with <br>· item format
+- Keep responses concise and actionable — lead with the most critical insight
+- Ground every answer in the live data above
+- Never use emoji`;
+}
+
 // ── State ─────────────────────────────────────────────────────────
 let currentView = 'franchise';
-let veraTyping = false;
+let veraTyping  = false;
+let veraHistory = []; // multi-turn conversation memory
 
 // ── View switching ────────────────────────────────────────────────
 function showVera(context) {
@@ -1082,7 +1136,7 @@ function askVera(q) {
   sendVera();
 }
 
-function sendVera() {
+async function sendVera() {
   const input = document.getElementById('veraInput');
   const q = input.value.trim();
   if (!q || veraTyping) return;
@@ -1093,6 +1147,7 @@ function sendVera() {
   thread.style.display = 'flex';
 
   appendMsg('user', q);
+  veraHistory.push({ role: 'user', content: q });
 
   veraTyping = true;
   const typingEl = document.createElement('div');
@@ -1104,12 +1159,43 @@ function sendVera() {
   thread.appendChild(typingEl);
   scrollChat();
 
-  setTimeout(() => {
+  try {
+    const resp = await fetch(VERA_ENDPOINT, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${VERA_API_KEY}`,
+      },
+      body: JSON.stringify({
+        model: VERA_MODEL,
+        messages: [
+          { role: 'system', content: buildVeraSystemPrompt() },
+          ...veraHistory,
+        ],
+        temperature: 0.45,
+        max_tokens: 600,
+      }),
+    });
+
+    if (!resp.ok) throw new Error(`API ${resp.status}`);
+    const data = await resp.json();
+    const reply = data.choices?.[0]?.message?.content?.trim() || 'I was unable to retrieve data at this time. Please try again.';
+    veraHistory.push({ role: 'assistant', content: reply });
+
     typingEl.remove();
     veraTyping = false;
-    appendMsg('vera', getVeraResponse(q));
+    appendMsg('vera', reply);
     scrollChat();
-  }, 850 + Math.random() * 600);
+  } catch (err) {
+    typingEl.remove();
+    veraTyping = false;
+    // Fallback to static responses if API is unreachable
+    const fallback = getVeraResponse(q);
+    veraHistory.push({ role: 'assistant', content: fallback });
+    appendMsg('vera', fallback);
+    scrollChat();
+    console.warn('[VERA] API error, using fallback:', err.message);
+  }
 }
 
 function appendMsg(role, html) {
