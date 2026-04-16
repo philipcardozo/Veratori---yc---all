@@ -63,15 +63,9 @@
     .topbar-menu-btn:hover { background:var(--bg-hover); color:var(--text-2); border-color:var(--border-md); }
     .topbar-menu-btn svg { width:16px; height:16px; fill:currentColor; }
     .topbar-brand {
-      display:flex; align-items:center; gap:8px; text-decoration:none; margin-right:28px;
+      display:flex; align-items:center; text-decoration:none; margin-right:28px;
     }
-    .brand-icon {
-      width:28px; height:28px; border-radius:7px;
-      background:linear-gradient(135deg,#76b900,#3d6200);
-      display:flex; align-items:center; justify-content:center;
-    }
-    .brand-icon svg { width:14px; height:14px; fill:#fff; }
-    .brand-text { font-size:14px; font-weight:800; color:var(--text-1); letter-spacing:-.3px; }
+    .brand-logo { height:22px; width:auto; display:block; }
 
     .topbar-nav { display:flex; align-items:center; gap:2px; flex:1; }
     .topbar-nav-link {
@@ -314,7 +308,7 @@
       color:var(--text-4); font-size:13px; font-weight:500; text-align:center;
       display:flex; flex-direction:column; align-items:center; gap:8px;
     }
-    .no-feed-icon { font-size:28px; opacity:.4; }
+    .no-feed-icon { opacity:.25; }
     .camera-controls { display:flex; gap:6px; align-items:center; flex-wrap:wrap; margin-bottom:10px; }
     .cam-btn {
       display:flex; align-items:center; gap:4px;
@@ -537,11 +531,7 @@
 <!-- ══════════════════ TOPBAR ══════════════════ -->
 <header class="topbar">
   <a href="home.html" class="topbar-brand">
-    <div class="brand-icon">
-      <svg viewBox="0 0 24 24"><path d="M3 3h8v8H3zm10 0h8v8h-8zM3 13h8v8H3zm13 0a4 4 0 100 8 4 4 0 000-8z"/></svg>
-    </div>
-    <span class="brand-text">Veratori</span>
-    <span style="font-size:9px;font-weight:600;letter-spacing:.6px;text-transform:uppercase;color:var(--text-3);margin-left:2px">Enterprise</span>
+    <img src="logo.png" alt="Veratori" class="brand-logo">
   </a>
   <nav class="topbar-nav">
     <a href="home.html"         class="topbar-nav-link">Hub</a>
@@ -617,7 +607,7 @@
       <div class="video-wrapper">
         <img id="videoFeed" alt="Live video feed">
         <div class="no-feed" id="noFeed">
-          <span class="no-feed-icon">📷</span>
+          <svg viewBox="0 0 24 24" style="width:28px;height:28px;fill:currentColor;opacity:.25"><path d="M20 4h-3.17L15 2H9L7.17 4H4a2 2 0 00-2 2v12a2 2 0 002 2h16a2 2 0 002-2V6a2 2 0 00-2-2zm-8 13a5 5 0 110-10 5 5 0 010 10z"/></svg>
           Waiting for camera feed…
         </div>
       </div>
@@ -638,7 +628,7 @@
   <div class="panel" id="panel-nvidia" data-panel="nvidia" style="z-index:9">
     <div class="panel-header" data-drag="nvidia">
       <div class="panel-header-icon" style="background:linear-gradient(135deg,#76b900,#4a7500)">
-        <svg viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+        <svg viewBox="0 0 24 24"><path d="M22 9V7h-2V5a2 2 0 00-2-2H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-2h2v-2h-2v-2h2v-2h-2V9h2zm-4 10H4V5h14v14zM6 13h5v4H6zm6-6h4v3h-4zM6 7h5v5H6zm6 4h4v6h-4z"/></svg>
       </div>
       <span class="panel-title">NVIDIA AI Inference</span>
       <span class="panel-subtitle" id="nvSubtitle">DeepStream · Jetson Orin</span>
@@ -671,7 +661,7 @@
       <div class="nv-chat" id="nvChat">
         <div class="nv-empty" id="nvEmpty">
           <div class="nv-empty-icon">
-            <svg viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+            <svg viewBox="0 0 24 24"><path d="M6 2v6l2 2-2 2v6l16-8L6 2zm2 11.37V8.63L17.28 12 8 13.37z"/></svg>
           </div>
           <div>Click <strong style="color:var(--nv)">Generate Report</strong> to run<br>DeepStream business inference</div>
         </div>
@@ -861,12 +851,12 @@ const DEFAULT_LAYOUT = {
 };
 
 const PANEL_META = {
-  camera:    { label:'Camera Feed', icon:'📷' },
-  nvidia:    { label:'NVIDIA AI',   icon:'⚡' },
-  inventory: { label:'Inventory',   icon:'📦' },
-  sales:     { label:'Sales Log',   icon:'💵' },
-  alerts:    { label:'Alerts',      icon:'🚨' },
-  diag:      { label:'Diagnostics', icon:'📊' },
+  camera:    { label:'Camera Feed' },
+  nvidia:    { label:'NVIDIA AI'   },
+  inventory: { label:'Inventory'   },
+  sales:     { label:'Sales Log'   },
+  alerts:    { label:'Alerts'      },
+  diag:      { label:'Diagnostics' },
 };
 
 let zCounter = 20;
@@ -1116,7 +1106,7 @@ function updateRestoreBar() {
     const m = PANEL_META[id];
     const chip = document.createElement('button');
     chip.className = 'restore-chip';
-    chip.innerHTML = `<svg viewBox="0 0 24 24" style="width:11px;height:11px;fill:currentColor"><path d="M19 3H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V5a2 2 0 00-2-2zm-7 3c1.93 0 3.5 1.57 3.5 3.5S13.93 13 12 13s-3.5-1.57-3.5-3.5S10.07 6 12 6z"/></svg>${m.icon} ${m.label}`;
+    chip.innerHTML = `<svg viewBox="0 0 24 24" style="width:11px;height:11px;fill:currentColor"><path d="M19 3H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V5a2 2 0 00-2-2zm-7 3c1.93 0 3.5 1.57 3.5 3.5S13.93 13 12 13s-3.5-1.57-3.5-3.5S10.07 6 12 6z"/></svg>${m.label}`;
     chip.onclick = () => restorePanel(id);
     bar.appendChild(chip);
   });
@@ -1371,7 +1361,7 @@ function updateConnectionStatus(connected) {
   } else {
     status.textContent = 'Reconnecting…';
     videoFeed.style.display='none'; noFeed.style.display='flex';
-    noFeed.innerHTML='<span class="no-feed-icon">🔄</span>Reconnecting…';
+    noFeed.innerHTML='Reconnecting…';
     pill.style.background = 'var(--amber-dim)';
     pill.style.borderColor = 'rgba(245,158,11,.18)';
     pill.querySelector('.status-dot').style.background = 'var(--amber)';
@@ -1465,7 +1455,7 @@ videoFileInput.addEventListener('change', e=>{
 function handleVideoEnded(sessionId) {
   console.log('Video ended:', sessionId);
   videoFeed.style.display='none'; noFeed.style.display='flex';
-  noFeed.innerHTML='<span class="no-feed-icon">✅</span>Video playback complete';
+  noFeed.innerHTML='Video playback complete';
 }
 
 // ═══════════════════════════════════════════════════════
@@ -1493,7 +1483,7 @@ async function nvGenerate() {
     nvRenderMock();
   } finally {
     nvGenerating=false; btn.disabled=false;
-    btn.innerHTML='<svg viewBox="0 0 24 24" style="width:11px;height:11px;fill:#fff"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>Generate Report';
+    btn.innerHTML='<svg viewBox="0 0 24 24" style="width:11px;height:11px;fill:#fff"><path d="M8 5v14l11-7z"/></svg>Generate Report';
   }
 }
 
@@ -1518,7 +1508,7 @@ function nvRenderReport(data) {
     const d=document.createElement('div'); d.className='nv-msg'; d.style.animationDelay=(i*0.05)+'s';
     const av=document.createElement('div'); av.className='nv-avatar '+(msg.role==='system'?'sys':'ai');
     if (msg.role==='system') av.textContent='SYS';
-    else av.innerHTML='<svg viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>';
+    else av.textContent='AI';
     const bubble=document.createElement('div'); bubble.className='nv-bubble '+(msg.type||'info');
     bubble.innerHTML=msg.content;
     d.appendChild(av); d.appendChild(bubble); chat.appendChild(d);
@@ -1558,7 +1548,7 @@ function nvRenderMock() {
     const d=document.createElement('div'); d.className='nv-msg'; d.style.animationDelay=(i*0.08)+'s';
     const av=document.createElement('div'); av.className='nv-avatar '+(msg.role==='system'?'sys':'ai');
     if (msg.role==='system') av.textContent='SYS';
-    else av.innerHTML='<svg viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>';
+    else av.textContent='AI';
     const bubble=document.createElement('div'); bubble.className='nv-bubble '+(msg.type||'info');
     bubble.innerHTML=msg.content;
     d.appendChild(av); d.appendChild(bubble); chat.appendChild(d);
@@ -1595,7 +1585,7 @@ fetchCameras(false);
 // Show drag hint on first visit
 if (!localStorage.getItem('veratori-drag-hint-seen')) {
   setTimeout(() => {
-    showToast('💡 Drag panel headers to move · Drag edges to resize · Double-click header to maximize');
+    showToast('Drag panel headers to move · Drag edges to resize · Double-click header to maximize');
     localStorage.setItem('veratori-drag-hint-seen', '1');
   }, 1200);
 }

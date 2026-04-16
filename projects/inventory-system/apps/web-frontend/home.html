@@ -57,20 +57,11 @@
       padding: 0 20px; gap: 0;
     }
     .topbar-brand {
-      display: flex; align-items: center; gap: 9px;
+      display: flex; align-items: center;
       text-decoration: none; width: var(--sidebar-w);
       flex-shrink: 0; padding-right: 16px;
     }
-    .brand-mark {
-      width: 28px; height: 28px; border-radius: 6px;
-      background: var(--nv); display: flex; align-items: center; justify-content: center;
-    }
-    .brand-mark svg { width: 14px; height: 14px; fill: #fff; }
-    .brand-name { font-size: 14px; font-weight: 700; color: var(--text-1); letter-spacing: -.3px; }
-    .brand-tier {
-      font-size: 9px; font-weight: 600; letter-spacing: .6px; text-transform: uppercase;
-      color: var(--text-3); margin-left: 2px;
-    }
+    .brand-logo { height: 22px; width: auto; display: block; }
     .topbar-nav {
       flex: 1; display: flex; align-items: center; gap: 1px;
     }
@@ -468,10 +459,9 @@
       display: flex; align-items: center; gap: 10px; margin-bottom: 10px;
     }
     .vera-insight-logo {
-      width: 24px; height: 24px; border-radius: 6px;
-      background: var(--nv); display: flex; align-items: center; justify-content: center;
+      font-size: 10px; font-weight: 700; letter-spacing: .5px; text-transform: uppercase;
+      color: var(--nv); flex-shrink: 0;
     }
-    .vera-insight-logo svg { width: 12px; height: 12px; fill: #fff; }
     .vera-insight-title { font-size: 12px; font-weight: 600; color: var(--text-2); }
     .vera-insight-time { font-size: 10.5px; color: var(--text-4); margin-left: auto; }
     .vera-insight-body { font-size: 13px; color: var(--text-2); line-height: 1.68; }
@@ -576,11 +566,7 @@
 <!-- ═══ TOPBAR ═══ -->
 <header class="topbar">
   <a href="home.html" class="topbar-brand">
-    <div class="brand-mark">
-      <svg viewBox="0 0 24 24"><path d="M3 3h8v8H3zm10 0h8v8h-8zM3 13h8v8H3zm13 0a4 4 0 100 8 4 4 0 000-8z"/></svg>
-    </div>
-    <span class="brand-name">Veratori</span>
-    <span class="brand-tier">Enterprise</span>
+    <img src="logo.png" alt="Veratori" class="brand-logo">
   </a>
 
   <nav class="topbar-nav">
@@ -1043,7 +1029,7 @@ function renderFranchise(f) {
 
       <div class="vera-insight">
         <div class="vera-insight-head">
-          <div class="vera-insight-logo"><svg viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg></div>
+          <div class="vera-insight-logo">VERA</div>
           <div class="vera-insight-title">VERA Intelligence — ${f.name}</div>
           <div class="vera-insight-time">Generated ${now} EST · DeepStream · Jetson Orin</div>
         </div>
