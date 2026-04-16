@@ -536,31 +536,19 @@
 
 <!-- ══════════════════ TOPBAR ══════════════════ -->
 <header class="topbar">
-  <button class="topbar-menu-btn" id="menuBtn">
-    <svg viewBox="0 0 24 24"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg>
-  </button>
   <a href="home.html" class="topbar-brand">
     <div class="brand-icon">
       <svg viewBox="0 0 24 24"><path d="M3 3h8v8H3zm10 0h8v8h-8zM3 13h8v8H3zm13 0a4 4 0 100 8 4 4 0 000-8z"/></svg>
     </div>
     <span class="brand-text">Veratori</span>
+    <span style="font-size:9px;font-weight:600;letter-spacing:.6px;text-transform:uppercase;color:var(--text-3);margin-left:2px">Enterprise</span>
   </a>
   <nav class="topbar-nav">
-    <a href="home.html" class="topbar-nav-link">
-      <svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>Hub
-    </a>
-    <a href="index.html" class="topbar-nav-link active">
-      <svg viewBox="0 0 24 24"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg>Dashboard
-    </a>
-    <a href="ai-analytics.html" class="topbar-nav-link">
-      <svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 110 20A10 10 0 0112 2zm-1 11h2v2h-2zm0-8h2v6h-2z"/></svg>AI Insights
-    </a>
-    <a href="analytics.html" class="topbar-nav-link">
-      <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/></svg>Analytics
-    </a>
-    <a href="upload.html" class="topbar-nav-link">
-      <svg viewBox="0 0 24 24"><path d="M9 16h6v-6h4l-7-7-7 7h4v6zm-4 2h14v2H5v-2z"/></svg>Upload
-    </a>
+    <a href="home.html"         class="topbar-nav-link">Hub</a>
+    <a href="index.html"        class="topbar-nav-link active">Dashboard</a>
+    <a href="ai-analytics.html" class="topbar-nav-link">AI Insights</a>
+    <a href="analytics.html"    class="topbar-nav-link">Analytics</a>
+    <a href="upload.html"       class="topbar-nav-link">Upload</a>
   </nav>
   <div class="topbar-right">
     <div id="statusPill" class="status-pill">
@@ -578,31 +566,10 @@
         Save
       </button>
     </div>
-    <button class="topbar-btn" onclick="handleLogout()" style="color:var(--red);border-color:rgba(239,68,68,.18)">Logout</button>
+    <a href="account.html" class="topbar-btn">Account</a>
+    <button class="topbar-btn danger" onclick="handleLogout()">Sign out</button>
   </div>
 </header>
-
-<!-- ══════════════════ SIDEBAR ══════════════════ -->
-<div class="sidebar-overlay" id="sidebarOverlay"></div>
-<nav class="sidebar" id="sidebar">
-  <div class="sidebar-hdr">
-    <span class="sidebar-brand-name">Veratori</span>
-    <button class="sidebar-close" id="sidebarClose">×</button>
-  </div>
-  <div class="sidebar-section-label">Platform</div>
-  <div class="sidebar-nav">
-    <a href="home.html" class="sidebar-link"><svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg><span>Home</span></a>
-    <a href="index.html" class="sidebar-link active"><svg viewBox="0 0 24 24"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg><span>Dashboard</span></a>
-    <a href="upload.html" class="sidebar-link"><svg viewBox="0 0 24 24"><path d="M9 16h6v-6h4l-7-7-7 7h4v6zm-4 2h14v2H5v-2z"/></svg><span>Upload</span></a>
-    <a href="analytics.html" class="sidebar-link"><svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/></svg><span>Data &amp; Analytics</span></a>
-    <a href="ai-analytics.html" class="sidebar-link"><svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 110 20A10 10 0 0112 2zm-1 11h2v2h-2zm0-8h2v6h-2z"/></svg><span>AI Insights</span></a>
-  </div>
-  <div class="sidebar-section-label">Settings</div>
-  <div class="sidebar-nav" style="flex:0">
-    <a href="account.html" class="sidebar-link"><svg viewBox="0 0 24 24"><path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/></svg><span>Account</span></a>
-  </div>
-  <div class="sidebar-footer"><span>Veratori v2.0 · Jetson Orin</span></div>
-</nav>
 
 <!-- ══════════════════ CANVAS ══════════════════ -->
 <div class="canvas" id="canvas">
@@ -909,7 +876,9 @@ let panelStates = {}; // stores pre-maximize geometry
 
 function canvasSize() {
   const c = document.getElementById('canvas');
-  return { w: c.clientWidth, h: c.clientHeight };
+  const w = c.clientWidth  || (window.innerWidth);
+  const h = c.clientHeight || (window.innerHeight - 52);
+  return { w, h };
 }
 
 function getPanel(id) { return document.getElementById('panel-' + id); }
@@ -1618,6 +1587,7 @@ function handleLogout() {
 //  INIT
 // ═══════════════════════════════════════════════════════
 initLayout();
+window.addEventListener('load', initLayout); // re-apply once all resources are loaded and dimensions are final
 connect();
 nvLoadLatest();
 fetchCameras(false);

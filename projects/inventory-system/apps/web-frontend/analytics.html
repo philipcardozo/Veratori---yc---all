@@ -52,42 +52,29 @@
             -webkit-font-smoothing: antialiased;
         }
 
-        /* Sidebar */
-        .sidebar-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); z-index: 1999; opacity: 0; pointer-events: none; transition: opacity .3s var(--ease); }
-        .sidebar-overlay.active { opacity: 1; pointer-events: auto; }
-        .sidebar { position: fixed; top: 0; left: 0; width: 280px; height: 100vh; background: var(--bg-primary); z-index: 2000; transform: translateX(-100%); transition: transform .3s var(--ease); display: flex; flex-direction: column; border-right: 1px solid var(--border); }
-        .sidebar.open { transform: translateX(0); }
-        .sidebar-header { display: flex; justify-content: space-between; align-items: center; padding: 24px 20px 20px; border-bottom: 1px solid var(--border); }
-        .sidebar-brand { display: flex; align-items: center; gap: 10px; font-size: 17px; font-weight: 700; color: var(--text-primary); }
-        .sidebar-brand-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 8px var(--accent-glow); }
-        .sidebar-close { background: none; border: none; color: var(--text-muted); font-size: 20px; cursor: pointer; padding: 6px 8px; border-radius: var(--radius-sm); transition: all .15s var(--ease); line-height: 1; }
-        .sidebar-close:hover { background: var(--bg-hover); color: var(--text-primary); }
-        .sidebar-section-label { padding: 20px 20px 8px; font-size: 11px; font-weight: 600; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; }
-        .sidebar-nav { flex: 1; padding: 0 12px; display: flex; flex-direction: column; gap: 2px; overflow-y: auto; }
-        .sidebar-link { display: flex; align-items: center; gap: 12px; padding: 10px 14px; color: var(--text-secondary); text-decoration: none; border-radius: var(--radius-md); font-size: 14px; font-weight: 500; transition: all .15s var(--ease); position: relative; }
-        .sidebar-link:hover { background: var(--bg-hover); color: var(--text-primary); }
-        .sidebar-link.active { background: var(--accent-glow); color: var(--accent); font-weight: 600; }
-        .sidebar-link.active::before { content: ''; position: absolute; left: 0; top: 50%; transform: translateY(-50%); width: 3px; height: 20px; background: var(--accent); border-radius: 0 3px 3px 0; }
-        .sidebar-link svg { width: 20px; height: 20px; fill: currentColor; flex-shrink: 0; opacity: .8; }
-        .sidebar-footer { padding: 16px 20px; border-top: 1px solid var(--border); }
-        .sidebar-version { font-size: 11px; color: var(--text-dim); }
+        /* ─── Topbar ─── */
+        .topbar { position: fixed; top: 0; left: 0; right: 0; z-index: 300; height: 52px; background: rgba(6,10,17,0.95); backdrop-filter: blur(20px); border-bottom: 1px solid rgba(255,255,255,0.055); display: flex; align-items: center; padding: 0 20px; gap: 0; }
+        .topbar-brand { display: flex; align-items: center; gap: 9px; text-decoration: none; margin-right: 24px; flex-shrink: 0; }
+        .brand-mark { width: 28px; height: 28px; border-radius: 6px; background: #5d9200; display: flex; align-items: center; justify-content: center; }
+        .brand-mark svg { width: 14px; height: 14px; fill: #fff; }
+        .brand-name { font-size: 14px; font-weight: 700; color: #e2e8f0; letter-spacing: -.3px; }
+        .brand-tier { font-size: 9px; font-weight: 600; letter-spacing: .6px; text-transform: uppercase; color: #556070; margin-left: 2px; }
+        .topbar-nav { flex: 1; display: flex; align-items: center; gap: 1px; }
+        .nav-a { padding: 5px 11px; border-radius: 6px; font-size: 12.5px; font-weight: 500; color: #556070; text-decoration: none; transition: color .14s, background .14s; white-space: nowrap; }
+        .nav-a:hover { color: #8899aa; background: rgba(255,255,255,0.04); }
+        .nav-a.active { color: #e2e8f0; font-weight: 600; background: rgba(255,255,255,0.06); }
+        .topbar-right { display: flex; align-items: center; gap: 12px; }
+        .network-status { display: flex; align-items: center; gap: 7px; font-size: 12px; color: #8899aa; }
+        .ns-dot { width: 6px; height: 6px; border-radius: 50%; background: #10b981; flex-shrink: 0; box-shadow: 0 0 0 2px rgba(16,185,129,.2); animation: blink 2.4s ease infinite; }
+        @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.4} }
+        .topbar-divider { width: 1px; height: 18px; background: rgba(255,255,255,0.055); }
+        .topbar-action { font-size: 12px; font-weight: 500; color: #556070; background: none; border: none; cursor: pointer; font-family: inherit; padding: 4px 8px; border-radius: 5px; transition: color .14s; text-decoration: none; }
+        .topbar-action:hover { color: #8899aa; background: rgba(255,255,255,0.04); }
+        .topbar-action.danger:hover { color: #dc2626; }
 
         /* Layout */
-        .page-wrapper { display: flex; flex-direction: column; min-height: 100vh; }
+        .page-wrapper { display: flex; flex-direction: column; min-height: 100vh; padding-top: 52px; }
         .page-content { flex: 1; padding: 24px; max-width: 1400px; margin: 0 auto; width: 100%; }
-
-        /* Top Bar */
-        .top-bar { display: flex; align-items: center; justify-content: space-between; padding: 16px 24px; border-bottom: 1px solid var(--border); background: var(--bg-primary); position: sticky; top: 0; z-index: 100; backdrop-filter: blur(12px); }
-        .top-bar-left { display: flex; align-items: center; gap: 16px; }
-        .top-bar-right { display: flex; align-items: center; gap: 10px; }
-        .menu-btn { background: none; border: 1px solid var(--border-light); color: var(--text-secondary); cursor: pointer; padding: 8px; border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; transition: all .2s var(--ease); }
-        .menu-btn:hover { background: var(--bg-hover); border-color: rgba(255,255,255,0.15); color: var(--text-primary); }
-        .menu-btn svg { width: 18px; height: 18px; fill: currentColor; }
-        .breadcrumb { display: flex; align-items: center; gap: 8px; font-size: 13px; }
-        .breadcrumb a { color: var(--text-muted); text-decoration: none; }
-        .breadcrumb a:hover { color: var(--text-primary); }
-        .breadcrumb-sep { color: var(--text-dim); font-size: 11px; }
-        .breadcrumb-current { color: var(--text-primary); font-weight: 600; }
 
         /* Buttons */
         .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 10px 20px; border-radius: var(--radius-md); font-size: 14px; font-weight: 600; font-family: inherit; cursor: pointer; transition: all .2s var(--ease); border: none; text-decoration: none; }
@@ -244,72 +231,35 @@
     </style>
 </head>
 <body>
-    <!-- Sidebar -->
-    <div class="sidebar-overlay" id="sidebarOverlay"></div>
-    <nav class="sidebar" id="sidebar">
-        <div class="sidebar-header">
-            <span class="sidebar-brand"><span class="sidebar-brand-dot"></span>Veratori</span>
-            <button class="sidebar-close" id="sidebarClose">&times;</button>
-        </div>
-        <div class="sidebar-section-label">Platform</div>
-        <div class="sidebar-nav">
-            <a href="home.html" class="sidebar-link">
-                <svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
-                <span>Home</span>
-            </a>
-            <a href="index.html" class="sidebar-link">
-                <svg viewBox="0 0 24 24"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg>
-                <span>Dashboard</span>
-            </a>
-            <a href="upload.html" class="sidebar-link">
-                <svg viewBox="0 0 24 24"><path d="M9 16h6v-6h4l-7-7-7 7h4v6zm-4 2h14v2H5v-2z"/></svg>
-                <span>Upload</span>
-            </a>
-            <a href="analytics.html" class="sidebar-link active">
-                <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/></svg>
-                <span>Data & Analytics</span>
-            </a>
-        </div>
-        <div class="sidebar-section-label">Settings</div>
-        <div class="sidebar-nav" style="flex:0;">
-            <a href="account.html" class="sidebar-link">
-                <svg viewBox="0 0 24 24"><path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/></svg>
-                <span>Account</span>
-            </a>
-        </div>
-        <div class="sidebar-footer">
-            <div class="sidebar-version">Veratori v2.0 · Analytics</div>
-        </div>
-    </nav>
+
+<!-- ═══ TOPBAR ═══ -->
+<header class="topbar">
+  <a href="home.html" class="topbar-brand">
+    <div class="brand-mark">
+      <svg viewBox="0 0 24 24"><path d="M3 3h8v8H3zm10 0h8v8h-8zM3 13h8v8H3zm13 0a4 4 0 100 8 4 4 0 000-8z"/></svg>
+    </div>
+    <span class="brand-name">Veratori</span>
+    <span class="brand-tier">Enterprise</span>
+  </a>
+  <nav class="topbar-nav">
+    <a href="home.html"         class="nav-a">Hub</a>
+    <a href="index.html"        class="nav-a">Dashboard</a>
+    <a href="ai-analytics.html" class="nav-a">AI Insights</a>
+    <a href="analytics.html"    class="nav-a active">Analytics</a>
+    <a href="upload.html"       class="nav-a">Upload</a>
+  </nav>
+  <div class="topbar-right">
+    <div class="network-status">
+      <div class="ns-dot"></div>
+      <span>5 locations active</span>
+    </div>
+    <div class="topbar-divider"></div>
+    <a href="account.html" class="topbar-action">Account</a>
+    <button class="topbar-action danger" onclick="handleLogout()">Sign out</button>
+  </div>
+</header>
 
     <div class="page-wrapper">
-        <!-- Top Bar -->
-        <div class="top-bar">
-            <div class="top-bar-left">
-                <button class="menu-btn" id="menuBtn">
-                    <svg viewBox="0 0 24 24"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg>
-                </button>
-                <div class="breadcrumb">
-                    <a href="index.html">Dashboard</a>
-                    <span class="breadcrumb-sep">></span>
-                    <span class="breadcrumb-current">Sales Analytics</span>
-                </div>
-            </div>
-            <div class="top-bar-right">
-                <button class="btn btn-primary" id="exportBtn" style="font-size:13px; padding:8px 16px;">
-                    <svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
-                    Export Excel
-                </button>
-                <button class="btn btn-ghost" id="clearDataBtn" style="font-size:13px; padding:8px 14px; border-color: rgba(239,68,68,0.4); color: #ef4444;">
-                    <svg viewBox="0 0 24 24" style="width:14px;height:14px;"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z" fill="currentColor"/></svg>
-                    Clear Data
-                </button>
-                <a href="index.html" class="btn btn-ghost" style="font-size:13px; padding:8px 14px;">
-                    <svg viewBox="0 0 24 24" style="width:14px;height:14px;"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
-                    Back
-                </a>
-            </div>
-        </div>
 
         <!-- Main Content -->
         <main class="page-content">
@@ -474,19 +424,7 @@
     </div>
 
     <script>
-        // Sidebar
-        const menuBtn = document.getElementById('menuBtn');
-        const sidebar = document.getElementById('sidebar');
-        const sidebarOverlay = document.getElementById('sidebarOverlay');
-        const sidebarClose = document.getElementById('sidebarClose');
-
-        function openSidebar() { sidebar.classList.add('open'); sidebarOverlay.classList.add('active'); }
-        function closeSidebar() { sidebar.classList.remove('open'); sidebarOverlay.classList.remove('active'); }
-
-        menuBtn.addEventListener('click', openSidebar);
-        sidebarClose.addEventListener('click', closeSidebar);
-        sidebarOverlay.addEventListener('click', closeSidebar);
-        document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeSidebar(); });
+        function handleLogout() { window.location.href = 'login.html'; }
 
         // API Base URL helper - handles cross-port development setup
         function getApiBaseUrl() {
