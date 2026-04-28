@@ -1540,7 +1540,7 @@ function toggleYolo() {
       if (yoloActive) {
         _yoloBtnOn();
         document.getElementById('yoloStatusText').textContent = 'YOLO inference ON — detecting items';
-        document.getElementById('cameraSubtitle').textContent = 'YOLO ON · detecting · conf 35%';
+        document.getElementById('cameraSubtitle').textContent = 'YOLO ON · detecting · conf 40%';
       } else {
         _yoloBtnOff();
         document.getElementById('yoloStatusText').textContent = 'Camera streaming · YOLO OFF';
@@ -1597,9 +1597,9 @@ function connectYoloServer() {
       label.textContent = 'YOLO Live';
       btn.style.opacity = '1';
       bar.style.display = 'flex';
-      document.getElementById('videoSourceTitle').textContent = 'YOLO Live — Poke Bowl';
+      document.getElementById('videoSourceTitle').textContent = 'YOLO Live — Inventory';
       document.getElementById('cameraSubtitle').textContent   = data.connected
-        ? `See3CAM · ${data.fps} fps · conf 35%`
+        ? `See3CAM · ${data.fps} fps · conf 40%`
         : 'Server running — camera starting…';
       stTxt.textContent = data.connected
         ? `Streaming · ${data.fps} fps`
@@ -1637,32 +1637,43 @@ function reconnectYoloServer() {
 
 function pollYoloStatus() {
   if (!yoloConnected) { clearInterval(yoloPollTimer); return; }
-  fetch(`${YOLO_SERVER}/status`, { signal: AbortSignal.timeout(2000) })
-    .then(r => r.json())
-    .then(data => {
-      const stTxt = document.getElementById('yoloStatusText');
-      // Sync button state with server
-      if (data.yolo !== undefined && data.yolo !== yoloActive) {
-        yoloActive = data.yolo;
-        yoloActive ? _yoloBtnOn() : _yoloBtnOff();
-      }
-      if (data.error) {
-        stTxt.textContent = `⚠ ${data.error}`;
-      } else if (data.yolo) {
-        stTxt.textContent = `YOLO ON · ${data.fps} fps · detecting`;
-        document.getElementById('cameraSubtitle').textContent = `YOLO ON · ${data.fps} fps · conf 35%`;
-      } else {
-        stTxt.textContent = `Streaming · ${data.fps} fps · YOLO OFF`;
-        document.getElementById('cameraSubtitle').textContent = `See3CAM · ${data.fps} fps · YOLO paused`;
-      }
-    })
-    .catch(() => {
-      yoloConnected = false;
-      clearInterval(yoloPollTimer);
-      if (yoloFrameTimer) clearTimeout(yoloFrameTimer);
-      document.getElementById('yoloStatusText').textContent = 'Server unreachable';
-      _yoloHideCanvas();
-    });
+
+  // Poll status and detections in parallel
+  Promise.all([
+    fetch(`${YOLO_SERVER}/status`,     { signal: AbortSignal.timeout(2000) }).then(r => r.json()),
+    fetch(`${YOLO_SERVER}/detections`, { signal: AbortSignal.timeout(2000) }).then(r => r.json()),
+  ])
+  .then(([data, detections]) => {
+    const stTxt = document.getElementById('yoloStatusText');
+
+    // Sync button state with server
+    if (data.yolo !== undefined && data.yolo !== yoloActive) {
+      yoloActive = data.yolo;
+      yoloActive ? _yoloBtnOn() : _yoloBtnOff();
+    }
+
+    if (data.error) {
+      stTxt.textContent = `⚠ ${data.error}`;
+    } else if (data.yolo) {
+      stTxt.textContent = `YOLO ON · ${data.fps} fps · detecting`;
+      document.getElementById('cameraSubtitle').textContent = `YOLO ON · ${data.fps} fps · conf 40%`;
+    } else {
+      stTxt.textContent = `Streaming · ${data.fps} fps · YOLO OFF`;
+      document.getElementById('cameraSubtitle').textContent = `Camera · ${data.fps} fps · YOLO paused`;
+    }
+
+    // Update Live Inventory panel from real YOLO detections
+    const inventory = {};
+    detections.forEach(d => { inventory[d.label] = d.count; });
+    updateInventory(inventory);
+  })
+  .catch(() => {
+    yoloConnected = false;
+    clearInterval(yoloPollTimer);
+    if (yoloFrameTimer) clearTimeout(yoloFrameTimer);
+    document.getElementById('yoloStatusText').textContent = 'Server unreachable';
+    _yoloHideCanvas();
+  });
 }
 
 // Auto-try YOLO server when page loads
@@ -1703,7 +1714,7 @@ function nvInitCamMode() {
   chat.innerHTML = '';
   const msgs = [
     { role:'system', type:'info',    content:'Camera Demo mode — live YOLO inference stats from <strong>localhost:5001</strong>.' },
-    { role:'ai',     type:'info',    content:'Model: <strong>YOLOv8n · Poke Bowl dataset</strong> · 40 classes · conf threshold 35%.' },
+    { role:'ai',     type:'info',    content:'Model: <strong>YOLOv8n · COCO pretrained</strong> · 80 classes · conf threshold 40%.' },
     { role:'ai',     type:'success', content:'Start <code>camera_server.py</code> to see live FPS and detection counts here.' },
   ];
   msgs.forEach((msg, i) => {

@@ -28,9 +28,8 @@ class ThreadingHTTPServer(ThreadingMixIn, TCPServer):
 
 # ── Config ────────────────────────────────────────────────────────────────────
 PORT       = 5001
-MODEL_PATH = os.path.join(os.path.dirname(__file__),
-    "runs/detect/runs/train/pokebowl_yolov8n_20260113_172436/weights/best.pt")
-CONF_THRESH = 0.25
+MODEL_PATH = os.path.join(os.path.dirname(__file__), "models/yolov8n.pt")
+CONF_THRESH = 0.40
 FRAME_W     = 640
 FRAME_H     = 480
 
@@ -42,11 +41,13 @@ PALETTE = [
 ]
 
 # ── Shared state ──────────────────────────────────────────────────────────────
-lock          = threading.Lock()
-latest_frame  = None   # bytes (JPEG)
-yolo_enabled  = False  # toggled by POST /yolo/toggle
-camera_status = {"connected": False, "error": None, "fps": 0, "yolo": False}
-model         = None
+lock             = threading.Lock()
+latest_frame     = None   # bytes (JPEG)
+yolo_enabled     = False  # toggled by POST /yolo/toggle
+camera_status    = {"connected": False, "error": None, "fps": 0, "yolo": False}
+model            = None
+latest_detections = []    # list of {label, conf, count} updated each frame
+_last_empty_log  = 0.0    # throttle for "no detections" spam (1/sec)
 
 # ── Camera + inference thread ─────────────────────────────────────────────────
 # Keywords that identify phone / virtual cameras — always tried last
@@ -162,7 +163,7 @@ def draw_detections(frame, results):
     return frame
 
 def capture_loop():
-    global latest_frame, camera_status, model
+    global latest_frame, camera_status, model, _last_empty_log, latest_detections
 
     print("[server] Loading YOLO model…")
     try:
@@ -207,8 +208,35 @@ def capture_loop():
             try:
                 results = model(frame, conf=CONF_THRESH, verbose=False)
                 frame   = draw_detections(frame, results)
+
+                # Aggregate detections by label
+                counts = {}
+                for r in results:
+                    for box in r.boxes:
+                        cls   = int(box.cls[0])
+                        conf  = float(box.conf[0])
+                        label = model.names[cls] if hasattr(model, 'names') else str(cls)
+                        if label not in counts:
+                            counts[label] = {"label": label, "count": 0, "conf": 0.0}
+                        counts[label]["count"] += 1
+                        counts[label]["conf"] = max(counts[label]["conf"], conf)
+
+                new_detections = sorted(counts.values(), key=lambda x: -x["count"])
+                with lock:
+                    latest_detections = new_detections
+
+                if new_detections:
+                    print(f"[yolo] DETECTED: { {d['label']: d['count'] for d in new_detections} }")
+                else:
+                    now = time.time()
+                    if now - _last_empty_log >= 1.0:
+                        print(f"[yolo] no detections (conf={CONF_THRESH})")
+                        _last_empty_log = now
             except Exception as e:
                 print(f"[yolo] Inference error: {e}")
+        else:
+            with lock:
+                latest_detections = []
 
         # FPS overlay
         fc += 1
@@ -311,6 +339,18 @@ class Handler(BaseHTTPRequestHandler):
             self.send_response(200)
             self.send_header("Content-Type", "application/json")
             self.send_header("Content-Length", len(body))
+            self._cors()
+            self.end_headers()
+            self.wfile.write(body)
+
+        elif self.path == "/detections":
+            with lock:
+                payload = list(latest_detections)
+            body = json.dumps(payload).encode()
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Content-Length", len(body))
+            self.send_header("Cache-Control", "no-cache, no-store")
             self._cors()
             self.end_headers()
             self.wfile.write(body)
