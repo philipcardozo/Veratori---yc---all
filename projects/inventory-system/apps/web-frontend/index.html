@@ -7,6 +7,10 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+  <script src="firebase-auth.js?v=3"></script>
+  <script>requireAuth();</script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <style>
     :root {
@@ -304,7 +308,8 @@
       background:var(--bg-base); border-radius:8px; overflow:hidden;
       position:relative; border:1px solid var(--border); min-height:80px;
     }
-    #videoFeed { max-width:100%; max-height:100%; display:none; }
+    #videoFeed { max-width:100%; max-height:100%; display:none; border-radius:4px; }
+    #yoloCanvas { width:100%; height:100%; display:none; border-radius:4px; object-fit:contain; }
     .no-feed {
       color:var(--text-4); font-size:13px; font-weight:500; text-align:center;
       display:flex; flex-direction:column; align-items:center; gap:8px;
@@ -648,13 +653,23 @@
             <div id="cameraList"><div class="camera-no-items">Loading…</div></div>
           </div>
         </div>
+        <button class="cam-btn" id="yoloConnectBtn" onclick="handleYoloBtn()" style="background:rgba(93,146,0,0.12);border-color:rgba(93,146,0,0.25);color:#76b900;transition:all .2s">
+          <svg id="yoloBtnIcon" viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+          <span id="yoloBtnLabel">YOLO Live</span>
+        </button>
         <button class="cam-btn" id="loadVideoBtn" style="background:var(--green-dim);border-color:rgba(16,185,129,.2);color:var(--green)">
           <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>Load Video
         </button>
         <input type="file" id="videoFileInput" accept="video/*" style="display:none">
       </div>
+      <div id="yoloStatusBar" style="display:none;font-size:11px;color:#76b900;padding:3px 0 0;display:flex;align-items:center;gap:6px">
+        <span style="width:6px;height:6px;border-radius:50%;background:#76b900;display:inline-block;box-shadow:0 0 6px rgba(118,185,0,0.6)"></span>
+        <span id="yoloStatusText">YOLO server connected</span>
+        <button onclick="reconnectYoloServer()" style="margin-left:auto;background:none;border:1px solid rgba(118,185,0,0.3);color:#76b900;font-size:10px;padding:2px 8px;border-radius:4px;cursor:pointer">Reconnect</button>
+      </div>
       <div class="video-wrapper">
         <img id="videoFeed" alt="Live video feed">
+        <canvas id="yoloCanvas"></canvas>
         <div class="no-feed" id="noFeed">
           <svg viewBox="0 0 24 24" style="width:28px;height:28px;fill:currentColor;opacity:.25"><path d="M20 4h-3.17L15 2H9L7.17 4H4a2 2 0 00-2 2v12a2 2 0 002 2h16a2 2 0 002-2V6a2 2 0 00-2-2zm-8 13a5 5 0 110-10 5 5 0 010 10z"/></svg>
           Waiting for camera feed…
@@ -1175,6 +1190,8 @@ let reconnectInterval = null;
 let isConnected = false;
 
 const videoFeed     = document.getElementById('videoFeed');
+const yoloCanvas    = document.getElementById('yoloCanvas');
+const yoloCtx       = yoloCanvas ? yoloCanvas.getContext('2d') : null;
 const noFeed        = document.getElementById('noFeed');
 const inventoryList = document.getElementById('inventoryList');
 const totalItems    = document.getElementById('totalItems');
@@ -1462,6 +1479,262 @@ function handleVideoEnded(sessionId) {
   console.log('Video ended:', sessionId);
   videoFeed.style.display='none'; noFeed.style.display='flex';
   noFeed.innerHTML='Video playback complete';
+}
+
+// ═══════════════════════════════════════════════════════
+//  YOLO LOCAL SERVER  (localhost:5001)
+//  Uses canvas + /snapshot polling — MJPEG <img> blocked by Chrome cross-origin
+// ═══════════════════════════════════════════════════════
+const YOLO_SERVER   = 'http://localhost:5001';
+let yoloConnected   = false;
+let yoloActive      = false;  // true = YOLO inference ON on the server
+let yoloFrameTimer  = null;
+let yoloPollTimer   = null;
+let yoloFrameImg    = new Image();
+
+// ── Button state helpers ───────────────────────────────
+function _yoloBtnOn() {
+  const btn = document.getElementById('yoloConnectBtn');
+  const lbl = document.getElementById('yoloBtnLabel');
+  btn.style.background   = 'rgba(118,185,0,0.22)';
+  btn.style.borderColor  = 'rgba(118,185,0,0.6)';
+  btn.style.color        = '#76b900';
+  btn.style.boxShadow    = '0 0 10px rgba(118,185,0,0.3)';
+  lbl.textContent        = 'YOLO ON';
+}
+function _yoloBtnOff() {
+  const btn = document.getElementById('yoloConnectBtn');
+  const lbl = document.getElementById('yoloBtnLabel');
+  btn.style.background   = 'rgba(93,146,0,0.12)';
+  btn.style.borderColor  = 'rgba(93,146,0,0.25)';
+  btn.style.color        = '#76b900';
+  btn.style.boxShadow    = 'none';
+  lbl.textContent        = 'YOLO Live';
+}
+function _yoloBtnLoading(text) {
+  document.getElementById('yoloBtnLabel').textContent = text;
+  document.getElementById('yoloConnectBtn').style.opacity = '0.6';
+}
+function _yoloBtnReady() {
+  document.getElementById('yoloConnectBtn').style.opacity = '1';
+}
+
+// ── Main toggle handler (called by button) ─────────────
+function handleYoloBtn() {
+  if (!yoloConnected) {
+    // Not yet connected — connect first
+    connectYoloServer();
+  } else {
+    // Already connected — toggle inference
+    toggleYolo();
+  }
+}
+
+function toggleYolo() {
+  _yoloBtnLoading(yoloActive ? 'Disabling…' : 'Enabling…');
+  fetch(`${YOLO_SERVER}/yolo/toggle`, { method: 'POST', signal: AbortSignal.timeout(3000) })
+    .then(r => r.json())
+    .then(data => {
+      yoloActive = data.yolo;
+      _yoloBtnReady();
+      if (yoloActive) {
+        _yoloBtnOn();
+        document.getElementById('yoloStatusText').textContent = 'YOLO inference ON — detecting items';
+        document.getElementById('cameraSubtitle').textContent = 'YOLO ON · detecting · conf 35%';
+      } else {
+        _yoloBtnOff();
+        document.getElementById('yoloStatusText').textContent = 'Camera streaming · YOLO OFF';
+        document.getElementById('cameraSubtitle').textContent = 'Camera live · YOLO paused';
+      }
+    })
+    .catch(() => { _yoloBtnReady(); });
+}
+
+function _yoloShowCanvas() {
+  yoloCanvas.style.display = 'block';
+  noFeed.style.display     = 'none';
+}
+function _yoloHideCanvas() {
+  yoloCanvas.style.display = 'none';
+  noFeed.style.display     = 'flex';
+}
+
+function _yoloDrawLoop() {
+  if (!yoloConnected) return;
+  const t = Date.now();
+  const img = new Image();
+  img.onload = () => {
+    if (!yoloConnected) return;
+    // Resize canvas to match frame dimensions once
+    if (yoloCanvas.width !== img.naturalWidth || yoloCanvas.height !== img.naturalHeight) {
+      yoloCanvas.width  = img.naturalWidth  || 640;
+      yoloCanvas.height = img.naturalHeight || 480;
+    }
+    yoloCtx.drawImage(img, 0, 0, yoloCanvas.width, yoloCanvas.height);
+    _yoloShowCanvas();
+    yoloFrameTimer = setTimeout(_yoloDrawLoop, 40); // ~25 fps
+  };
+  img.onerror = () => {
+    if (!yoloConnected) return;
+    yoloFrameTimer = setTimeout(_yoloDrawLoop, 200); // retry slower on error
+  };
+  img.src = `${YOLO_SERVER}/snapshot?t=${t}`;
+}
+
+function connectYoloServer() {
+  const btn   = document.getElementById('yoloConnectBtn');
+  const label = document.getElementById('yoloBtnLabel');
+  const bar   = document.getElementById('yoloStatusBar');
+  const stTxt = document.getElementById('yoloStatusText');
+
+  label.textContent = 'Connecting…';
+  btn.style.opacity = '0.6';
+
+  fetch(`${YOLO_SERVER}/status`, { signal: AbortSignal.timeout(3000) })
+    .then(r => r.json())
+    .then(data => {
+      yoloConnected = true;
+      label.textContent = 'YOLO Live';
+      btn.style.opacity = '1';
+      bar.style.display = 'flex';
+      document.getElementById('videoSourceTitle').textContent = 'YOLO Live — Poke Bowl';
+      document.getElementById('cameraSubtitle').textContent   = data.connected
+        ? `See3CAM · ${data.fps} fps · conf 35%`
+        : 'Server running — camera starting…';
+      stTxt.textContent = data.connected
+        ? `Streaming · ${data.fps} fps`
+        : data.error || 'Camera initialising…';
+
+      // Start canvas frame loop
+      if (yoloFrameTimer) clearTimeout(yoloFrameTimer);
+      _yoloDrawLoop();
+
+      // Status poll
+      if (yoloPollTimer) clearInterval(yoloPollTimer);
+      yoloPollTimer = setInterval(pollYoloStatus, 2000);
+    })
+    .catch(() => {
+      _yoloHideCanvas();
+      noFeed.innerHTML  = '⚠ YOLO server not running<br><small style="color:var(--text-4)">Start camera_server.py first</small>';
+      bar.style.display = 'none';
+      label.textContent = 'YOLO Live';
+      btn.style.opacity = '1';
+    });
+}
+
+function reconnectYoloServer() {
+  yoloConnected = false;
+  if (yoloFrameTimer) clearTimeout(yoloFrameTimer);
+  if (yoloPollTimer)  clearInterval(yoloPollTimer);
+  _yoloHideCanvas();
+  noFeed.innerHTML = 'Reconnecting to YOLO server…';
+  document.getElementById('yoloStatusText').textContent = 'Reconnecting…';
+
+  fetch(`${YOLO_SERVER}/reconnect`, { method:'POST', signal: AbortSignal.timeout(3000) })
+    .then(() => setTimeout(connectYoloServer, 1500))
+    .catch(()  => setTimeout(connectYoloServer, 1500));
+}
+
+function pollYoloStatus() {
+  if (!yoloConnected) { clearInterval(yoloPollTimer); return; }
+  fetch(`${YOLO_SERVER}/status`, { signal: AbortSignal.timeout(2000) })
+    .then(r => r.json())
+    .then(data => {
+      const stTxt = document.getElementById('yoloStatusText');
+      // Sync button state with server
+      if (data.yolo !== undefined && data.yolo !== yoloActive) {
+        yoloActive = data.yolo;
+        yoloActive ? _yoloBtnOn() : _yoloBtnOff();
+      }
+      if (data.error) {
+        stTxt.textContent = `⚠ ${data.error}`;
+      } else if (data.yolo) {
+        stTxt.textContent = `YOLO ON · ${data.fps} fps · detecting`;
+        document.getElementById('cameraSubtitle').textContent = `YOLO ON · ${data.fps} fps · conf 35%`;
+      } else {
+        stTxt.textContent = `Streaming · ${data.fps} fps · YOLO OFF`;
+        document.getElementById('cameraSubtitle').textContent = `See3CAM · ${data.fps} fps · YOLO paused`;
+      }
+    })
+    .catch(() => {
+      yoloConnected = false;
+      clearInterval(yoloPollTimer);
+      if (yoloFrameTimer) clearTimeout(yoloFrameTimer);
+      document.getElementById('yoloStatusText').textContent = 'Server unreachable';
+      _yoloHideCanvas();
+    });
+}
+
+// Auto-try YOLO server when page loads
+window.addEventListener('load', () => {
+  setTimeout(() => {
+    fetch(`${YOLO_SERVER}/status`, { signal: AbortSignal.timeout(1500) })
+      .then(() => connectYoloServer())
+      .catch(() => {});
+  }, 800);
+});
+
+// ═══════════════════════════════════════════════════════
+//  CAM MODE  (?loc=cam — Camera Demo location)
+// ═══════════════════════════════════════════════════════
+const isCamMode = new URLSearchParams(window.location.search).get('loc') === 'cam';
+
+let nvCamPollTimer = null;
+
+function nvInitCamMode() {
+  // Retitle the NVIDIA panel to show YOLO inference from localhost
+  document.getElementById('nvSubtitle').textContent = 'YOLO · USB Camera';
+  document.getElementById('nvModePill').textContent  = 'Live Inference';
+
+  // Show stat row immediately with placeholders
+  document.getElementById('nvStatRow').style.display  = 'grid';
+  document.getElementById('nvEmpty').style.display    = 'none';
+  document.getElementById('nvStatFrames').textContent = '—';
+  document.getElementById('nvStatConf').textContent   = '—';
+  document.getElementById('nvStatGpu').textContent    = '—';
+
+  // Stat label overrides: Frames→FPS, Confidence→Confidence, GPU Load→Status
+  const labels = document.querySelectorAll('.nv-stat-lbl');
+  if (labels[0]) labels[0].textContent = 'FPS';
+  if (labels[2]) labels[2].textContent = 'Status';
+
+  // Initial message
+  const chat = document.getElementById('nvChat');
+  chat.innerHTML = '';
+  const msgs = [
+    { role:'system', type:'info',    content:'Camera Demo mode — live YOLO inference stats from <strong>localhost:5001</strong>.' },
+    { role:'ai',     type:'info',    content:'Model: <strong>YOLOv8n · Poke Bowl dataset</strong> · 40 classes · conf threshold 35%.' },
+    { role:'ai',     type:'success', content:'Start <code>camera_server.py</code> to see live FPS and detection counts here.' },
+  ];
+  msgs.forEach((msg, i) => {
+    const d  = document.createElement('div'); d.className = 'nv-msg'; d.style.animationDelay = (i*0.08)+'s';
+    const av = document.createElement('div'); av.className = 'nv-avatar ' + (msg.role === 'system' ? 'sys' : 'ai');
+    av.textContent = msg.role === 'system' ? 'SYS' : 'AI';
+    const bubble = document.createElement('div'); bubble.className = 'nv-bubble ' + (msg.type || 'info');
+    bubble.innerHTML = msg.content;
+    d.appendChild(av); d.appendChild(bubble); chat.appendChild(d);
+  });
+
+  // Poll /status every 2s to update stats
+  function pollCamStats() {
+    fetch(`${YOLO_SERVER}/status`, { signal: AbortSignal.timeout(1500) })
+      .then(r => r.json())
+      .then(data => {
+        document.getElementById('nvStatFrames').textContent = data.fps != null ? data.fps : '—';
+        document.getElementById('nvStatConf').textContent   = '35%';
+        document.getElementById('nvStatGpu').textContent    = data.connected ? 'Live' : data.error ? 'Error' : '—';
+        document.getElementById('nvSubtitle').textContent   = data.connected
+          ? `YOLO · ${data.fps} fps · USB Camera`
+          : 'YOLO · Waiting for camera…';
+      })
+      .catch(() => {
+        document.getElementById('nvStatGpu').textContent  = 'Off';
+        document.getElementById('nvSubtitle').textContent = 'YOLO · server not running';
+      });
+  }
+  pollCamStats();
+  if (nvCamPollTimer) clearInterval(nvCamPollTimer);
+  nvCamPollTimer = setInterval(pollCamStats, 2000);
 }
 
 // ═══════════════════════════════════════════════════════
@@ -1895,13 +2168,6 @@ async function buildAndDownloadPDF(period, aiContent) {
   doc.save(fname);
 }
 
-// ═══════════════════════════════════════════════════════
-//  LOGOUT
-// ═══════════════════════════════════════════════════════
-function handleLogout() {
-  fetch('/api/logout',{method:'POST',credentials:'same-origin'})
-    .finally(()=>{ window.location.href='/login'; });
-}
 
 // ═══════════════════════════════════════════════════════
 //  INIT
@@ -1909,9 +2175,15 @@ function handleLogout() {
 initLayout();
 window.addEventListener('load', initLayout); // re-apply once all resources are loaded and dimensions are final
 connect();
-nvLoadLatest();
 fetchCameras(false);
-initDemoAlerts();
+
+if (isCamMode) {
+  updateAlerts([]);   // Camera Demo has no sales alerts
+  nvInitCamMode();    // NVIDIA panel shows live YOLO stats from localhost:5001
+} else {
+  nvLoadLatest();
+  initDemoAlerts();
+}
 
 // Show drag hint on first visit
 if (!localStorage.getItem('veratori-drag-hint-seen')) {

@@ -7,6 +7,10 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+    <script src="firebase-auth.js?v=3"></script>
+    <script>requireAuth();</script>
     <style>
         :root {
             --bg-base: #070b12;
@@ -398,29 +402,42 @@
         sidebarOverlay.addEventListener('click', closeSidebar);
         document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeSidebar(); });
 
-        /* ── Load Account Info ── */
-        async function loadAccountInfo() {
-            try {
-                const res = await fetch('/api/account/info', { credentials: 'same-origin' });
-                if (res.status === 401) { window.location.href = '/login'; return; }
-                const data = await res.json();
-                const username = data.username || 'User';
-                document.getElementById('infoUsername').textContent = username;
-                document.getElementById('profileName').textContent = username;
-                document.getElementById('avatarInitials').textContent = username.substring(0, 2).toUpperCase();
-                document.getElementById('infoAuth').textContent = data.auth_enabled ? 'Enabled' : 'Disabled';
-            } catch (err) {
-                console.error('Failed to load account info:', err);
-                document.getElementById('profileName').textContent = 'Unavailable';
-                document.getElementById('avatarInitials').textContent = '?';
-            }
-        }
-        loadAccountInfo();
+        /* ── Load Firebase User Info ── */
+        firebase.auth().onAuthStateChanged(user => {
+            if (!user) return;
 
-        /* ── Change Password ── */
+            const name = user.displayName || user.email.split('@')[0];
+            const email = user.email;
+            const isGoogle = user.providerData.some(p => p.providerId === 'google.com');
+            const initials = name.substring(0, 2).toUpperCase();
+
+            // Avatar: photo or initials
+            const avatarEl = document.getElementById('avatarInitials');
+            if (user.photoURL) {
+                avatarEl.style.background = 'none';
+                avatarEl.style.padding = '0';
+                avatarEl.innerHTML = `<img src="${user.photoURL}" style="width:72px;height:72px;border-radius:50%;object-fit:cover;" referrerpolicy="no-referrer">`;
+            } else {
+                avatarEl.textContent = initials;
+            }
+
+            document.getElementById('profileName').textContent = name;
+            document.getElementById('infoUsername').textContent = email;
+            document.getElementById('infoAuth').textContent = isGoogle ? 'Google Sign-In' : 'Email / Password';
+
+            // Hide password form for Google users
+            if (isGoogle) {
+                document.getElementById('pwForm').innerHTML = `
+                    <div style="padding:20px 0;text-align:center;color:var(--text-secondary);font-size:13px;line-height:1.6;">
+                        Password changes are managed through your Google account.<br>
+                        <a href="https://myaccount.google.com/security" target="_blank" style="color:var(--accent-blue);text-decoration:none;">Manage Google security →</a>
+                    </div>`;
+            }
+        });
+
+        /* ── Change Password (Email users only) ── */
         const pwForm = document.getElementById('pwForm');
         const pwMsg = document.getElementById('pwMsg');
-        const pwSubmit = document.getElementById('pwSubmit');
 
         pwForm.addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -430,35 +447,28 @@
             const newPw = document.getElementById('newPw').value;
             const confirmPw = document.getElementById('confirmPw').value;
 
-            if (newPw !== confirmPw) {
-                showMsg('error', 'New passwords do not match.');
-                return;
-            }
-            if (newPw.length < 8) {
-                showMsg('error', 'New password must be at least 8 characters.');
-                return;
-            }
+            if (newPw !== confirmPw) { showMsg('error', 'New passwords do not match.'); return; }
+            if (newPw.length < 8) { showMsg('error', 'New password must be at least 8 characters.'); return; }
 
+            const pwSubmit = document.getElementById('pwSubmit');
             pwSubmit.disabled = true;
             const origHTML = pwSubmit.innerHTML;
             pwSubmit.innerHTML = '<svg viewBox="0 0 24 24" style="animation:spin .8s linear infinite"><path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/></svg> Updating...';
 
             try {
-                const res = await fetch('/api/account/change-password', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    credentials: 'same-origin',
-                    body: JSON.stringify({ current_password: currentPw, new_password: newPw }),
-                });
-                const data = await res.json();
-                if (data.success) {
-                    showMsg('success', data.message);
-                    pwForm.reset();
-                } else {
-                    showMsg('error', data.message || 'Password change failed.');
-                }
+                const user = firebase.auth().currentUser;
+                const credential = firebase.auth.EmailAuthProvider.credential(user.email, currentPw);
+                await user.reauthenticateWithCredential(credential);
+                await user.updatePassword(newPw);
+                showMsg('success', 'Password updated successfully.');
+                pwForm.reset();
             } catch (err) {
-                showMsg('error', 'Network error: ' + err.message);
+                const msgs = {
+                    'auth/wrong-password': 'Current password is incorrect.',
+                    'auth/weak-password': 'New password is too weak.',
+                    'auth/requires-recent-login': 'Please sign out and sign back in, then try again.',
+                };
+                showMsg('error', msgs[err.code] || err.message);
             } finally {
                 pwSubmit.disabled = false;
                 pwSubmit.innerHTML = origHTML;
@@ -475,12 +485,10 @@
 
         /* ── Logout ── */
         document.getElementById('logoutBtn').addEventListener('click', () => {
-            fetch('/api/logout', { method: 'POST', credentials: 'same-origin' })
-                .then(() => { window.location.href = '/login'; })
-                .catch(() => { window.location.href = '/login'; });
+            firebase.auth().signOut().then(() => { window.location.href = 'login.html'; });
         });
 
-        /* ── Spin keyframe (for loading button) ── */
+        /* ── Spin keyframe ── */
         const style = document.createElement('style');
         style.textContent = '@keyframes spin { to { transform: rotate(360deg); } }';
         document.head.appendChild(style);

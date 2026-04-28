@@ -7,6 +7,10 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+    <script src="firebase-auth.js?v=3"></script>
+    <script>requireAuth();</script>
     <style>
         :root {
             --bg-base: #070b12;
@@ -546,7 +550,6 @@
     </div>
 
     <script>
-        function handleLogout() { window.location.href = 'login.html'; }
 
         // API Base URL helper - handles cross-port development setup
         function getApiBaseUrl() {

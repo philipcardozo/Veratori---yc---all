@@ -7,6 +7,10 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+  <script src="firebase-auth.js?v=3"></script>
+  <script>requireAuth();</script>
   <style>
     :root {
       --bg:        #060a11;
@@ -580,7 +584,7 @@
   <div class="topbar-right">
     <div class="network-status">
       <div class="ns-dot"></div>
-      <span>5 locations active</span>
+      <span>6 locations active</span>
     </div>
     <div class="topbar-divider"></div>
     <a href="account.html" class="topbar-action">Account</a>
@@ -670,6 +674,18 @@
         </div>
       </div>
 
+      <div class="fi" onclick="showFranchise('cam')" id="fi-cam">
+        <div class="fi-indicator live" style="background:var(--blue);box-shadow:0 0 6px rgba(59,130,246,0.5)"></div>
+        <div class="fi-body">
+          <div class="fi-name">Camera Demo</div>
+          <div class="fi-sub">Local · USB Camera</div>
+        </div>
+        <div class="fi-right">
+          <div class="fi-rev" style="color:var(--text-3)">$0</div>
+          <div class="fi-flag ok">No alerts</div>
+        </div>
+      </div>
+
       <div class="sidebar-sep"></div>
       <div class="sidebar-label">VERA — Recent</div>
 
@@ -701,7 +717,7 @@
       <div class="sf-val">$29,810</div>
       <div class="sf-grid">
         <div class="sf-cell"><div class="sf-cell-val">694</div><div class="sf-cell-lbl">Units Sold</div></div>
-        <div class="sf-cell"><div class="sf-cell-val">5 / 5</div><div class="sf-cell-lbl">Online</div></div>
+        <div class="sf-cell"><div class="sf-cell-val">6 / 6</div><div class="sf-cell-lbl">Online</div></div>
         <div class="sf-cell"><div class="sf-cell-val">6</div><div class="sf-cell-lbl">Alerts</div></div>
         <div class="sf-cell"><div class="sf-cell-val">91.4%</div><div class="sf-cell-lbl">DS Accuracy</div></div>
       </div>
@@ -719,7 +735,7 @@
           <p>Real-time intelligence across all franchise locations</p>
         </div>
         <div class="vera-meta">
-          <span class="vera-meta-chip live">5 locations connected</span>
+          <span class="vera-meta-chip live">6 locations connected</span>
           <span class="vera-meta-chip">DeepStream · Jetson Orin</span>
           <span class="vera-meta-chip">VERA v2.1</span>
         </div>
@@ -898,6 +914,24 @@ const FRANCHISES = {
     ],
     vera:'46th Street is the most consistent performer — low variability, no issues. Revenue is slightly up (+2%). Times Square foot traffic peaks after 20:00 due to theater crowds; this location has additional revenue potential in the evening window.',
   },
+  cam: {
+    id:'cam', initials:'CD', status:'live',
+    name:'Camera Demo', sub:'Local · USB Camera (See3CAM_24CUG)', role:'Demo',
+    rev:'$0', revDelta:'—', revDir:'neu',
+    units:0, unitDelta:'—', unitDir:'neu',
+    customers:0, avgTicket:'$0.00',
+    alerts:[],
+    activity:[
+      {dot:'blue',  text:'<strong>USB camera connected</strong> — See3CAM_24CUG detected', time:'On startup'},
+      {dot:'green', text:'<strong>YOLOv8 model loaded</strong> — Poke Bowl dataset, 40 classes', time:'On startup'},
+      {dot:'gray',  text:'<strong>Awaiting stream</strong> — open Dashboard to start inference', time:'—'},
+    ],
+    products:[
+      {name:'—', units:0, rev:'$0', pct:0},
+    ],
+    vera:'This is a <strong>live camera demo</strong> location. It does not have sales data — all metrics start at zero. The USB camera (See3CAM_24CUG) feeds live YOLO object detection running the Poke Bowl dataset (40 classes, YOLOv8n). Open the <a href="index.html?loc=cam" style="color:var(--blue);text-decoration:none">Dashboard</a> to see the live camera feed with bounding boxes and detection labels.',
+    isDemo: true,
+  },
 };
 
 const VERA_RESPONSES = {
@@ -942,13 +976,14 @@ ${topProducts}
 
 Today is ${dateStr}, current time ${timeStr} EST.
 
-Veratori operates a network of 5 franchise frozen yogurt / açaí bowl locations in New York City. Each location runs NVIDIA DeepStream computer vision pipelines (YOLO object detection at 30 fps on Jetson Orin hardware) to count customers, track real-time inventory depletion, and trigger automated stock and freshness alerts.
+Veratori operates a network of 5 active franchise frozen yogurt / açaí bowl locations in New York City, plus 1 Camera Demo location used for live YOLO inference testing. Each sales location runs NVIDIA DeepStream computer vision pipelines (YOLO object detection at 30 fps on Jetson Orin hardware) to count customers, track real-time inventory depletion, and trigger automated stock and freshness alerts. The Camera Demo location streams live from a USB camera (See3CAM_24CUG) running YOLOv8 with the Poke Bowl dataset (40 classes).
 
 LIVE BUSINESS DATA — ${dateStr}:
 Network total revenue: $29,810 (+8.2% vs yesterday)
 Network units sold: 694
 Active alerts across network: 6
 DeepStream pipeline: Active — 86,400 frames processed overnight, 91.4% avg confidence, GPU load avg 12%
+Camera Demo: Live USB camera connected, YOLO inference active, 0 sales (demo only)
 
 ${locationSummary}
 
@@ -1012,7 +1047,9 @@ function renderFranchise(f) {
       </div>
     </div>`).join('');
 
-  const productsHtml = f.products.map((p,i) => `
+  const productsHtml = f.isDemo
+    ? '<div class="no-alerts" style="color:var(--text-3)">No sales data — demo location</div>'
+    : f.products.map((p,i) => `
     <div class="prod-row">
       <div class="prod-rank">${i+1}</div>
       <div class="prod-name">${p.name}</div>
@@ -1042,7 +1079,7 @@ function renderFranchise(f) {
         ${f.status === 'live' ? 'Operational' : f.status === 'warn' ? 'Attention required' : 'Immediate attention required'}
       </div>
       <div class="fran-topbar-actions">
-        <a href="index.html" class="fran-btn">
+        <a href="${f.id === 'cam' ? 'index.html?loc=cam' : 'index.html'}" class="fran-btn">
           <svg viewBox="0 0 24 24"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg>
           Live Dashboard
         </a>
@@ -1095,7 +1132,7 @@ function renderFranchise(f) {
         <div class="section-panel">
           <div class="section-head">
             <span class="section-head-title">Active Alerts</span>
-            <a href="index.html" class="section-head-link">View dashboard</a>
+            <a href="${f.id === 'cam' ? 'index.html?loc=cam' : 'index.html'}" class="section-head-link">View dashboard</a>
           </div>
           ${alertsHtml}
         </div>
@@ -1262,10 +1299,6 @@ document.addEventListener('keydown', e => {
   }
 });
 
-function handleLogout() {
-  fetch('/api/auth/logout', { method: 'POST' }).catch(() => {});
-  window.location.href = 'index.html';
-}
 
 // Init
 showFranchise('canal');

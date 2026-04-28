@@ -7,6 +7,10 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+  <script src="firebase-auth.js?v=3"></script>
+  <script>requireAuth();</script>
   <style>
     :root {
       --bg:        #060a11;
@@ -853,10 +857,6 @@ document.addEventListener('keydown', e => {
   if ((e.metaKey || e.ctrlKey) && e.key === 'g') { e.preventDefault(); handleGenerate(); }
 });
 
-function handleLogout() {
-  fetch('/api/auth/logout', { method: 'POST' }).catch(() => {});
-  window.location.href = 'index.html';
-}
 
 // Add spin animation
 const style = document.createElement('style');

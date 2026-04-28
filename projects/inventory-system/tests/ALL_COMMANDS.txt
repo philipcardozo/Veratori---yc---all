@@ -1,0 +1,211 @@
+================================================================================
+ALL COMMANDS - PC Testing Environment
+================================================================================
+Quick reference for running the inventory system on PC
+================================================================================
+
+================================================================================
+ONE-TIME SETUP (First Time Only)
+================================================================================
+
+1. Navigate to Testing On Pc folder:
+   cd "Testing On Pc"
+
+2. Install dependencies:
+   bash install_pc_dependencies.sh
+
+   This installs:
+   - PyTorch (CPU or GPU)
+   - OpenCV
+   - Ultralytics YOLO
+   - Web server dependencies
+
+================================================================================
+OPTION 1: Use PC Built-in Webcam
+================================================================================
+
+Command:
+   python3 run_pc_webcam.py
+
+What it does:
+   ✓ Uses camera index 0 (built-in webcam)
+   ✓ Scans and shows available cameras
+   ✓ Tests camera access
+   ✓ Starts YOLO detection
+   ✓ Launches web interface
+
+Configuration:
+   File: pc_config.yaml
+   Camera Index: 0 (built-in webcam)
+
+Access web interface:
+   Open browser: http://localhost:8080
+
+Stop:
+   Press Ctrl+C
+
+================================================================================
+OPTION 2: Use Phone Camera (iPhone via USB)
+================================================================================
+
+Setup (First Time):
+   1. Connect iPhone via USB cable
+   2. Unlock iPhone
+   3. Tap "Trust This Computer" when prompted
+   4. Verify iPhone appears in System Preferences → Camera
+
+Command:
+   python3 run_phone_camera.py
+
+What it does:
+   ✓ Uses camera index 1 (iPhone via USB, configurable)
+   ✓ Scans and shows available cameras
+   ✓ Detects phone camera
+   ✓ Tests camera access
+   ✓ Starts YOLO detection
+   ✓ Launches web interface
+
+Configuration:
+   File: phone_config.yaml
+   Camera Index: 1 (adjust if needed)
+
+Access web interface:
+   Open browser: http://localhost:8080
+
+Stop:
+   Press Ctrl+C
+
+If phone camera not detected:
+   - Edit phone_config.yaml
+   - Change camera.index to 2, 3, or another index
+   - Script will show available cameras when run
+
+================================================================================
+QUICK REFERENCE - Copy & Paste
+================================================================================
+
+# ONE-TIME SETUP
+cd "Testing On Pc"
+bash install_pc_dependencies.sh
+
+# OPTION 1: PC Webcam
+python3 run_pc_webcam.py
+
+# OPTION 2: Phone Camera
+# (Connect iPhone via USB first, then trust computer)
+python3 run_phone_camera.py
+
+# Access web interface (both options)
+# Open browser: http://localhost:8080
+
+# Stop (both options)
+# Press Ctrl+C
+
+================================================================================
+TROUBLESHOOTING COMMANDS
+================================================================================
+
+Test PC webcam:
+   python3 -c "import cv2; cap = cv2.VideoCapture(0); print('OK' if cap.isOpened() else 'FAILED'); cap.release()"
+
+Test phone camera (index 1):
+   python3 -c "import cv2; cap = cv2.VideoCapture(1); print('OK' if cap.isOpened() else 'FAILED'); cap.release()"
+
+List all available cameras:
+   python3 -c "import cv2; [print(f'Camera {i}: {cv2.VideoCapture(i).isOpened()}') for i in range(5)]"
+
+Check if port 8080 is in use:
+   lsof -ti:8080
+
+Kill process on port 8080:
+   lsof -ti:8080 | xargs kill -9
+
+Check dependencies installed:
+   pip3 list | grep -E "torch|opencv|ultralytics|aiohttp"
+
+================================================================================
+CONFIGURATION COMMANDS
+================================================================================
+
+Edit PC webcam config:
+   nano pc_config.yaml
+   # Change camera.index if needed
+
+Edit phone camera config:
+   nano phone_config.yaml
+   # Change camera.index if needed (1, 2, 3, etc.)
+
+View current config:
+   cat pc_config.yaml
+   cat phone_config.yaml
+
+================================================================================
+FILE LOCATIONS
+================================================================================
+
+Working directory:
+   /Users/felipecardozo/Desktop/coding/Poke-Bowl---updated-January/Testing On Pc
+
+Config files:
+   pc_config.yaml        - PC webcam settings
+   phone_config.yaml     - Phone camera settings
+
+Launcher scripts:
+   run_pc_webcam.py      - PC webcam launcher
+   run_phone_camera.py   - Phone camera launcher
+
+Model file:
+   ../best.pt            - YOLO model (in parent directory)
+
+Frontend:
+   ../frontend/index.html - Web interface (in parent directory)
+
+================================================================================
+COMPLETE WORKFLOW - PC Webcam
+================================================================================
+
+1. cd "Testing On Pc"
+2. bash install_pc_dependencies.sh  (first time only)
+3. python3 run_pc_webcam.py
+4. Open browser: http://localhost:8080
+5. Press Ctrl+C to stop
+
+================================================================================
+COMPLETE WORKFLOW - Phone Camera
+================================================================================
+
+1. Connect iPhone via USB
+2. Unlock iPhone and trust computer
+3. cd "Testing On Pc"
+4. bash install_pc_dependencies.sh  (first time only)
+5. python3 run_phone_camera.py
+6. Open browser: http://localhost:8080
+7. Press Ctrl+C to stop
+
+================================================================================
+NOTES
+================================================================================
+
+- Both commands scan for available cameras automatically
+- Scripts show which camera index is being used
+- If camera not found, edit the respective config file
+- Original project files are NEVER modified
+- All changes stay in "Testing On Pc" folder
+- Web interface works the same for both options
+
+================================================================================
+SUPPORT
+================================================================================
+
+See also:
+- README.md - Complete documentation
+- COMMANDS.md - Detailed command reference
+- QUICK_START.txt - Quick start guide
+
+For issues:
+1. Check camera permissions (System Preferences → Security & Privacy → Camera)
+2. Verify dependencies installed (bash install_pc_dependencies.sh)
+3. Test camera independently (see troubleshooting commands above)
+4. Review terminal output for error messages
+
+================================================================================

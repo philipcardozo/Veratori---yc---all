@@ -226,18 +226,24 @@ def run_system():
         logger.info("Initializing components...")
         
         # Initialize camera (original code) - PC Webcam
-        camera = USBCamera(
-            camera_index=config['camera']['index'],  # Index 0 = PC webcam
-            width=config['camera']['width'],
-            height=config['camera']['height'],
-            fps=config['camera']['fps']
-        )
+        camera = None
+        camera_enabled = config['camera'].get('enabled', True)
         
-        if not camera.open():
-            logger.error("Failed to open PC webcam")
-            return False
-        
-        logger.info(f"[OK] Camera: {camera.get_info()}")
+        if camera_enabled:
+            camera = USBCamera(
+                camera_index=config['camera']['index'],  # Index 0 = PC webcam
+                width=config['camera']['width'],
+                height=config['camera']['height'],
+                fps=config['camera']['fps']
+            )
+            
+            if not camera.open():
+                logger.error("Failed to open PC webcam")
+                return False
+            
+            logger.info(f"[OK] Camera: {camera.get_info()}")
+        else:
+            logger.info("[OK] Camera disabled in configuration - running without camera")
         
         # Initialize detector (original code)
         model_path = PARENT_DIR / config['detector']['model_path']
@@ -252,7 +258,8 @@ def run_system():
         
         if not detector.load():
             logger.error("Failed to load YOLO model")
-            camera.release()
+            if camera:
+                camera.release()
             return False
         
         logger.info(f"[OK] Detector: {detector.get_info()}")
@@ -297,7 +304,10 @@ def run_system():
             logger.info("=" * 60)
             logger.info("SYSTEM READY - PC Webcam Mode")
             logger.info("=" * 60)
-            logger.info(f"Camera: PC Built-in Webcam (index {config['camera']['index']})")
+            if camera:
+                logger.info(f"Camera: PC Built-in Webcam (index {config['camera']['index']})")
+            else:
+                logger.info("Camera: Disabled (running without video feed)")
             logger.info(f"Web interface: http://{config['server']['host']}:{config['server']['port']}")
             logger.info("Press Ctrl+C to stop")
             logger.info("=" * 60)
@@ -305,7 +315,8 @@ def run_system():
             
             try:
                 await server.start()
-                stream_manager.start()
+                if camera:
+                    stream_manager.start()
                 
                 # Keep running
                 while True:
@@ -313,8 +324,9 @@ def run_system():
                     
             except KeyboardInterrupt:
                 logger.info("\nShutting down...")
-                await stream_manager.stop()
-                camera.release()
+                if camera:
+                    await stream_manager.stop()
+                    camera.release()
                 logger.info("Shutdown complete")
         
         # Run the async main function

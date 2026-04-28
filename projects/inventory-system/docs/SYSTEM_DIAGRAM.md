@@ -1,0 +1,474 @@
+# Poke Bowl Inventory System - Visual Diagrams
+
+## System Overview
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                         JETSON ORIN NANO                            │
+│                                                                     │
+│  ┌──────────────┐         ┌────────────────┐                      │
+│  │   USB        │         │  7" HDMI       │                      │
+│  │  Camera      │         │  Monitor       │                      │
+│  │ (Megapixel)  │         │  (Touchscreen) │                      │
+│  └──────┬───────┘         └───────▲────────┘                      │
+│         │                         │                                │
+│         │ V4L2                    │ Display                        │
+│         ▼                         │                                │
+│  ┌─────────────────────────────────────────────────────┐          │
+│  │         POKE BOWL INVENTORY APPLICATION             │          │
+│  │                                                      │          │
+│  │  ┌────────────┐   ┌──────────┐   ┌──────────────┐ │          │
+│  │  │   Camera   │──▶│   YOLO   │──▶│  Inventory   │ │          │
+│  │  │  Handler   │   │ Detector │   │   Tracker    │ │          │
+│  │  └────────────┘   └──────────┘   └──────┬───────┘ │          │
+│  │                                          │         │          │
+│  │  ┌──────────────────────────────────────┘         │          │
+│  │  │                                                 │          │
+│  │  │   ┌─────────────────────────────────┐          │          │
+│  │  └──▶│    Web Server (aiohttp)         │          │          │
+│  │      │    - HTTP Server (port 8080)    │          │          │
+│  │      │    - WebSocket Streaming        │◀─────────┼──────────┤
+│  │      └─────────────────────────────────┘          │          │
+│  └─────────────────────────────────────────────────────┘          │
+└─────────────────────────────────────────────────────────────────────┘
+                              │
+                              │ HTTP/WebSocket
+                              │ (LAN: 192.168.x.x:8080)
+                              │
+        ┌─────────────────────┼──────────────────────┐
+        │                     │                      │
+        ▼                     ▼                      ▼
+┌──────────────┐      ┌──────────────┐      ┌──────────────┐
+│   Chromium   │      │   Mobile     │      │   Laptop     │
+│   (Kiosk)    │      │   Browser    │      │   Browser    │
+│  on Jetson   │      │              │      │              │
+└──────────────┘      └──────────────┘      └──────────────┘
+```
+
+---
+
+## Data Flow - Frame Processing
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│ 1. CAPTURE                                                      │
+└──────────────────┬──────────────────────────────────────────────┘
+                   │
+                   ▼
+        ┌──────────────────┐
+        │  USB Camera      │  1280x720 @ 30fps
+        │  (V4L2 Backend)  │  MJPEG Format
+        └─────────┬────────┘
+                   │ cv2.read()
+                   ▼
+        ┌──────────────────┐
+        │ BGR Frame        │  numpy.ndarray (H,W,3)
+        │ (Raw Pixels)     │
+        └─────────┬────────┘
+                   │
+┌──────────────────┴──────────────────────────────────────────────┐
+│ 2. DETECTION                                                    │
+└──────────────────┬──────────────────────────────────────────────┘
+                   │
+                   ▼
+        ┌──────────────────┐
+        │ YOLO Inference   │  GPU (CUDA)
+        │ - Resize to 640  │  FP16 Precision
+        │ - Normalize      │  ~35ms
+        │ - Run model      │
+        └─────────┬────────┘
+                   │
+                   ▼
+        ┌──────────────────────────────┐
+        │ Detection Results            │
+        │ [{class_id, bbox, conf}, ...] │
+        └──────────┬─────────┬──────────┘
+                   │         │
+       ┌───────────┘         └────────────┐
+       │                                  │
+┌──────▼──────────────────┐   ┌──────────▼─────────────────────┐
+│ 3. INVENTORY UPDATE     │   │ 4. VISUALIZATION               │
+└──────┬──────────────────┘   └──────────┬─────────────────────┘
+       │                                  │
+       ▼                                  ▼
+┌────────────────┐            ┌──────────────────┐
+│ Count by Class │            │ Draw Bounding    │
+│ Mango: 1       │            │ Boxes on Frame   │
+│ Sprite: 2      │            │                  │
+└────────┬───────┘            └────────┬─────────┘
+       │                              │
+       ▼                              │
+┌────────────────┐                   │
+│ Temporal       │                   │
+│ Smoothing      │                   │
+│ (10 frames)    │                   │
+└────────┬───────┘                   │
+       │                              │
+       ▼                              │
+┌────────────────┐                   │
+│ Stable Count   │                   │
+│ Mango: 5       │                   │
+│ Sprite: 12     │                   │
+└────────┬───────┘                   │
+       │                              │
+       └──────────┬───────────────────┘
+                  │
+┌─────────────────┴─────────────────────────────────────────────┐
+│ 5. STREAMING                                                  │
+└─────────────────┬─────────────────────────────────────────────┘
+                  │
+         ┌────────┴────────┐
+         │                 │
+         ▼                 ▼
+┌────────────────┐  ┌────────────────┐
+│ Encode Frame   │  │ Inventory JSON │
+│ to JPEG        │  │ {"Mango": 5}   │
+└────────┬───────┘  └────────┬───────┘
+         │                   │
+         ▼                   ▼
+┌────────────────┐  ┌────────────────┐
+│ Base64 Encode  │  │ Wrap in        │
+│                │  │ WebSocket Msg  │
+└────────┬───────┘  └────────┬───────┘
+         │                   │
+         └─────────┬─────────┘
+                   │
+                   ▼
+        ┌──────────────────┐
+        │ WebSocket        │
+        │ Broadcast        │
+        └─────────┬────────┘
+                   │
+┌──────────────────┴──────────────────────────────────────────────┐
+│ 6. CLIENT DISPLAY                                               │
+└──────────────────┬──────────────────────────────────────────────┘
+                   │
+                   ▼
+        ┌──────────────────┐
+        │ Browser Receives │
+        │ - Frame data     │
+        │ - Inventory JSON │
+        └─────────┬────────┘
+                   │
+                   ▼
+        ┌──────────────────┐
+        │ Update UI        │
+        │ - Show video     │
+        │ - Update counts  │
+        └──────────────────┘
+```
+
+---
+
+## Component Interaction - Sequence Diagram
+
+```
+Camera      Detector    Inventory    Server       Client
+  │            │            │           │            │
+  │ read()     │            │           │            │
+  ├───────────▶│            │           │            │
+  │            │            │           │            │
+  │  frame     │            │           │            │
+  │◀───────────┤            │           │            │
+  │            │            │           │            │
+  │            │ detect()   │           │            │
+  │            ├───────────▶│           │            │
+  │            │            │           │            │
+  │            │ detections │           │            │
+  │            │◀───────────┤           │            │
+  │            │            │           │            │
+  │            │            │ update()  │            │
+  │            │            ├──────────▶│            │
+  │            │            │           │            │
+  │            │            │  counts   │            │
+  │            │            │◀──────────┤            │
+  │            │            │           │            │
+  │            │ draw()     │           │            │
+  │            ├───────────▶│           │            │
+  │            │            │           │            │
+  │            │annotated   │           │            │
+  │            │◀───────────┤           │            │
+  │            │            │           │            │
+  │            │            │           │broadcast() │
+  │            │            │           ├───────────▶│
+  │            │            │           │            │
+  │            │            │           │   frame    │
+  │            │            │           │◀───────────┤
+  │            │            │           │            │
+  │            │            │           │broadcast() │
+  │            │            │           ├───────────▶│
+  │            │            │           │            │
+  │            │            │           │ inventory  │
+  │            │            │           │◀───────────┤
+  │            │            │           │            │
+  └────────────┴────────────┴───────────┴────────────┘
+     (Loop at ~30 FPS)
+```
+
+---
+
+## Startup Sequence
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│ JETSON BOOT                                                 │
+└──────────────────┬──────────────────────────────────────────┘
+                   │
+                   ▼
+        ┌──────────────────┐
+        │ systemd init     │
+        └─────────┬────────┘
+                   │
+                   ▼
+        ┌──────────────────────────────┐
+        │ pokebowl-inventory.service   │
+        │ (ExecStart: main.py)         │
+        └─────────┬────────────────────┘
+                   │
+    ┌──────────────┴───────────────┐
+    │                              │
+    ▼                              ▼
+┌────────────┐            ┌────────────────┐
+│ Load       │            │ Load Config    │
+│ Config     │───────────▶│ config.yaml    │
+└────────────┘            └────────┬───────┘
+                                   │
+                                   ▼
+                          ┌────────────────┐
+                          │ Init Camera    │
+                          │ - Open /dev/   │
+                          │ - Set params   │
+                          └────────┬───────┘
+                                   │
+                                   ▼
+                          ┌────────────────┐
+                          │ Load YOLO      │
+                          │ - Load best.pt │
+                          │ - Move to GPU  │
+                          │ - Warmup       │
+                          └────────┬───────┘
+                                   │ (~3 sec)
+                                   ▼
+                          ┌────────────────┐
+                          │ Init Inventory │
+                          │ - Create hist  │
+                          └────────┬───────┘
+                                   │
+                                   ▼
+                          ┌────────────────┐
+                          │ Start Server   │
+                          │ - Bind :8080   │
+                          └────────┬───────┘
+                                   │
+                                   ▼
+                          ┌────────────────┐
+                          │ Start Stream   │
+                          │ - Main loop    │
+                          └────────┬───────┘
+                                   │
+                                   ▼
+                          ┌────────────────┐
+                          │ READY          │
+                          │ Serving HTTP   │
+                          └────────┬───────┘
+                                   │
+    ┌──────────────────────────────┘
+    │ (After 8 seconds)
+    │
+    ▼
+┌──────────────────────┐
+│ chromium-kiosk.srv   │
+│ - Launch Chromium    │
+│ - Fullscreen mode    │
+│ - Load localhost:8080│
+└──────────┬───────────┘
+           │
+           ▼
+┌──────────────────────┐
+│ WebSocket Connect    │
+└──────────┬───────────┘
+           │
+           ▼
+┌──────────────────────┐
+│ SYSTEM OPERATIONAL   │
+│ - Video streaming    │
+│ - Counts updating    │
+└──────────────────────┘
+```
+
+---
+
+## File Structure Map
+
+```
+Poke-Bowl---updated-January/
+│
+├── 📄 README.md                    # Main documentation
+├── 📄 QUICKSTART.md                # Quick start guide
+├── 📄 ARCHITECTURE.md              # System architecture
+├── 📄 SYSTEM_DIAGRAM.md            # This file
+├── 📄 requirements.txt             # Python dependencies
+├── 📄 .gitignore                   # Git ignore rules
+│
+├── 🤖 best.pt                      # Trained YOLO model (40 classes)
+│
+├── 📁 backend/                     # Python application
+│   ├── 📄 __init__.py              # Package init
+│   ├── 🐍 main.py                  # Entry point ⭐
+│   ├── 🐍 camera.py                # USB camera handler
+│   ├── 🐍 detector.py              # YOLO inference
+│   ├── 🐍 inventory.py             # Inventory tracking
+│   └── 🐍 server.py                # Web server + streaming
+│
+├── 📁 frontend/                    # Web interface
+│   └── 📄 index.html               # Single-page UI
+│
+├── 📁 config/                      # Configuration
+│   └── 📄 config.yaml              # System settings
+│
+├── 📁 deployment/                  # Deployment scripts
+│   ├── 📄 pokebowl-inventory.service       # Systemd service
+│   ├── 📄 chromium-kiosk.service           # Browser service
+│   ├──  install_service.sh               # Service installer
+│   ├──  setup_autostart.sh               # Auto-start setup
+│   ├──  setup_jetson.sh                  # Full system setup
+│   └──  quick_test.sh                    # System test
+│
+├── 📁 dataset/                     # Training data (preserved)
+│   └── pokebowl_dataset/
+│       ├── data.yaml               # Class names
+│       ├── images/                 # Training/val images
+│       └── labels/                 # YOLO format labels
+│
+└── 📁 Images/                      # Raw images (preserved)
+    ├── Cantaloupe/
+    ├── Mango/
+    ├── Island Passion Fruit/
+    └── ...
+```
+
+---
+
+## Network Architecture
+
+```
+┌────────────────────────────────────────────────────────────┐
+│ Jetson Orin Nano                                           │
+│ IP: 192.168.1.100 (example)                               │
+│                                                            │
+│  ┌──────────────────────────────────────────┐            │
+│  │  Backend Application                     │            │
+│  │  - Binds to 0.0.0.0:8080                 │            │
+│  │  - Accepts connections from all IFs      │            │
+│  └────────────────┬─────────────────────────┘            │
+│                   │                                       │
+│  ┌────────────────┴─────────────────────────┐            │
+│  │  Localhost (127.0.0.1:8080)              │            │
+│  │  - Chromium kiosk on same device         │            │
+│  └──────────────────────────────────────────┘            │
+│                                                            │
+└────────────────────┬───────────────────────────────────────┘
+                     │
+                     │ Ethernet/WiFi
+                     │
+      ┌──────────────┴──────────────┐
+      │                             │
+      │     Local Network (LAN)     │
+      │     192.168.1.0/24          │
+      │                             │
+      └──────────────┬──────────────┘
+                     │
+         ┌───────────┼────────────┐
+         │           │            │
+         ▼           ▼            ▼
+    ┌────────┐  ┌────────┐  ┌────────┐
+    │ Tablet │  │ Phone  │  │ Laptop │
+    │ :8080  │  │ :8080  │  │ :8080  │
+    └────────┘  └────────┘  └────────┘
+
+All devices access: http://192.168.1.100:8080
+```
+
+---
+
+## Memory Layout (Jetson)
+
+```
+┌─────────────────────────────────────────────────────┐
+│ Jetson Orin Nano Memory (8 GB total)               │
+├─────────────────────────────────────────────────────┤
+│                                                     │
+│ Operating System (Ubuntu 22.04)        ~500 MB     │
+├─────────────────────────────────────────────────────┤
+│ Python Runtime + Libraries             ~100 MB     │
+├─────────────────────────────────────────────────────┤
+│ YOLO Model (FP16)                      ~20 MB      │
+├─────────────────────────────────────────────────────┤
+│ Frame Buffers (camera + processing)   ~10 MB       │
+├─────────────────────────────────────────────────────┤
+│ Inventory History                     ~1 MB        │
+├─────────────────────────────────────────────────────┤
+│ Web Server + WebSockets                ~50 MB      │
+├─────────────────────────────────────────────────────┤
+│ Available for GPU/Cache                ~7.3 GB     │
+└─────────────────────────────────────────────────────┘
+
+Total Application Memory: ~200 MB
+```
+
+---
+
+## Performance Timeline (Single Frame)
+
+```
+Time (ms)   Component           Activity
+────────────────────────────────────────────────────
+0           Camera              Start frame capture
+│
+5           Camera              Frame ready
+│                              └─▶ Return BGR array
+│
+6           Detector            Start preprocessing
+│                              - Resize to 640x640
+│                              - Normalize
+│
+10          Detector            Start GPU inference
+│                              - Forward pass
+│                              - NMS
+│
+45          Detector            Inference complete
+│                              └─▶ Return detections
+│
+46          Inventory           Update counts
+│                              - Count per class
+│                              - Add to history
+│                              - Compute median
+│
+47          Inventory           Smoothing complete
+│                              └─▶ Return stable counts
+│
+48          Detector            Start draw
+│                              - Draw bounding boxes
+│                              - Add labels
+│
+52          Detector            Drawing complete
+│                              └─▶ Return annotated frame
+│
+53          Server              Start JPEG encode
+│                              - cv2.imencode()
+│
+58          Server              Encoding complete
+│                              - Base64 encode
+│
+60          Server              WebSocket broadcast
+│                              - Send frame
+│                              - Send inventory
+│
+────────────────────────────────────────────────────
+Total: ~60ms → ~16-20 FPS achievable with overhead
+```
+
+---
+
+**Note**: These diagrams represent the production system as implemented. Actual performance may vary based on hardware configuration and system load.
+

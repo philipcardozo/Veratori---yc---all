@@ -1,0 +1,52 @@
+product,quantity,price,timestamp,location,employee_id,cost,category
+Mango,15,12.50,2025-02-17 08:30:00,Store A,EMP001,5.00,Fruit
+Island Passion Fruit,8,15.99,2025-02-17 09:15:00,Store A,EMP002,7.50,Fruit
+Kilauea Lemon Cake,5,18.75,2025-02-17 10:00:00,Store A,EMP001,9.00,Dessert
+Maui Custard,12,14.25,2025-02-17 10:45:00,Store A,EMP003,6.50,Dessert
+Watermelon,20,10.00,2025-02-17 11:30:00,Store A,EMP002,4.00,Fruit
+Pineapple,10,13.50,2025-02-17 12:15:00,Store A,EMP001,5.50,Fruit
+Cantaloupe,7,11.75,2025-02-17 13:00:00,Store A,EMP003,5.00,Fruit
+Strawberry,18,16.00,2025-02-17 13:45:00,Store A,EMP002,7.00,Fruit
+Grapes,14,12.99,2025-02-17 14:30:00,Store A,EMP001,6.00,Fruit
+Coke Diet,25,3.50,2025-02-17 15:00:00,Store A,EMP003,1.50,Beverage
+Coke Zero,22,3.50,2025-02-17 15:15:00,Store A,EMP002,1.50,Beverage
+Sprite,20,3.50,2025-02-17 15:30:00,Store A,EMP001,1.50,Beverage
+Essentia,15,4.50,2025-02-17 15:45:00,Store A,EMP003,2.00,Beverage
+Perrier,12,4.75,2025-02-17 16:00:00,Store A,EMP002,2.25,Beverage
+Ginger Ale Canada,18,3.99,2025-02-17 16:15:00,Store A,EMP001,1.75,Beverage
+Jasmine Green Tea,10,5.50,2025-02-17 16:30:00,Store A,EMP003,2.50,Tea
+Guava Green Tea,8,5.75,2025-02-17 16:45:00,Store A,EMP002,2.75,Tea
+Mango Oolong Tea,6,6.00,2025-02-17 17:00:00,Store A,EMP001,3.00,Tea
+Passionfruit Green Tea,9,5.99,2025-02-17 17:15:00,Store A,EMP003,2.80,Tea
+Pineapple Green Tea,7,5.50,2025-02-17 17:30:00,Store A,EMP002,2.50,Tea
+Cold Brew Matcha Green Tea,5,6.50,2025-02-17 17:45:00,Store A,EMP001,3.25,Tea
+Iced Tea Cane Sugar,12,4.99,2025-02-17 18:00:00,Store A,EMP003,2.40,Tea
+Black Cherry Cane Sugar,10,5.25,2025-02-17 18:15:00,Store A,EMP002,2.60,Tea
+Orange Cane Sugar,9,5.00,2025-02-17 18:30:00,Store A,EMP001,2.50,Tea
+Pineapple Cane Sugar,8,5.25,2025-02-17 18:45:00,Store A,EMP003,2.60,Tea
+Limonade Cane Sugar,11,4.75,2025-02-17 19:00:00,Store A,EMP002,2.30,Tea
+Vanilla Cream Cane Sugar,7,5.50,2025-02-17 19:15:00,Store A,EMP001,2.75,Tea
+Root Bear Cane Sugar,9,5.00,2025-02-17 19:30:00,Store A,EMP003,2.50,Tea
+Ito Milk Tea,6,6.25,2025-02-17 19:45:00,Store A,EMP002,3.10,Tea
+Lychee Oolong Tea,5,6.50,2025-02-17 20:00:00,Store A,EMP001,3.25,Tea
+Traditional Jasmine Green Tea,8,5.75,2025-02-17 20:15:00,Store A,EMP003,2.85,Tea
+Traditional Golden Oolong Tea,7,6.00,2025-02-17 20:30:00,Store A,EMP002,3.00,Tea
+Teas' Tea Rose Green Tea,6,6.25,2025-02-17 20:45:00,Store A,EMP001,3.10,Tea
+Little Jasmine White Peach Black Tea,5,6.50,2025-02-17 21:00:00,Store A,EMP003,3.25,Tea
+Oi Ocha Unsweetened Green Tea,10,4.50,2025-02-17 21:15:00,Store A,EMP002,2.20,Tea
+San Pe Blood Orange,15,4.25,2025-02-17 21:30:00,Store A,EMP001,2.00,Beverage
+San Pe Lemonade,12,4.00,2025-02-17 21:45:00,Store A,EMP003,1.90,Beverage
+San Pe Orange,14,4.25,2025-02-17 22:00:00,Store A,EMP002,2.00,Beverage
+Sunkist Orange,13,3.99,2025-02-17 22:15:00,Store A,EMP001,1.85,Beverage
+Philadelphia 6 roll,4,22.50,2025-02-17 22:30:00,Store A,EMP003,12.00,Food
+Mango,12,12.50,2025-02-18 08:00:00,Store B,EMP004,5.00,Fruit
+Island Passion Fruit,6,15.99,2025-02-18 09:00:00,Store B,EMP005,7.50,Fruit
+Watermelon,15,10.00,2025-02-18 10:00:00,Store B,EMP004,4.00,Fruit
+Kilauea Lemon Cake,3,18.75,2025-02-18 11:00:00,Store B,EMP005,9.00,Dessert
+Maui Custard,8,14.25,2025-02-18 12:00:00,Store B,EMP004,6.50,Dessert
+Coke Diet,30,3.50,2025-02-18 13:00:00,Store B,EMP005,1.50,Beverage
+Sprite,25,3.50,2025-02-18 14:00:00,Store B,EMP004,1.50,Beverage
+Essentia,18,4.50,2025-02-18 15:00:00,Store B,EMP005,2.00,Beverage
+Jasmine Green Tea,12,5.50,2025-02-18 16:00:00,Store B,EMP004,2.50,Tea
+Mango Oolong Tea,8,6.00,2025-02-18 17:00:00,Store B,EMP005,3.00,Tea
+Philadelphia 6 roll,2,22.50,2025-02-18 18:00:00,Store B,EMP004,12.00,Food

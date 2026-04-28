@@ -3,6 +3,7 @@
 
 # Camera Settings (PC Webcam)
 camera:
+  enabled: false       # Disable camera - run without video feed
   index: 1              # 1 = built-in webcam (phone camera is at index 0 on this system)
   width: 1280           # Resolution
   height: 720

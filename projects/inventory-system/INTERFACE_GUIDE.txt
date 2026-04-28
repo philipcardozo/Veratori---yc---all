@@ -1,0 +1,348 @@
+================================================================================
+POKE BOWL INVENTORY SYSTEM - WEB INTERFACE GUIDE
+================================================================================
+Production-Grade Interface - Version 2.0
+================================================================================
+
+VISUAL LAYOUT
+================================================================================
+
+┌──────────────────────────────────────────────────────────────────────────┐
+│  Poke Bowl Inventory System          [Diagnostics] [Connected ●]        │
+└──────────────────────────────────────────────────────────────────────────┘
+                                              ↑
+                                              │
+                                    Click to show/hide
+                                    diagnostics panel
+                                              │
+                                              ↓
+                            ┌─────────────────────────────┐
+                            │ FPS:              15.3      │
+                            │ Inference Time:   45ms      │
+                            │ Frames Processed: 1,234     │
+                            │ Active Connections: 1       │
+                            └─────────────────────────────┘
+                                    (Hidden by default)
+
+┌────────────────────────────────────┬─────────────────────────────────────┐
+│                                    │                                     │
+│  Live Camera Feed                  │  Current Inventory      Total: 42   │
+│                                    │                                     │
+│  ┌──────────────────────────────┐  │  ┌─────────────────────────────┐   │
+│  │                              │  │  │ Mango                   15  │   │
+│  │                              │  │  │ Fresh - 2 days old          │   │
+│  │     [Video Stream]           │  │  ├─────────────────────────────┤   │
+│  │                              │  │  │ Watermelon              12  │   │
+│  │                              │  │  │ Fresh - 1 day old           │   │
+│  │                              │  │  ├─────────────────────────────┤   │
+│  └──────────────────────────────┘  │  │ Passion Fruit            8  │   │
+│                                    │  │ EXPIRED (6 days old)        │   │
+│                                    │  │      ↑ Red text             │   │
+│                                    │  ├─────────────────────────────┤   │
+│                                    │  │ Pineapple                7  │   │
+│                                    │  │ Fresh - 3 days old          │   │
+│                                    │  └─────────────────────────────┘   │
+│                                    │         (Scrollable)                │
+└────────────────────────────────────┴─────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────────────────────┐
+│  Sales Log                                          3 sales recorded     │
+│  ┌────────────────────────────────────────────────────────────────────┐  │
+│  │ Product Removed          01/10/2026, 10:15:32 AM                  │  │
+│  ├────────────────────────────────────────────────────────────────────┤  │
+│  │ Product Removed          01/10/2026, 10:15:27 AM                  │  │
+│  ├────────────────────────────────────────────────────────────────────┤  │
+│  │ Product Removed          01/10/2026, 10:14:58 AM                  │  │
+│  └────────────────────────────────────────────────────────────────────┘  │
+│                            (Scrollable)                                  │
+└──────────────────────────────────────────────────────────────────────────┘
+
+================================================================================
+KEY FEATURES
+================================================================================
+
+1. DIAGNOSTICS PANEL
+   ─────────────────
+   Location:    Top-right corner, left of "Connected" status
+   Trigger:     Click "Diagnostics" button
+   State:       Hidden by default
+   Close:       Click button again or click outside panel
+   
+   Displays:
+   • FPS (frames per second)
+   • Inference time (milliseconds)
+   • Total frames processed
+   • Active connections
+
+2. FRESHNESS TRACKING
+   ──────────────────
+   Tracked Products:
+   • Passion fruit
+   • Maui custard
+   • Lemon cake
+   • Mango
+   • Watermelon
+   • Pineapple
+   
+   Display Format:
+   Fresh:    "Fresh - X days old" (gray text)
+   Expired:  "EXPIRED (X days old)" (red text)
+   
+   Expiration:
+   • Products expire after 5 days
+   • Timer starts when first detected
+   • Updates automatically
+   • Persists across page views
+
+3. SALES LOG
+   ─────────
+   Detection:   Every 5 seconds
+   Method:      Compares inventory totals
+   Logic:       Total decrease = sale(s)
+   
+   Entry Format:
+   Product Name          MM/DD/YYYY, HH:MM:SS AM/PM
+   
+   Features:
+   • Chronological order (newest first)
+   • US Eastern Time (EST)
+   • Scrollable list
+   • Sales counter badge
+   • Persistent during session
+
+================================================================================
+COLOR CODING
+================================================================================
+
+Status Indicators:
+  ● Green dot     = Connected
+  ● Gray dot      = Disconnected
+
+Inventory:
+  Green numbers   = Item counts
+  Green border    = Active inventory item
+  Gray text       = Fresh products (< 5 days)
+  Red text        = Expired products (≥ 5 days)
+
+Sales Log:
+  Blue border     = Sales entry
+  Blue badge      = Sales counter
+
+Diagnostics:
+  Green text      = Metric values
+  Green border    = Diagnostics button
+
+================================================================================
+USER INTERACTIONS
+================================================================================
+
+Diagnostics Panel:
+  1. Click "Diagnostics" button → Panel appears
+  2. Click "Diagnostics" again → Panel closes
+  3. Click anywhere outside → Panel closes
+
+Inventory List:
+  • Hover over item → Slight highlight
+  • Scroll to view all products
+  • Sorted by count (highest first)
+
+Sales Log:
+  • Hover over entry → Background darkens
+  • Scroll to view history
+  • Newest entries at top
+
+================================================================================
+TECHNICAL DETAILS
+================================================================================
+
+Freshness Calculation:
+  • Timestamp stored when product first detected
+  • Age = Current time - First seen time
+  • Displayed in days (rounded down)
+  • Recalculated on every inventory update
+
+Sales Detection:
+  • Check interval: 5 seconds
+  • Previous total: 30 items
+  • Current total: 28 items
+  • Result: 2 sales recorded
+
+Time Zone Conversion:
+  • All times displayed in US Eastern Time (EST)
+  • Format: MM/DD/YYYY, HH:MM:SS AM/PM
+  • Example: 01/10/2026, 10:15:32 AM
+
+================================================================================
+RESPONSIVE DESIGN
+================================================================================
+
+Desktop (> 1200px):
+  • Side-by-side layout
+  • Video: 60% width
+  • Inventory: 40% width
+  • Sales log: Full width bottom
+
+Tablet (768px - 1200px):
+  • Stacked layout
+  • Video: Full width
+  • Inventory: Full width
+  • Sales log: Full width
+
+Mobile (< 768px):
+  • Stacked layout
+  • Smaller fonts
+  • Compact spacing
+  • Touch-friendly buttons
+
+================================================================================
+BROWSER COMPATIBILITY
+================================================================================
+
+Fully Supported:
+  ✓ Chrome/Edge (Chromium)
+  ✓ Safari
+  ✓ Firefox
+  ✓ Opera
+
+Requirements:
+  • WebSocket API
+  • ES6 JavaScript
+  • CSS Grid/Flexbox
+  • Intl.DateTimeFormat
+
+================================================================================
+PERFORMANCE
+================================================================================
+
+Update Frequencies:
+  • Video feed:        Real-time (WebSocket)
+  • Inventory:         Real-time (WebSocket)
+  • Diagnostics:       Real-time (WebSocket)
+  • Freshness check:   Every 60 seconds
+  • Sales check:       Every 5 seconds
+
+Resource Usage:
+  • Memory:   ~5-10 MB
+  • CPU:      Minimal (idle)
+  • Network:  WebSocket streaming
+
+================================================================================
+DEPLOYMENT
+================================================================================
+
+File Location:
+  /frontend/index.html
+
+Same File Used For:
+  • Testing On Pc (Mac/Windows/Linux)
+  • Jetson Orin Nano (Production)
+
+No Platform-Specific Changes Needed:
+  ✓ Responsive design adapts automatically
+  ✓ WebSocket works on all platforms
+  ✓ No backend modifications required
+
+To Update:
+  1. Edit frontend/index.html
+  2. Hard refresh browser (Cmd+Shift+R or Ctrl+Shift+R)
+  3. No server restart needed
+
+================================================================================
+CUSTOMIZATION
+================================================================================
+
+Colors:
+  • Primary accent:   #4CAF50 (green)
+  • Secondary accent: #2196F3 (blue)
+  • Background:       #0f1419 (dark blue-gray)
+  • Text:             #e8eaed (light gray)
+  • Error:            #f44336 (red)
+
+Fonts:
+  • Main:       Inter, Segoe UI, system-ui
+  • Monospace:  Monaco, Courier New
+
+Expiration Threshold:
+  • Change EXPIRATION_DAYS constant (line ~543)
+  • Default: 5 days
+
+Sales Check Interval:
+  • Change SALES_CHECK_INTERVAL constant (line ~546)
+  • Default: 5000 ms (5 seconds)
+
+Tracked Products:
+  • Edit TRACKED_PRODUCTS array (line ~542)
+  • Add/remove product names (lowercase)
+
+================================================================================
+TROUBLESHOOTING
+================================================================================
+
+Issue: Diagnostics panel not showing
+Fix:  • Check browser console for errors
+      • Verify WebSocket connected
+      • Hard refresh page
+
+Issue: Freshness timers missing
+Fix:  • Verify product name matches tracked list
+      • Check case-insensitive matching
+      • Ensure product detected in inventory
+
+Issue: Sales not recording
+Fix:  • Verify inventory total decreasing
+      • Wait 5 seconds between checks
+      • Check browser console logs
+
+Issue: Wrong time zone
+Fix:  • Verify browser supports Intl.DateTimeFormat
+      • Check system time zone settings
+      • Confirm 'America/New_York' available
+
+Issue: Interface not updating
+Fix:  • Check WebSocket connection status
+      • Verify backend server running
+      • Check network connectivity
+
+================================================================================
+SUPPORT & DOCUMENTATION
+================================================================================
+
+Documentation Files:
+  • INTERFACE_FEATURES.md  - Detailed feature documentation
+  • INTERFACE_GUIDE.txt    - This visual guide
+  • README.md              - Project overview
+
+Logs:
+  • Browser console        - Frontend errors
+  • Backend terminal       - Server logs
+  • Network tab            - WebSocket traffic
+
+Testing:
+  • Open diagnostics panel - Check metrics updating
+  • Watch inventory        - Verify freshness timers
+  • Monitor sales log      - Confirm detection working
+
+================================================================================
+CHANGELOG
+================================================================================
+
+Version 2.0 (January 10, 2026):
+  ✓ Removed all emojis for professional appearance
+  ✓ Added collapsible diagnostics panel
+  ✓ Implemented freshness tracking (6 products)
+  ✓ Added 5-day expiration logic with red indicators
+  ✓ Created sales log section
+  ✓ Implemented 5-second sales detection
+  ✓ Added US Eastern Time formatting
+  ✓ Enhanced visual design (gradients, shadows)
+  ✓ Improved responsive layout
+  ✓ Added hover effects and transitions
+  ✓ Optimized performance and resource usage
+
+Version 1.0 (Initial):
+  • Basic video feed display
+  • Simple inventory list
+  • Connection status indicator
+  • Performance stats bar
+
+================================================================================

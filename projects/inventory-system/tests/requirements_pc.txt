@@ -1,0 +1,28 @@
+# PC Testing Dependencies
+# Standard PyPI packages for PC/Mac development
+
+# Core ML and Vision
+torch>=2.0.0                    # Standard PyTorch (CPU or GPU)
+torchvision>=0.15.0             # PyTorch vision utilities
+opencv-python>=4.8.0            # OpenCV for camera and image processing
+ultralytics>=8.0.0              # YOLO models
+numpy>=1.24.0,<2.0.0            # Array operations
+
+# Web Server
+aiohttp>=3.9.0                  # Async HTTP server
+aiofiles>=23.0.0                # Async file operations
+
+# Configuration
+PyYAML>=6.0                     # YAML config files
+pytz>=2023.3                    # Timezone support for persistence layer
+bcrypt>=4.0.0                   # Password hashing for authentication
+
+# Optional but recommended
+pillow>=10.0.0                  # Image processing
+tqdm>=4.65.0                    # Progress bars (used by ultralytics)
+
+# Notes:
+# - This uses standard PyTorch from PyPI (not Jetson-specific)
+# - opencv-python works on Mac/Linux/Windows
+# - GPU support automatic if CUDA available
+# - All packages compatible with PC development

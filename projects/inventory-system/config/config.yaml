@@ -1,0 +1,176 @@
+# Veratori Inventory System Configuration
+# Production configuration for Jetson Orin Nano deployment
+#
+# Demo-safe design:
+# - All components have graceful fallbacks
+# - Mock mode auto-activates if YOLO unavailable
+# - No dependency on external services
+# - Suitable for edge deployment (Raspberry Pi 4, Jetson Orin Nano)
+
+# Demo Mode Settings
+demo:
+  # Enable demo mode (more graceful fallbacks, deterministic outputs)
+  enabled: false
+
+  # Auto-fallback to mock detection if YOLO fails
+  # When true: system continues with mock data
+  # When false: system requires working YOLO
+  mock_fallback_enabled: true
+
+  # Use deterministic random seed for consistent demo results
+  deterministic_seed: 42
+
+# Logging Settings
+logging:
+  # Log level: DEBUG, INFO, WARNING, ERROR
+  level: INFO
+
+  # Enable file logging to run/system.log
+  file_enabled: true
+
+  # Maximum log file size in MB (rotates when exceeded)
+  max_file_size_mb: 10
+
+  # Number of backup log files to keep
+  backup_count: 5
+
+# USB Camera Settings
+camera:
+  # Enable/disable camera (set to false to run without camera)
+  enabled: false
+  
+  # V4L2 device index (0 = /dev/video0, 1 = /dev/video1, etc.)
+  index: 0
+  
+  # Resolution (adjust based on your camera's native resolution)
+  width: 1280
+  height: 720
+  
+  # Target frames per second
+  fps: 30
+
+# YOLO Detector Settings
+detector:
+  # Enable/disable YOLO detection (if false, uses mock responses)
+  # Set to false for demos without GPU or when model unavailable
+  yolo_enabled: true
+
+  # Enable automatic fallback to mock mode if YOLO fails
+  # This ensures demo-safe operation even without GPU/model
+  mock_fallback_enabled: true
+
+  # Path to trained model (relative to project root or absolute path)
+  # System will try: best.pt, yolov8n.pt in models/ directory
+  model_path: models/best.pt
+  secondary_model_path: models/coke_best.pt
+  
+  # Confidence threshold (0.0 to 1.0)
+  # Lower = more detections (more false positives)
+  # Higher = fewer detections (more false negatives)
+  conf_threshold: 0.25
+  
+  # IoU threshold for Non-Maximum Suppression (0.0 to 1.0)
+  # Lower = more aggressive filtering of overlapping boxes
+  # Higher = allows more overlapping detections
+  iou_threshold: 0.45
+  
+  # Input image size for YOLO (should match training)
+  # Common values: 320, 416, 640, 1280
+  imgsz: 640
+  
+  # CUDA device ('0' for GPU, 'cpu' for CPU)
+  # On Jetson, use '0' for GPU acceleration
+  device: '0'
+  
+  # Enable FP16 half precision (recommended for Jetson)
+  # Reduces memory usage and increases speed with minimal accuracy loss
+  half: true
+
+# Inventory Tracking Settings
+inventory:
+  # Number of frames to use for temporal smoothing
+  # Higher = more stable counts but slower response to changes
+  # Lower = faster response but more noise
+  smoothing_window: 10
+  
+  # Smoothing method: 'median', 'mean', or 'mode'
+  # - median: Best for removing outliers (recommended)
+  # - mean: Smooth averaging
+  # - mode: Most common value
+  smoothing_method: median
+  
+  # Persistence settings (SQLite database)
+  enable_persistence: true      # Enable data persistence
+  snapshot_interval: 5.0        # Seconds between inventory snapshots
+  expiration_days: 5            # Days until products expire
+  
+  # Sales attribution settings
+  sales_confirm_intervals: 2    # Number of consecutive intervals to confirm sale
+  sales_min_delta: 1            # Minimum quantity change to consider
+  sales_cooldown_seconds: 10.0  # Cooldown between sales for same product
+
+# Alert System Settings
+alerts:
+  # Enable/disable alert system
+  enable_alerts: true
+  
+  # Number of consecutive intervals to confirm alert condition
+  alert_confirm_intervals: 2
+  
+  # Cooldown between alerts for same product+type (seconds)
+  # Default: 3600 (1 hour)
+  alert_cooldown_seconds: 3600.0
+  
+  # Low stock thresholds per product
+  # Alerts trigger when count falls below threshold for confirm_intervals
+  low_stock_thresholds:
+    mango: 3
+    watermelon: 2
+    pineapple: 2
+    passion fruit: 2
+    maui custard: 2
+    lemon cake: 2
+  
+  # Email notification settings (via environment variables)
+  # Set these in your environment:
+  #   SMTP_HOST - SMTP server hostname (e.g., smtp.gmail.com)
+  #   SMTP_PORT - SMTP server port (e.g., 587 for TLS)
+  #   SMTP_USER - SMTP username/email
+  #   SMTP_PASS - SMTP password or app-specific password
+  #   NOTIFY_TO - Recipient email address
+  #   NOTIFY_FROM - Sender email (optional, defaults to SMTP_USER)
+
+# Web Server Settings
+server:
+  # Host address
+  # '0.0.0.0' = accessible from all network interfaces
+  # '127.0.0.1' = localhost only
+  host: '0.0.0.0'
+  
+  # Port number
+  port: 8080
+
+# Video Streaming Settings
+stream:
+  # Target FPS for video stream
+  # Lower = reduced CPU/GPU usage and bandwidth
+  # Higher = smoother video but more resource intensive
+  target_fps: 30
+
+# Data Path Settings (relative to project root)
+paths:
+  # SQLite database location
+  database: data/inventory.db
+
+  # Export directory for CSV/Excel files
+  exports: run/exports
+
+  # Restock photos storage
+  restock_photos: restock_photos
+
+  # System logs
+  logs: run/system.log
+
+  # Detection-specific logs
+  detection_logs: run
+
