@@ -657,10 +657,9 @@
           <svg id="yoloBtnIcon" viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
           <span id="yoloBtnLabel">YOLO Live</span>
         </button>
-        <button class="cam-btn" id="loadVideoBtn" style="background:var(--green-dim);border-color:rgba(16,185,129,.2);color:var(--green)">
-          <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>Load Video
+        <button class="cam-btn" id="cameraRescanBtn" style="background:var(--green-dim);border-color:rgba(16,185,129,.2);color:var(--green)" title="Rescan connected cameras">
+          <svg viewBox="0 0 24 24"><path d="M17.65 6.35A7.95 7.95 0 0012 4a8 8 0 108 8h-2a6 6 0 11-1.76-4.24L13 11h7V4l-2.35 2.35z"/></svg>Rescan
         </button>
-        <input type="file" id="videoFileInput" accept="video/*" style="display:none">
       </div>
       <div id="yoloStatusBar" style="display:none;font-size:11px;color:#76b900;padding:3px 0 0;display:flex;align-items:center;gap:6px">
         <span style="width:6px;height:6px;border-radius:50%;background:#76b900;display:inline-block;box-shadow:0 0 6px rgba(118,185,0,0.6)"></span>
@@ -1240,9 +1239,6 @@ function handleMessage(msg) {
     case 'inventory':          updateInventory(msg.data); break;
     case 'freshness':          updateFreshness(msg.data); break;
     case 'alerts':             updateAlerts(msg.data); break;
-    case 'camera_switched':    onCameraSwitched(msg); break;
-    case 'camera_switch_result': onCameraSwitchResult(msg); break;
-    case 'video_ended':        handleVideoEnded(msg.session_id); break;
   }
 }
 
@@ -1305,6 +1301,46 @@ function updateInventory(inventory) {
     const cnt = document.createElement('div'); cnt.className='item-count'; cnt.textContent=count;
     item.appendChild(info); item.appendChild(cnt);
     inventoryList.appendChild(item);
+  });
+  previousInventoryTotal = total;
+}
+
+// Render food/drink-only items from the camera server's /inventory endpoint.
+// Each item carries: label, count, oldest_display_seconds, expiring, price_usd.
+function fmtDisplayTime(s) {
+  if (s < 60)   return s + 's';
+  if (s < 3600) return Math.floor(s/60) + 'm ' + (s%60) + 's';
+  const h = Math.floor(s/3600), m = Math.floor((s%3600)/60);
+  return h + 'h ' + m + 'm';
+}
+
+function updateInventoryFromTracker(items) {
+  const total = (items || []).reduce((s, i) => s + i.count, 0);
+  totalItems.textContent = total;
+  inventoryList.innerHTML = '';
+  if (!items || items.length === 0) {
+    inventoryList.innerHTML = '<div class="empty-inventory">No food or drink items in display</div>';
+    previousInventoryTotal = 0;
+    return;
+  }
+  items.forEach(it => {
+    const row  = document.createElement('div'); row.className = 'inventory-item';
+    const info = document.createElement('div'); info.className = 'item-info';
+    const nm   = document.createElement('div'); nm.className   = 'item-name';
+    nm.textContent = it.label;
+    info.appendChild(nm);
+
+    const meta = document.createElement('div');
+    meta.className = 'item-freshness' + (it.expiring ? ' expired' : '');
+    const priceStr = it.price_usd ? ' · $' + it.price_usd.toFixed(2) : '';
+    meta.textContent = 'on display ' + fmtDisplayTime(it.oldest_display_seconds || 0) + priceStr +
+                       (it.expiring ? ' · EXPIRING' : '');
+    info.appendChild(meta);
+
+    const cnt = document.createElement('div'); cnt.className = 'item-count';
+    cnt.textContent = it.count;
+    row.appendChild(info); row.appendChild(cnt);
+    inventoryList.appendChild(row);
   });
   previousInventoryTotal = total;
 }
@@ -1410,75 +1446,61 @@ document.addEventListener('click', e => {
   if (!e.target.closest('#cameraSwitcher')) cameraDropdown.classList.remove('open');
 });
 cameraRefreshBtn.addEventListener('click', e => { e.stopPropagation(); fetchCameras(true); });
+const cameraRescanBtn = document.getElementById('cameraRescanBtn');
+if (cameraRescanBtn) cameraRescanBtn.addEventListener('click', () => fetchCameras(true));
 
 function fetchCameras(refresh) {
   cameraList.innerHTML='<div class="camera-no-items">Scanning…</div>';
-  fetch(refresh?'/api/cameras?refresh=1':'/api/cameras',{credentials:'same-origin'})
+  const url = (refresh ? 'http://localhost:5001/cameras?refresh=1' : 'http://localhost:5001/cameras');
+  fetch(url)
     .then(r=>r.json()).then(data=>{
       availableCameras=data.cameras||[]; activeCameraIndex=data.active_index;
       renderCameraList(); updateActiveLabel();
-    }).catch(()=>{ cameraList.innerHTML='<div class="camera-no-items">Failed to load cameras</div>'; });
+    }).catch(()=>{ cameraList.innerHTML='<div class="camera-no-items">Camera server offline</div>'; });
 }
 
 function renderCameraList() {
   if (!availableCameras.length) { cameraList.innerHTML='<div class="camera-no-items">No cameras detected</div>'; return; }
   cameraList.innerHTML='';
-  availableCameras.forEach((cam,i)=>{
-    const btn=document.createElement('button'); btn.className='camera-option'+(i===activeCameraIndex?' active':'');
+  availableCameras.forEach(cam=>{
+    const btn=document.createElement('button');
+    btn.className='camera-option'+(cam.idx===activeCameraIndex?' active':'');
     const dot=document.createElement('span'); dot.className='camera-option-dot';
-    btn.appendChild(dot); btn.appendChild(document.createTextNode(cam.name||`Camera ${i}`));
-    btn.addEventListener('click',()=>{ cameraDropdown.classList.remove('open'); switchCamera(i); });
+    const tierLabel = ['USB','built-in','phone'][cam.tier] || '';
+    const label = tierLabel ? `${cam.name} · ${tierLabel}` : cam.name;
+    btn.appendChild(dot); btn.appendChild(document.createTextNode(label));
+    btn.addEventListener('click',()=>{ cameraDropdown.classList.remove('open'); switchCamera(cam.idx); });
     cameraList.appendChild(btn);
   });
 }
 
 function updateActiveLabel() {
-  if (activeCameraIndex!==null && availableCameras[activeCameraIndex]) {
-    activeCameraLabel.textContent = availableCameras[activeCameraIndex].name||`Camera ${activeCameraIndex}`;
-  }
+  const cam = availableCameras.find(c => c.idx === activeCameraIndex);
+  if (cam) activeCameraLabel.textContent = cam.name || `Camera ${cam.idx}`;
 }
 
 function switchCamera(index) {
-  if (cameraSwitching||!ws||ws.readyState!==WebSocket.OPEN) return;
+  if (cameraSwitching) return;
   cameraSwitching=true;
-  ws.send(JSON.stringify({type:'switch_camera',camera_index:index}));
-}
-
-function onCameraSwitched(msg) {
-  activeCameraIndex=msg.camera_index;
-  cameraSwitching=false;
-  if (availableCameras[msg.camera_index]) {
-    activeCameraLabel.textContent=availableCameras[msg.camera_index].name||`Camera ${msg.camera_index}`;
-    document.getElementById('videoSourceTitle').textContent=`Live Camera — ${availableCameras[msg.camera_index].name||'Camera '+msg.camera_index}`;
-  }
-  renderCameraList();
-}
-
-function onCameraSwitchResult(msg) {
-  if (!msg.success) { console.error('Camera switch failed:', msg.error); cameraSwitching=false; }
-}
-
-// Load video file
-const loadVideoBtn  = document.getElementById('loadVideoBtn');
-const videoFileInput= document.getElementById('videoFileInput');
-loadVideoBtn.addEventListener('click',()=>videoFileInput.click());
-videoFileInput.addEventListener('change', e=>{
-  const file=e.target.files[0]; if(!file)return;
-  if (ws&&ws.readyState===WebSocket.OPEN) {
-    const reader=new FileReader();
-    reader.onload=ev=>{
-      const b64=ev.target.result.split(',')[1];
-      ws.send(JSON.stringify({type:'load_video',filename:file.name,data:b64}));
-    };
-    reader.readAsDataURL(file);
-  }
-  videoFileInput.value='';
-});
-
-function handleVideoEnded(sessionId) {
-  console.log('Video ended:', sessionId);
-  videoFeed.style.display='none'; noFeed.style.display='flex';
-  noFeed.innerHTML='Video playback complete';
+  fetch('http://localhost:5001/camera/select', {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({index})
+  }).then(r=>r.json()).then(data=>{
+    cameraSwitching=false;
+    if (!data.ok) { console.error('Camera switch failed:', data.error); return; }
+    activeCameraIndex = index;
+    const cam = availableCameras.find(c => c.idx === index);
+    if (cam) {
+      activeCameraLabel.textContent = cam.name || `Camera ${index}`;
+      document.getElementById('videoSourceTitle').textContent =
+        `YOLO Live — ${cam.name || 'Camera '+index}`;
+    }
+    renderCameraList();
+  }).catch(err=>{
+    cameraSwitching=false;
+    console.error('Camera switch request failed:', err);
+  });
 }
 
 // ═══════════════════════════════════════════════════════
@@ -1612,6 +1634,9 @@ function connectYoloServer() {
       // Status poll
       if (yoloPollTimer) clearInterval(yoloPollTimer);
       yoloPollTimer = setInterval(pollYoloStatus, 2000);
+
+      // Populate the camera dropdown from the live server
+      fetchCameras(false);
     })
     .catch(() => {
       _yoloHideCanvas();
@@ -1638,12 +1663,12 @@ function reconnectYoloServer() {
 function pollYoloStatus() {
   if (!yoloConnected) { clearInterval(yoloPollTimer); return; }
 
-  // Poll status and detections in parallel
+  // Poll status + tracked food/drink inventory in parallel
   Promise.all([
-    fetch(`${YOLO_SERVER}/status`,     { signal: AbortSignal.timeout(2000) }).then(r => r.json()),
-    fetch(`${YOLO_SERVER}/detections`, { signal: AbortSignal.timeout(2000) }).then(r => r.json()),
+    fetch(`${YOLO_SERVER}/status`,    { signal: AbortSignal.timeout(2000) }).then(r => r.json()),
+    fetch(`${YOLO_SERVER}/inventory`, { signal: AbortSignal.timeout(2000) }).then(r => r.json()),
   ])
-  .then(([data, detections]) => {
+  .then(([data, inventory]) => {
     const stTxt = document.getElementById('yoloStatusText');
 
     // Sync button state with server
@@ -1662,10 +1687,8 @@ function pollYoloStatus() {
       document.getElementById('cameraSubtitle').textContent = `Camera · ${data.fps} fps · YOLO paused`;
     }
 
-    // Update Live Inventory panel from real YOLO detections
-    const inventory = {};
-    detections.forEach(d => { inventory[d.label] = d.count; });
-    updateInventory(inventory);
+    // Update Live Inventory panel — only food/drink items in IN_DISPLAY state
+    updateInventoryFromTracker(inventory);
   })
   .catch(() => {
     yoloConnected = false;
@@ -1688,36 +1711,54 @@ window.addEventListener('load', () => {
 // ═══════════════════════════════════════════════════════
 //  CAM MODE  (?loc=cam — Camera Demo location)
 // ═══════════════════════════════════════════════════════
-const isCamMode = new URLSearchParams(window.location.search).get('loc') === 'cam';
+// Camera Demo mode applies when ?loc=cam is set OR when no location is set
+// at all (root URL). Other named franchises keep the static demo data.
+const _locParam = new URLSearchParams(window.location.search).get('loc');
+const isCamMode = _locParam === 'cam' || _locParam === null;
 
 let nvCamPollTimer = null;
+let camAlertsPollTimer = null;
+
+// Camera Demo: poll /alerts every 5s and feed the System Alerts panel.
+function startCamModeAlerts() {
+  function pollAlerts() {
+    fetch(`${YOLO_SERVER}/alerts`, { signal: AbortSignal.timeout(2000) })
+      .then(r => r.json())
+      .then(data => updateAlerts(Array.isArray(data) ? data : []))
+      .catch(() => updateAlerts([]));
+  }
+  pollAlerts();
+  if (camAlertsPollTimer) clearInterval(camAlertsPollTimer);
+  camAlertsPollTimer = setInterval(pollAlerts, 5000);
+}
 
 function nvInitCamMode() {
-  // Retitle the NVIDIA panel to show YOLO inference from localhost
-  document.getElementById('nvSubtitle').textContent = 'YOLO · USB Camera';
-  document.getElementById('nvModePill').textContent  = 'Live Inference';
+  // Retitle the NVIDIA panel to show live sales from the camera server
+  document.getElementById('nvSubtitle').textContent  = 'Live Sales · YOLO Tracker';
+  document.getElementById('nvModePill').textContent  = 'Live Sales';
 
   // Show stat row immediately with placeholders
   document.getElementById('nvStatRow').style.display  = 'grid';
   document.getElementById('nvEmpty').style.display    = 'none';
-  document.getElementById('nvStatFrames').textContent = '—';
-  document.getElementById('nvStatConf').textContent   = '—';
+  document.getElementById('nvStatFrames').textContent = '0';
+  document.getElementById('nvStatConf').textContent   = '$0.00';
   document.getElementById('nvStatGpu').textContent    = '—';
 
-  // Stat label overrides: Frames→FPS, Confidence→Confidence, GPU Load→Status
+  // Relabel stats: Frames→Sales Today, Confidence→Revenue, GPU Load→Last Sale
   const labels = document.querySelectorAll('.nv-stat-lbl');
-  if (labels[0]) labels[0].textContent = 'FPS';
-  if (labels[2]) labels[2].textContent = 'Status';
+  if (labels[0]) labels[0].textContent = 'Sales Today';
+  if (labels[1]) labels[1].textContent = 'Revenue';
+  if (labels[2]) labels[2].textContent = 'Last Sale';
 
   // Initial message
   const chat = document.getElementById('nvChat');
   chat.innerHTML = '';
-  const msgs = [
-    { role:'system', type:'info',    content:'Camera Demo mode — live YOLO inference stats from <strong>localhost:5001</strong>.' },
-    { role:'ai',     type:'info',    content:'Model: <strong>YOLOv8n · COCO pretrained</strong> · 80 classes · conf threshold 40%.' },
-    { role:'ai',     type:'success', content:'Start <code>camera_server.py</code> to see live FPS and detection counts here.' },
+  const seedMsgs = [
+    { role:'system', type:'info',    content:'Camera Demo mode — live sales from <strong>localhost:5001</strong>. Items count as sold after vanishing for 5s.' },
+    { role:'ai',     type:'info',    content:'Tracking <strong>14 food &amp; drink classes</strong>. Sales log → <code>inventory-system/sales/veratori-sales-YYYY-MM-DD.csv</code>.' },
+    { role:'ai',     type:'success', content:'Toggle YOLO ON and place a tracked item in frame — once it vanishes for 5s, a sale appears here.' },
   ];
-  msgs.forEach((msg, i) => {
+  seedMsgs.forEach((msg, i) => {
     const d  = document.createElement('div'); d.className = 'nv-msg'; d.style.animationDelay = (i*0.08)+'s';
     const av = document.createElement('div'); av.className = 'nv-avatar ' + (msg.role === 'system' ? 'sys' : 'ai');
     av.textContent = msg.role === 'system' ? 'SYS' : 'AI';
@@ -1726,21 +1767,44 @@ function nvInitCamMode() {
     d.appendChild(av); d.appendChild(bubble); chat.appendChild(d);
   });
 
-  // Poll /status every 2s to update stats
+  let lastSaleStamp = 0;  // most recent sale time we've already shown in chat
+
+  function appendSaleMsg(sale) {
+    const d  = document.createElement('div'); d.className = 'nv-msg';
+    const av = document.createElement('div'); av.className = 'nv-avatar ai';
+    av.textContent = 'AI';
+    const bubble = document.createElement('div'); bubble.className = 'nv-bubble success';
+    bubble.innerHTML = `<strong>SALE</strong> · ${sale.label} @ $${sale.price_usd.toFixed(2)} · ${sale.time_display} <span style="color:var(--text-4)">(on display ${sale.on_display_seconds}s)</span>`;
+    d.appendChild(av); d.appendChild(bubble); chat.appendChild(d);
+    chat.scrollTop = chat.scrollHeight;
+  }
+
   function pollCamStats() {
-    fetch(`${YOLO_SERVER}/status`, { signal: AbortSignal.timeout(1500) })
+    fetch(`${YOLO_SERVER}/sales`, { signal: AbortSignal.timeout(1500) })
       .then(r => r.json())
       .then(data => {
-        document.getElementById('nvStatFrames').textContent = data.fps != null ? data.fps : '—';
-        document.getElementById('nvStatConf').textContent   = '35%';
-        document.getElementById('nvStatGpu').textContent    = data.connected ? 'Live' : data.error ? 'Error' : '—';
-        document.getElementById('nvSubtitle').textContent   = data.connected
-          ? `YOLO · ${data.fps} fps · USB Camera`
-          : 'YOLO · Waiting for camera…';
+        const today  = data.today  || { count: 0, revenue_usd: 0 };
+        const recent = data.recent || [];
+        document.getElementById('nvStatFrames').textContent = today.count;
+        document.getElementById('nvStatConf').textContent   = '$' + (today.revenue_usd || 0).toFixed(2);
+        if (recent.length) {
+          const latest = recent[0];  // server returns newest-first
+          document.getElementById('nvStatGpu').textContent  = latest.label + ' · ' + latest.time_display;
+        } else {
+          document.getElementById('nvStatGpu').textContent  = 'Awaiting…';
+        }
+        document.getElementById('nvSubtitle').textContent   =
+          today.count > 0
+            ? `${today.count} sales today · $${(today.revenue_usd||0).toFixed(2)}`
+            : 'Live Sales · YOLO Tracker';
+        // Append any newly-seen sales to the chat (recent[] is newest-first)
+        const fresh = recent.filter(s => s.time > lastSaleStamp).reverse();
+        fresh.forEach(appendSaleMsg);
+        if (recent.length) lastSaleStamp = recent[0].time;
       })
       .catch(() => {
         document.getElementById('nvStatGpu').textContent  = 'Off';
-        document.getElementById('nvSubtitle').textContent = 'YOLO · server not running';
+        document.getElementById('nvSubtitle').textContent = 'Sales server unreachable';
       });
   }
   pollCamStats();
@@ -2189,8 +2253,10 @@ connect();
 fetchCameras(false);
 
 if (isCamMode) {
-  updateAlerts([]);   // Camera Demo has no sales alerts
-  nvInitCamMode();    // NVIDIA panel shows live YOLO stats from localhost:5001
+  // Camera Demo: live perishable-freshness alerts from the camera server
+  updateAlerts([]);
+  startCamModeAlerts();
+  nvInitCamMode();
 } else {
   nvLoadLatest();
   initDemoAlerts();

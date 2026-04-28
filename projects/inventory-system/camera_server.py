@@ -21,6 +21,7 @@ import webbrowser
 from http.server import BaseHTTPRequestHandler
 from socketserver import ThreadingMixIn, TCPServer
 from ultralytics import YOLO
+from sales_tracker import SalesTracker, is_food_drink
 
 class ThreadingHTTPServer(ThreadingMixIn, TCPServer):
     allow_reuse_address = True
@@ -29,6 +30,7 @@ class ThreadingHTTPServer(ThreadingMixIn, TCPServer):
 # ── Config ────────────────────────────────────────────────────────────────────
 PORT       = 5001
 MODEL_PATH = os.path.join(os.path.dirname(__file__), "models/yolov8n.pt")
+SALES_DIR  = os.path.join(os.path.dirname(__file__), "sales")
 CONF_THRESH = 0.40
 FRAME_W     = 640
 FRAME_H     = 480
@@ -46,8 +48,15 @@ latest_frame     = None   # bytes (JPEG)
 yolo_enabled     = False  # toggled by POST /yolo/toggle
 camera_status    = {"connected": False, "error": None, "fps": 0, "yolo": False}
 model            = None
-latest_detections = []    # list of {label, conf, count} updated each frame
+latest_detections = []    # food/drink only — list of {label, conf, count}
 _last_empty_log  = 0.0    # throttle for "no detections" spam (1/sec)
+sales_tracker    = SalesTracker(SALES_DIR)
+_capture_should_stop = threading.Event()   # signal to capture_loop to exit cleanly
+
+# Camera selection state (used by GET /cameras and POST /camera/select)
+available_cameras    = []      # list of {idx, name, tier} populated at scan time
+active_camera_idx    = None    # AVFoundation index currently in use
+requested_camera_idx = None    # set by /camera/select, picked up by capture_loop
 
 # ── Camera + inference thread ─────────────────────────────────────────────────
 # Keywords that identify phone / virtual cameras — always tried last
@@ -64,7 +73,10 @@ def _ranked_camera_indices():
       Tier 1 — built-in cameras         (e.g. FaceTime HD)
       Tier 2 — phone / virtual cameras  (e.g. iPhone Continuity Camera)
     Returns a flat list of (index, name, tier) tuples in priority order.
+    Also caches the full list into the module-level `available_cameras` so the
+    HTTP API can expose it to the dashboard.
     """
+    global available_cameras
     try:
         result = subprocess.run(
             ["system_profiler", "SPCameraDataType", "-json"],
@@ -87,11 +99,16 @@ def _ranked_camera_indices():
             ranked = []
             for t in (0, 1, 2):
                 ranked.extend([(i, n, t) for i, n in tiers[t]])
+            available_cameras = [
+                {"idx": i, "name": n, "tier": t} for (i, n, t) in ranked
+            ]
             return ranked
     except Exception as e:
         print(f"[camera] system_profiler lookup failed: {e}")
     # Fallback: just try indices 0-6 with no tier info
-    return [(i, f"index {i}", 1) for i in range(7)]
+    fallback = [(i, f"index {i}", 1) for i in range(7)]
+    available_cameras = [{"idx": i, "name": n, "tier": t} for (i, n, t) in fallback]
+    return fallback
 
 def _try_open(idx, name):
     """Try to open camera at idx; return cap if live frames confirmed, else None."""
@@ -119,6 +136,7 @@ def find_best_camera():
       3rd — phone / virtual cam   (iPhone Continuity, DroidCam, …)
     Stops and returns the first tier that yields a working camera.
     """
+    global active_camera_idx
     ranked = _ranked_camera_indices()
 
     # Group by tier so we don't fall through to phone if a USB cam exists
@@ -135,11 +153,25 @@ def find_best_camera():
         for idx, name in entries:
             cap = _try_open(idx, name)
             if cap:
+                active_camera_idx = idx
                 return cap
         # If at least one camera existed in this tier but none worked, still
         # continue to the next tier (e.g. See3CAM unplugged → fall to built-in).
 
+    active_camera_idx = None
     return None
+
+def open_camera_at(idx):
+    """Open a specific AVFoundation index. Returns cap or None."""
+    global active_camera_idx
+    name = next(
+        (c["name"] for c in available_cameras if c["idx"] == idx),
+        f"index {idx}"
+    )
+    cap = _try_open(idx, name)
+    if cap:
+        active_camera_idx = idx
+    return cap
 
 # Keep old name as alias so any external callers still work
 find_see3cam = find_best_camera
@@ -163,7 +195,7 @@ def draw_detections(frame, results):
     return frame
 
 def capture_loop():
-    global latest_frame, camera_status, model, _last_empty_log, latest_detections
+    global latest_frame, camera_status, model, _last_empty_log, latest_detections, requested_camera_idx
 
     print("[server] Loading YOLO model…")
     try:
@@ -188,6 +220,32 @@ def capture_loop():
     fc = 0
 
     while True:
+        # Allow a clean shutdown when reconnect() asks us to exit
+        if _capture_should_stop.is_set():
+            print("[camera] capture_loop received stop signal — exiting cleanly")
+            cap.release()
+            return
+
+        # Honour an explicit camera switch request from the dashboard
+        if requested_camera_idx is not None and requested_camera_idx != active_camera_idx:
+            target = requested_camera_idx
+            requested_camera_idx = None
+            print(f"[camera] Switching to index {target} (requested by client)")
+            cap.release()
+            new_cap = open_camera_at(target)
+            if new_cap is not None:
+                cap = new_cap
+                camera_status["connected"] = True
+                camera_status["error"]     = None
+            else:
+                camera_status["error"] = f"Could not open camera index {target}"
+                print(f"[camera] Switch failed — falling back to best available")
+                cap = find_best_camera()
+                if cap is None:
+                    _serve_error_frame()
+                    time.sleep(2)
+                    continue
+
         ok, frame = cap.read()
         if not ok:
             camera_status["connected"] = False
@@ -206,37 +264,53 @@ def capture_loop():
         # Run YOLO only when enabled
         if yolo_enabled:
             try:
-                results = model(frame, conf=CONF_THRESH, verbose=False)
+                # model.track() assigns persistent IDs across frames so the sales
+                # tracker can apply its 5-second appearance / disappearance rules.
+                results = model.track(frame, conf=CONF_THRESH, persist=True, verbose=False)
                 frame   = draw_detections(frame, results)
 
-                # Aggregate detections by label
+                # Build per-track list (for sales tracker) + aggregated counts
+                # for the food/drink Live Inventory panel.
+                tracker_input = []
                 counts = {}
                 for r in results:
                     for box in r.boxes:
                         cls   = int(box.cls[0])
                         conf  = float(box.conf[0])
                         label = model.names[cls] if hasattr(model, 'names') else str(cls)
-                        if label not in counts:
-                            counts[label] = {"label": label, "count": 0, "conf": 0.0}
-                        counts[label]["count"] += 1
-                        counts[label]["conf"] = max(counts[label]["conf"], conf)
+                        tid   = int(box.id[0]) if box.id is not None else None
+                        if tid is not None and is_food_drink(label):
+                            tracker_input.append({
+                                "track_id": tid,
+                                "label":    label,
+                                "conf":     conf,
+                            })
+                        if is_food_drink(label):
+                            row = counts.setdefault(label, {"label": label, "count": 0, "conf": 0.0})
+                            row["count"] += 1
+                            row["conf"]   = max(row["conf"], conf)
+
+                # Drive the sales state machine — emits sales when items vanish.
+                sales_tracker.update(tracker_input)
 
                 new_detections = sorted(counts.values(), key=lambda x: -x["count"])
                 with lock:
                     latest_detections = new_detections
 
                 if new_detections:
-                    print(f"[yolo] DETECTED: { {d['label']: d['count'] for d in new_detections} }")
+                    print(f"[yolo] FOOD/DRINK: { {d['label']: d['count'] for d in new_detections} }")
                 else:
                     now = time.time()
                     if now - _last_empty_log >= 1.0:
-                        print(f"[yolo] no detections (conf={CONF_THRESH})")
+                        print(f"[yolo] no food/drink (conf={CONF_THRESH})")
                         _last_empty_log = now
             except Exception as e:
                 print(f"[yolo] Inference error: {e}")
         else:
             with lock:
                 latest_detections = []
+            # Drain tracker so vanished items don't get falsely sold while paused
+            sales_tracker.update([])
 
         # FPS overlay
         fc += 1
@@ -255,7 +329,13 @@ def capture_loop():
 
 _reconnecting = False
 def reconnect():
-    """Restart the capture thread (debounced — ignores if already reconnecting)."""
+    """
+    Restart the capture thread.
+      1. Signal any running capture_loop to stop (it watches _capture_should_stop)
+      2. Wait briefly for it to release the camera
+      3. Spawn a fresh capture_loop in a new thread
+    Debounced — ignores parallel reconnect requests.
+    """
     global latest_frame, camera_status, _reconnecting
     if _reconnecting:
         return
@@ -263,10 +343,18 @@ def reconnect():
     camera_status = {"connected": False, "error": "Reconnecting…", "fps": 0}
     with lock:
         latest_frame = None
+
+    # Tell any active capture_loop to exit, then clear so the new one runs
+    _capture_should_stop.set()
+    time.sleep(1.5)
+    _capture_should_stop.clear()
+
     def _start():
         global _reconnecting
-        capture_loop()
-        _reconnecting = False
+        try:
+            capture_loop()
+        finally:
+            _reconnecting = False
     t = threading.Thread(target=_start, daemon=True)
     t.start()
 
@@ -343,9 +431,59 @@ class Handler(BaseHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(body)
 
+        elif self.path.startswith("/cameras"):
+            # Re-scan if ?refresh=1 is present so newly plugged-in cameras show up
+            if "refresh=1" in self.path:
+                _ranked_camera_indices()
+            payload = {
+                "cameras":      list(available_cameras),
+                "active_index": active_camera_idx,
+            }
+            body = json.dumps(payload).encode()
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Content-Length", len(body))
+            self.send_header("Cache-Control", "no-cache, no-store")
+            self._cors()
+            self.end_headers()
+            self.wfile.write(body)
+
         elif self.path == "/detections":
             with lock:
                 payload = list(latest_detections)
+            body = json.dumps(payload).encode()
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Content-Length", len(body))
+            self.send_header("Cache-Control", "no-cache, no-store")
+            self._cors()
+            self.end_headers()
+            self.wfile.write(body)
+
+        elif self.path == "/inventory":
+            payload = sales_tracker.get_inventory()
+            body = json.dumps(payload).encode()
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Content-Length", len(body))
+            self.send_header("Cache-Control", "no-cache, no-store")
+            self._cors()
+            self.end_headers()
+            self.wfile.write(body)
+
+        elif self.path == "/sales":
+            payload = sales_tracker.get_sales_summary()
+            body = json.dumps(payload).encode()
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Content-Length", len(body))
+            self.send_header("Cache-Control", "no-cache, no-store")
+            self._cors()
+            self.end_headers()
+            self.wfile.write(body)
+
+        elif self.path == "/alerts":
+            payload = sales_tracker.get_alerts()
             body = json.dumps(payload).encode()
             self.send_response(200)
             self.send_header("Content-Type", "application/json")
@@ -367,6 +505,32 @@ class Handler(BaseHTTPRequestHandler):
             state = "on" if yolo_enabled else "off"
             print(f"[yolo] Inference {state.upper()}")
             body = json.dumps({"ok": True, "yolo": yolo_enabled}).encode()
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Content-Length", len(body))
+            self._cors()
+            self.end_headers()
+            self.wfile.write(body)
+            return
+
+        elif self.path == "/camera/select":
+            global requested_camera_idx
+            length = int(self.headers.get("Content-Length") or 0)
+            try:
+                data = json.loads(self.rfile.read(length) or b"{}")
+                idx  = int(data.get("index"))
+            except Exception as e:
+                body = json.dumps({"ok": False, "error": f"bad request: {e}"}).encode()
+                self.send_response(400)
+                self.send_header("Content-Type", "application/json")
+                self.send_header("Content-Length", len(body))
+                self._cors()
+                self.end_headers()
+                self.wfile.write(body)
+                return
+            requested_camera_idx = idx
+            print(f"[camera] /camera/select → index {idx}")
+            body = json.dumps({"ok": True, "requested_index": idx}).encode()
             self.send_response(200)
             self.send_header("Content-Type", "application/json")
             self.send_header("Content-Length", len(body))
