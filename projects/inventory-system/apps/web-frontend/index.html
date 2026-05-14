@@ -1808,11 +1808,24 @@ const _locParam = new URLSearchParams(window.location.search).get('loc');
 const isCamMode = _locParam === 'cam' || _locParam === null;
 
 // Multi-tenant guard: if this user can't access the franchise referenced in
-// the URL, bounce them back to the hub. Runs async after Firebase resolves.
+// the URL, redirect to the first franchise they DO have access to (or back
+// to the hub if they have none). Runs async after Firebase resolves.
+//
+// Without this, a manager scoped to e.g. 'canal' who clicks the Dashboard
+// nav link (which has no ?loc=) would default to 'cam', get denied, bounce
+// to home.html — and look like Dashboard "reloads the hub."
 window.VeratoriRole?.load().then(() => {
   const fid = window.getCurrentFranchiseId();
-  if (!window.VeratoriRole.canAccess(fid)) {
-    console.warn('[role] dashboard access denied for', fid, '→ redirecting to hub');
+  if (window.VeratoriRole.canAccess(fid)) return;
+
+  const allowed = window.VeratoriRole.allowedFranchises();
+  if (allowed.length > 0) {
+    console.info('[role] dashboard access denied for', fid,
+                 '→ redirecting to first allowed:', allowed[0]);
+    window.location.replace('index.html?loc=' + encodeURIComponent(allowed[0]));
+  } else {
+    console.warn('[role] dashboard access denied for', fid,
+                 '→ no allowed franchises, redirecting to hub');
     window.location.replace('home.html');
   }
 });
