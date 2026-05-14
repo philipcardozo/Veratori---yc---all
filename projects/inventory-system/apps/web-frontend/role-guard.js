@@ -31,7 +31,12 @@ window.VeratoriRole = (function () {
           resolve(cached); return;
         }
         try {
-          const tokenResult = await user.getIdTokenResult(/*forceRefresh*/ false);
+          // forceRefresh=true: always exchanges the refresh token for a brand-new
+          // ID token, so newly-set custom claims (via setUserClaims / admin SDK)
+          // take effect immediately instead of waiting up to 1h for the cached
+          // ID token to expire. Costs ~200ms extra on page load — worth it for
+          // not having every claim change require a manual sign-out.
+          const tokenResult = await user.getIdTokenResult(/*forceRefresh*/ true);
           const claims = tokenResult.claims || {};
 
           // Bootstrap allowlist: if the user has no role claim yet but their
