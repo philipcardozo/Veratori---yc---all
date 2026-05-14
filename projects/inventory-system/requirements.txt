@@ -23,6 +23,12 @@ colorlog>=6.7.0             # Colored logging output
 # Timezone support
 pytz>=2023.3                # Timezone conversion for EST timestamps
 
+# Cloud sync (Phase C — sync_agent.py)
+# sync_agent.py now uses raw HTTP via stdlib (urllib) — no extra deps needed.
+# firebase-admin is still kept for the local one-off provisioning script
+# (scripts/provision_initial_users.py) and any other admin-mode tooling.
+firebase-admin>=6.5.0       # local provisioning + admin scripts only
+
 # ========================================
 # JETSON-SPECIFIC INSTALLATION NOTES
 # ========================================

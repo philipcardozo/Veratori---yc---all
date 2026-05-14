@@ -171,6 +171,13 @@
           <input type="password" id="passInput" placeholder="Min. 8 characters" required autocomplete="current-password" minlength="8">
         </div>
         <button type="submit" class="btn-submit" id="submitBtn">Sign In</button>
+        <div style="text-align:right; margin-top:10px;">
+          <a href="#" id="forgotLink" onclick="event.preventDefault(); openForgotPassword()"
+             style="font-size:11px; color:var(--text-3); text-decoration:none; transition:color .15s ease;"
+             onmouseover="this.style.color='var(--green)'" onmouseout="this.style.color='var(--text-3)'">
+            Forgot password?
+          </a>
+        </div>
       </form>
 
       <div class="footer">
@@ -255,6 +262,25 @@
       const el = document.getElementById('msg');
       el.className = 'msg';
       el.textContent = '';
+    }
+
+    // Password reset — opens a small inline prompt + uses Firebase's
+    // sendPasswordResetEmail so a magic link goes to the user's inbox.
+    async function openForgotPassword() {
+      const email = (document.getElementById('emailInput').value || '').trim();
+      const target = prompt(
+        'Enter the email address on your Veratori account.\n'
+        + 'We will send a password reset link.',
+        email
+      );
+      if (!target) return;
+      clearMsg();
+      try {
+        await auth.sendPasswordResetEmail(target);
+        showMsg('success', `Reset link sent to ${target}. Check your inbox.`);
+      } catch (err) {
+        showMsg('error', friendlyError(err.code));
+      }
     }
 
     function friendlyError(code) {

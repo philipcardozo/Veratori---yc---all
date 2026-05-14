@@ -28,6 +28,29 @@ yarn-error.log*
 .env.test.local
 .env.production.local
 
+# Firebase / Google service-account credentials — NEVER commit
+*firebase-adminsdk*.json
+firebase-admin.json
+**/firebase-admin.json
+service-account*.json
+*-service-account.json
+google-credentials.json
+.firebase/
+firebase-debug.log
+firestore-debug.log
+
+# Veratori sync agent runtime state
+projects/inventory-system/.sync_state.json
+projects/inventory-system/.sync_state.json.tmp
+
+# Local-only ops/scratch files
+.claude/
+.gstack/
+# Root-level scratch copy only — the canonical one lives in projects/inventory-system/templates/
+/Tori_GenDocRef_v4.docx
+# Symlink to personal study materials, not project code
+projects/inventory-system/apps/Books
+
 # vercel
 .vercel
 
@@ -121,3 +144,4 @@ Poke-Bowl---updated-January/data/*.db*
 Poke-Bowl---updated-January/runs/
 Poke-Bowl---updated-January/__pycache__/
 Poke-Bowl---updated-January/**/__pycache__/
+.gstack/

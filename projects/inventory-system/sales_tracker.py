@@ -15,7 +15,7 @@ import csv
 import os
 import threading
 import time
-from datetime import datetime
+from datetime import datetime, timedelta
 
 # ── Config ────────────────────────────────────────────────────────────────────
 APPEARANCE_THRESHOLD_S    = 5.0   # must be visible this long before counting
@@ -56,7 +56,7 @@ FRESHNESS_HOURS = {
     # bottle / cup / wine glass: no expiry
 }
 
-CSV_HEADER = ["time", "product", "quantity", "price_usd", "on_display_seconds"]
+CSV_HEADER = ["time", "camera_id", "product", "quantity", "price_usd", "on_display_seconds"]
 
 
 def is_food_drink(label: str) -> bool:
@@ -64,8 +64,15 @@ def is_food_drink(label: str) -> bool:
 
 
 class SalesTracker:
-    def __init__(self, csv_dir: str):
-        self.csv_dir = csv_dir
+    def __init__(self, csv_dir: str, camera_id: int = 0):
+        """
+        camera_id distinguishes which physical camera generated a sale —
+        one process can run multiple trackers (one per slot). Every CSV row
+        is tagged with this id so cross-camera reads can filter or aggregate.
+        Camera 0 is the legacy/primary slot for backwards compatibility.
+        """
+        self.csv_dir    = csv_dir
+        self.camera_id  = camera_id
         os.makedirs(csv_dir, exist_ok=True)
         self.lock          = threading.Lock()
         self.tracks        = {}     # track_id -> dict
@@ -76,6 +83,11 @@ class SalesTracker:
         self._restore_today_from_csv()
 
     def _restore_today_from_csv(self):
+        """
+        Re-hydrate this tracker's daily totals from the shared CSV, filtered
+        to this camera_id. Rows missing the column are treated as camera 0
+        for backwards compatibility with pre-multi-cam CSVs.
+        """
         today = datetime.now().strftime("%Y-%m-%d")
         path  = os.path.join(self.csv_dir, f"veratori-sales-{today}.csv")
         if not os.path.exists(path):
@@ -87,6 +99,12 @@ class SalesTracker:
                 reader = csv.DictReader(f)
                 for row in reader:
                     try:
+                        cam = int(row.get("camera_id", 0) or 0)
+                    except (TypeError, ValueError):
+                        cam = 0
+                    if cam != self.camera_id:
+                        continue
+                    try:
                         revenue += float(row.get("price_usd", 0) or 0)
                         count   += int(row.get("quantity", 1) or 1)
                     except (TypeError, ValueError):
@@ -96,7 +114,7 @@ class SalesTracker:
             return
         self.daily_totals = {"date": today, "count": count, "revenue_usd": revenue}
         if count:
-            print(f"[sales] restored today's totals from CSV: {count} sales, ${revenue:.2f}")
+            print(f"[sales cam{self.camera_id}] restored from CSV: {count} sales, ${revenue:.2f}")
 
     def _ensure_today(self):
         """Roll daily_totals over to a new day if the calendar date has changed."""
@@ -192,6 +210,7 @@ class SalesTracker:
                     w.writerow(CSV_HEADER)
                 w.writerow([
                     sale["time_iso"],
+                    self.camera_id,
                     sale["label"],
                     1,
                     f"{sale['price_usd']:.2f}",
@@ -290,6 +309,132 @@ class SalesTracker:
         order = {"critical": 0, "expiration": 1, "warning": 2, "info": 3}
         alerts.sort(key=lambda a: order.get(a["alert_type"], 99))
         return alerts
+
+
+    # ── Report aggregation (multi-day CSV scan) ────────────────────────────────
+    def get_report(self, start_date: str, end_date: str, camera_id: int = None):
+        """
+        camera_id=None → aggregate ALL cameras for the report window (default).
+        camera_id=N    → only rows tagged with that camera (or untagged legacy
+                         rows when N == 0).
+        """
+        """
+        Aggregate sales across all CSVs falling in [start_date, end_date] (YYYY-MM-DD inclusive).
+
+        Returns a dict shaped for the PDF template:
+          {
+            "period":         {"start","end","days"},
+            "kpis":           {"revenue","units","top_product","avg_on_display_s","best_day"},
+            "daily":          [{"date","units","revenue"}, ...]   (one per day, gaps zero-filled)
+            "hourly":         [{"hour","units","revenue"}, ...]   (24 buckets)
+            "top_products":   [{"label","units","revenue","share"}, ...]  (sorted desc)
+            "transactions":   [{"time","product","price"}, ...]   (last 20 newest first)
+            "totals":         {"files_read","rows_read"}
+          }
+        """
+        try:
+            d0 = datetime.strptime(start_date, "%Y-%m-%d").date()
+            d1 = datetime.strptime(end_date,   "%Y-%m-%d").date()
+        except ValueError:
+            return None
+        if d1 < d0:
+            d0, d1 = d1, d0
+
+        # Pre-seed daily buckets so gaps render as zeros
+        days = (d1 - d0).days + 1
+        daily = {}
+        cur = d0
+        while cur <= d1:
+            daily[cur.isoformat()] = {"date": cur.isoformat(), "units": 0, "revenue": 0.0}
+            cur += timedelta(days=1)
+
+        hourly  = [{"hour": h, "units": 0, "revenue": 0.0} for h in range(24)]
+        products = {}            # label -> {units, revenue, on_display_s_sum, on_display_n}
+        all_rows = []            # for transactions tail
+        files_read = 0
+        rows_read  = 0
+
+        cur = d0
+        while cur <= d1:
+            path = os.path.join(self.csv_dir, f"veratori-sales-{cur.isoformat()}.csv")
+            if os.path.exists(path):
+                files_read += 1
+                try:
+                    with open(path, "r", newline="") as f:
+                        for row in csv.DictReader(f):
+                            try:
+                                price = float(row.get("price_usd") or 0)
+                                qty   = int(row.get("quantity")    or 1)
+                                label = (row.get("product") or "").strip() or "unknown"
+                                t_iso = row.get("time") or ""
+                                on_s  = int(row.get("on_display_seconds") or 0)
+                                cam   = int(row.get("camera_id", 0) or 0)
+                            except (TypeError, ValueError):
+                                continue
+                            if camera_id is not None and cam != camera_id:
+                                continue
+
+                            rows_read += 1
+                            d_iso = cur.isoformat()
+                            daily[d_iso]["units"]   += qty
+                            daily[d_iso]["revenue"] += price
+
+                            # Hour bucket (from ISO timestamp)
+                            try:
+                                hr = datetime.fromisoformat(t_iso).hour
+                            except Exception:
+                                hr = 0
+                            hourly[hr]["units"]   += qty
+                            hourly[hr]["revenue"] += price
+
+                            p = products.setdefault(label, {
+                                "label": label, "units": 0, "revenue": 0.0,
+                                "on_display_s_sum": 0, "on_display_n": 0,
+                            })
+                            p["units"]            += qty
+                            p["revenue"]          += price
+                            p["on_display_s_sum"] += on_s
+                            p["on_display_n"]     += 1
+
+                            all_rows.append({"time": t_iso, "product": label, "price": price})
+                except Exception as e:
+                    print(f"[report] read failed for {path}: {e}")
+            cur += timedelta(days=1)
+
+        # KPI rollups
+        total_units   = sum(d["units"]   for d in daily.values())
+        total_revenue = sum(d["revenue"] for d in daily.values())
+        on_disp_sum   = sum(p["on_display_s_sum"] for p in products.values())
+        on_disp_n     = sum(p["on_display_n"]    for p in products.values())
+        avg_on_disp_s = int(on_disp_sum / on_disp_n) if on_disp_n else 0
+
+        top_list = sorted(products.values(), key=lambda r: -r["revenue"])
+        top_product = top_list[0]["label"].title() if top_list else "—"
+        for p in top_list:
+            p["share"] = round(p["revenue"] / total_revenue * 100, 1) if total_revenue else 0.0
+            p.pop("on_display_s_sum", None)
+            p.pop("on_display_n",     None)
+
+        best_day = max(daily.values(), key=lambda d: d["revenue"]) if daily else None
+
+        all_rows.sort(key=lambda r: r["time"], reverse=True)
+        tail = all_rows[:20]
+
+        return {
+            "period": {"start": d0.isoformat(), "end": d1.isoformat(), "days": days},
+            "kpis": {
+                "revenue":          round(total_revenue, 2),
+                "units":            total_units,
+                "top_product":      top_product,
+                "avg_on_display_s": avg_on_disp_s,
+                "best_day":         best_day,
+            },
+            "daily":        list(daily.values()),
+            "hourly":       hourly,
+            "top_products": top_list[:10],
+            "transactions": tail,
+            "totals":       {"files_read": files_read, "rows_read": rows_read},
+        }
 
 
 def _fmt_duration(seconds: int) -> str:

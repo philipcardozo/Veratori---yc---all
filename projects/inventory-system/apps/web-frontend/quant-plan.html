@@ -1,0 +1,1070 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Full Quant Plan 2026</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0d1117;--surface:#161b22;--surface2:#1c2128;--border:#30363d;
+  --accent:#58a6ff;--green:#3fb950;--yellow:#d29922;--orange:#f78166;--purple:#bc8cff;
+  --text:#c9d1d9;--muted:#8b949e;--white:#f0f6fc;
+}
+body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;display:flex;height:100vh;overflow:hidden}
+#sidebar{width:230px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow-y:auto;flex-shrink:0}
+#sidebar::-webkit-scrollbar{width:4px}
+#sidebar::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+#shead{padding:16px;border-bottom:1px solid var(--border)}
+#shead h1{font-size:13px;font-weight:700;color:var(--accent);letter-spacing:.5px}
+#shead p{font-size:11px;color:var(--muted);margin-top:3px}
+.pg{padding:6px 0}
+.pl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--muted);padding:8px 14px 4px;display:flex;align-items:center;gap:6px}
+.pl-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.wbtn{display:flex;align-items:center;width:100%;padding:6px 14px;background:none;border:none;cursor:pointer;color:var(--text);font-size:12px;text-align:left;transition:background .12s;gap:0}
+.wbtn:hover{background:#ffffff0d;color:var(--white)}
+.wbtn.active{background:#58a6ff18;color:var(--accent);font-weight:600;border-right:2px solid var(--accent)}
+.wnum{font-size:10px;background:#ffffff12;border-radius:3px;padding:1px 5px;margin-right:7px;min-width:28px;text-align:center;flex-shrink:0}
+.wcpp{font-size:9px;background:#f7816630;color:#f78166;border-radius:3px;padding:1px 4px;margin-left:auto;font-weight:700;flex-shrink:0}
+#main{flex:1;overflow-y:auto;padding:28px 32px}
+#main::-webkit-scrollbar{width:6px}
+#main::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+.wh{margin-bottom:22px;padding-bottom:16px;border-bottom:1px solid var(--border)}
+.ptag{display:inline-block;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;padding:2px 9px;border-radius:20px;margin-bottom:8px}
+.wh h2{font-size:24px;font-weight:700;color:var(--white)}
+.wh .wd{font-size:13px;color:var(--muted);margin-top:5px}
+.wh .wg{font-size:12px;color:var(--muted);margin-top:4px;font-style:italic}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px;margin-bottom:16px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:15px}
+.ct{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--muted);margin-bottom:10px;display:flex;align-items:center;gap:7px}
+.ctd{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.card ul{list-style:none}
+.card ul li{font-size:12.5px;padding:3.5px 0;border-bottom:1px solid #30363d40;line-height:1.45}
+.card ul li:last-child{border-bottom:none}
+.card ul li::before{content:'▸ ';color:var(--accent)}
+.ptbl{width:100%;border-collapse:collapse;font-size:12.5px}
+.ptbl th{text-align:left;color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.7px;padding:6px 8px;border-bottom:1px solid var(--border)}
+.ptbl td{padding:7px 8px;border-bottom:1px solid #30363d35}
+.ptbl tr:last-child td{border-bottom:none}
+.pn{font-weight:600;color:var(--accent)}
+.dlvr{display:flex;align-items:flex-start;gap:10px;padding:7px 0;border-bottom:1px solid #30363d35;font-size:12.5px;cursor:pointer}
+.dlvr:last-child{border-bottom:none}
+.dlvr:hover .cb{border-color:var(--green)}
+.cb{width:16px;height:16px;border:2px solid var(--border);border-radius:3px;flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center;transition:all .2s}
+.cb.chk{background:var(--green);border-color:var(--green)}
+.cb.chk::after{content:'✓';color:#000;font-size:10px;font-weight:900}
+.dlvr.chk-row span{text-decoration:line-through;color:var(--muted)}
+.sec-title{font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;margin:18px 0 10px;padding-bottom:6px;border-bottom:1px solid var(--border)}
+.assess{background:#0d2200;border:1px solid #3fb95040;border-radius:8px;padding:15px;margin-top:16px}
+.assess h4{color:var(--green);font-size:13px;font-weight:700;margin-bottom:10px}
+.assess ul{list-style:none}
+.assess ul li{font-size:12.5px;padding:3px 0;color:var(--text)}
+.assess ul li::before{content:'→ ';color:var(--green)}
+.cpp-wrap{background:#160a00;border:1px solid #f7816635;border-radius:8px;padding:16px;margin-top:16px}
+.cpp-head{display:flex;align-items:center;gap:10px;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid #f7816625}
+.cpp-badge{background:#f78166;color:#000;font-size:10px;font-weight:800;padding:3px 9px;border-radius:4px;letter-spacing:.5px;flex-shrink:0}
+.cpp-head h3{font-size:14px;font-weight:700;color:#f78166}
+.cpp-src{font-size:11px;color:#f7816660;font-style:italic;margin-top:2px}
+.dtbl{width:100%;border-collapse:collapse;font-size:12px}
+.dtbl th{text-align:left;color:#f7816670;font-size:10px;text-transform:uppercase;letter-spacing:.7px;padding:5px 10px;border-bottom:1px solid #f7816620}
+.dtbl td{padding:8px 10px;vertical-align:top;border-bottom:1px solid #f7816615;line-height:1.5}
+.dtbl tr:last-child td{border-bottom:none}
+.dn{font-weight:700;color:#f78166;white-space:nowrap;padding-right:12px}
+.wkend{background:#f7816608}
+.wkend .dn{color:#ffa07a}
+.p1-tag{background:#388bfd18;color:#388bfd}
+.p2-tag{background:#3fb95018;color:#3fb950}
+.p3-tag{background:#d2992218;color:#d29922}
+.p4-tag{background:#f7816618;color:#f78166}
+.p5-tag{background:#bc8cff18;color:#bc8cff}
+.ph4-tbl{width:100%;border-collapse:collapse;font-size:12.5px;margin-top:8px}
+.ph4-tbl th{text-align:left;color:var(--muted);font-size:10px;text-transform:uppercase;padding:7px 10px;border-bottom:1px solid var(--border)}
+.ph4-tbl td{padding:9px 10px;border-bottom:1px solid #30363d35;vertical-align:top}
+.ph4-tbl tr:last-child td{border-bottom:none}
+.ph4-tbl tr.cur{background:#f7816608}
+.wk-col{font-weight:700;color:var(--orange);white-space:nowrap}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:14px;text-align:center}
+.sv{font-size:22px;font-weight:800;color:var(--accent)}
+.sl{font-size:11px;color:var(--muted);margin-top:3px}
+.note-box{background:var(--surface2);border:1px solid var(--border);border-left:3px solid var(--yellow);border-radius:4px;padding:11px 14px;font-size:12.5px;color:var(--muted);margin-top:12px;line-height:1.5}
+.js-puzzle{background:#0c1800;border:1px solid #e3b34140;border-radius:8px;padding:16px;margin-top:16px}
+.js-puzzle-head{display:flex;align-items:center;gap:12px;margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid #e3b34120}
+.js-badge{background:#e3b341;color:#000;font-size:10px;font-weight:800;padding:3px 9px;border-radius:4px;letter-spacing:.5px;flex-shrink:0}
+.js-puzzle-head h3{font-size:14px;font-weight:700;color:#e3b341}
+.js-meta{font-size:11px;color:#e3b34165;margin-top:2px}
+.js-deadline{font-size:11px;font-weight:700;color:#f78166;background:#f7816615;border-radius:4px;padding:2px 8px;margin-left:auto;flex-shrink:0;white-space:nowrap}
+.js-mandatory{font-size:11px;background:#e3b34112;color:#e3b341;border-radius:4px;padding:4px 12px;display:inline-flex;align-items:center;gap:6px;margin-bottom:12px}
+.js-progress-row{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.js-progress-bar{flex:1;height:5px;background:#ffffff0f;border-radius:3px;overflow:hidden}
+.js-progress-fill{height:100%;background:#e3b341;border-radius:3px;transition:width .4s}
+.js-progress-label{font-size:11px;color:#e3b34180;white-space:nowrap}
+.js-check{display:flex;align-items:center;gap:10px;cursor:pointer;font-size:13px;font-weight:600;color:#e3b341;padding:8px 0;border-top:1px solid #e3b34115}
+.js-check:hover .js-cb{border-color:#e3b341}
+.js-cb{width:20px;height:20px;border:2px solid #e3b34155;border-radius:4px;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .2s}
+.js-cb.solved{background:#e3b341;border-color:#e3b341}
+.js-cb.solved::after{content:'★';color:#000;font-size:12px;line-height:1}
+.js-notes-label{font-size:11px;color:#e3b34165;margin-top:12px;margin-bottom:5px;text-transform:uppercase;letter-spacing:.6px}
+.js-notes{width:100%;background:#060e00;border:1px solid #e3b34125;border-radius:4px;padding:9px 11px;color:#c9d1d9;font-size:12.5px;font-family:inherit;resize:vertical;min-height:65px;line-height:1.5}
+.js-notes::placeholder{color:#e3b34135}
+.js-notes:focus{outline:none;border-color:#e3b34155}
+.wcpp-js{font-size:9px;background:#e3b34125;color:#e3b341;border-radius:3px;padding:1px 4px;margin-left:3px;font-weight:700;flex-shrink:0}
+.lib-btn{display:flex;align-items:center;gap:8px;width:100%;padding:9px 14px;background:none;border:none;border-bottom:1px solid var(--border);cursor:pointer;color:var(--muted);font-size:12px;font-weight:600;text-align:left;transition:background .12s;letter-spacing:.3px}
+.lib-btn:hover{background:#ffffff0d;color:var(--white)}
+.lib-btn.active{background:#58a6ff18;color:var(--accent)}
+.lib-btn svg{flex-shrink:0}
+.book-pills{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px}
+.bpill{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;background:var(--surface);border:1px solid var(--border);border-radius:20px;font-size:11.5px;color:var(--text);text-decoration:none;cursor:pointer;transition:all .15s;white-space:nowrap}
+.bpill:hover{border-color:var(--accent);color:var(--accent);background:#58a6ff0d}
+.bpill-icon{font-size:12px}
+.bpill-tag{font-size:9px;background:#ffffff12;border-radius:3px;padding:1px 5px;color:var(--muted)}
+.blib-header{margin-bottom:24px;padding-bottom:16px;border-bottom:1px solid var(--border)}
+.blib-header h2{font-size:24px;font-weight:700;color:var(--white)}
+.blib-header p{font-size:13px;color:var(--muted);margin-top:5px}
+.blib-section{margin-bottom:28px}
+.blib-section-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:12px;padding-bottom:6px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px}
+.blib-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px}
+.bcard{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:14px;text-decoration:none;display:flex;flex-direction:column;gap:6px;transition:all .15s;cursor:pointer}
+.bcard:hover{border-color:var(--accent);transform:translateY(-1px)}
+.bcard-abbr{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;padding:2px 8px;border-radius:3px;align-self:flex-start}
+.bcard-title{font-size:13px;font-weight:600;color:var(--white);line-height:1.35}
+.bcard-author{font-size:11.5px;color:var(--muted)}
+.bcard-weeks{font-size:11px;color:var(--muted);display:flex;align-items:center;gap:5px;margin-top:4px}
+.bcard-wbadge{font-size:10px;background:#ffffff0d;border-radius:3px;padding:1px 6px;color:var(--muted)}
+.bcard-open{margin-top:auto;padding-top:10px;border-top:1px solid var(--border);font-size:11.5px;color:var(--accent);font-weight:600;display:flex;align-items:center;gap:5px}
+</style>
+</head>
+<body>
+<aside id="sidebar">
+  <div id="shead"><h1>QUANT PLAN 2026</h1><p>Apr 1 – Dec 31 · 39 Weeks · ~1,785h</p></div>
+  <div id="week-nav"></div>
+</aside>
+<main id="main"></main>
+
+<script>
+const PHASES = [
+  {id:1,name:"Foundation Revival",color:"#388bfd",dates:"Apr 1–May 12",weeks:[1,2,3,4,5,6]},
+  {id:2,name:"Core Quant Build",color:"#3fb950",dates:"May 13–Jul 7",weeks:[7,8,9,10,11,12,13,14]},
+  {id:3,name:"Advanced + Finance",color:"#d29922",dates:"Jul 8–Sep 1",weeks:[15,16,17,18,19,20,21,22]},
+  {id:4,name:"Peak Prep + Apps",color:"#f78166",dates:"Sep 2–Oct 27",weeks:[23,24,25,26,27,28,29,30]},
+  {id:5,name:"Interview Execution",color:"#bc8cff",dates:"Oct 28–Dec 31",weeks:[31,32,33,34,35,36,37,38,39]}
+];
+
+const BPATH = '../Books/';
+function burl(f){ return BPATH + encodeURIComponent(f); }
+
+const BOOKS = [
+  // ── Probability & Brain Teasers ──────────────────────────────────
+  {abbr:'Green Book',title:'Practical Guide to Quant Finance Interviews',author:'Xinfeng Zhou',file:'Green Book.pdf',cat:'Probability',color:'#388bfd',ws:1,we:39},
+  {abbr:'HOTS',title:'Heard on the Street',author:'Timothy Crack',file:'Heard of The Street.pdf',cat:'Probability',color:'#388bfd',ws:3,we:16},
+  {abbr:'Mosteller',title:'Fifty Challenging Problems in Probability',author:'Frederick Mosteller',file:'Mosteller.pdf',cat:'Probability',color:'#388bfd',ws:1,we:8},
+  {abbr:'Ross-Prob',title:'A First Course in Probability (10th ed)',author:'Sheldon Ross',file:'Ross-Prob.pdf',cat:'Probability',color:'#388bfd',ws:1,we:10},
+  {abbr:'Mental Math',title:'Secrets of Mental Math',author:'Arthur Benjamin',file:'Secrets of Mental Math.pdf',cat:'Probability',color:'#388bfd',ws:1,we:8},
+  {abbr:'150 Quant Qs',title:'150 Most Frequently Asked Quant Interview Questions',author:'Various',file:'150 Most Frequently Asked Questions on Quant Interviews.pdf',cat:'Probability',color:'#388bfd',ws:1,we:39},
+  {abbr:'Quant IQ',title:'Quant Job Interview Questions & Answers',author:'Mark Joshi',file:'Quant Job Interview Questions.pdf',cat:'Probability',color:'#388bfd',ws:20,we:39},
+  // ── Mathematics ──────────────────────────────────────────────────
+  {abbr:'Axler',title:'Linear Algebra Done Right',author:'Sheldon Axler',file:'Axler.pdf',cat:'Mathematics',color:'#3fb950',ws:1,we:8},
+  {abbr:'Wasserman',title:'All of Statistics',author:'Larry Wasserman',file:'Wasserman.pdf',cat:'Mathematics',color:'#3fb950',ws:7,we:18},
+  {abbr:'Ross-Models',title:'Introduction to Probability Models',author:'Sheldon Ross',file:'Ross-Models.pdf',cat:'Mathematics',color:'#3fb950',ws:10,we:18},
+  {abbr:'Royden',title:'Real Analysis (selected chapters)',author:'Royden & Fitzpatrick',file:'Royden.pdf',cat:'Mathematics',color:'#3fb950',ws:20,we:26},
+  {abbr:'Martingales',title:'Martingales & Stochastic Processes',author:'Various',file:'Martingales.pdf',cat:'Mathematics',color:'#3fb950',ws:17,we:24},
+  // ── Stochastic Calculus & Finance ─────────────────────────────────
+  {abbr:'Hull',title:'Options, Futures, and Other Derivatives',author:'John C. Hull',file:'Hull.pdf',cat:'Stochastic / Finance',color:'#d29922',ws:3,we:22},
+  {abbr:'Shreve-I',title:'Stochastic Calculus for Finance I',author:'Steven Shreve',file:'Shreve-I.pdf',cat:'Stochastic / Finance',color:'#d29922',ws:16,we:24},
+  {abbr:'Shreve-II',title:'Stochastic Calculus for Finance II',author:'Steven Shreve',file:'Shreve-II.pdf',cat:'Stochastic / Finance',color:'#d29922',ws:18,we:32},
+  {abbr:'Wilmott',title:'Paul Wilmott Introduces Quantitative Finance',author:'Paul Wilmott',file:'Willmott.pdf',cat:'Stochastic / Finance',color:'#d29922',ws:20,we:28},
+  {abbr:'Brownian',title:'Brownian Motion (selected chapters)',author:'Various',file:'Brownian motion  2, 5–6, 8, 9, 14, 16–18, 20.pdf',cat:'Stochastic / Finance',color:'#d29922',ws:19,we:26},
+  {abbr:'Lévy Calc',title:'Lévy Stochastic Calculus (selected)',author:'Various',file:'Levy stochastic calculus - 1,2,4,5,6.pdf',cat:'Stochastic / Finance',color:'#d29922',ws:20,we:30},
+  {abbr:'MathFin',title:'Concepts & Practice of Mathematical Finance',author:'Joshi',file:'The Con & Pract MathFin 2–7,11,15–18, Appendix B, all problems.pdf',cat:'Stochastic / Finance',color:'#d29922',ws:18,we:30},
+  {abbr:'Options Vol',title:'Option Volatility & Pricing (selected)',author:'Natenberg',file:'Option Volatility and Pricing 2, 5–9, 15–20, 23–25.pdf',cat:'Stochastic / Finance',color:'#d29922',ws:12,we:22},
+  {abbr:'Fin Calc',title:'Financial Calculus',author:'Baxter & Rennie',file:'Fin Calc.pdf',cat:'Stochastic / Finance',color:'#d29922',ws:18,we:28},
+  {abbr:'O\'Hara',title:'Market Microstructure Theory (selected)',author:"Maureen O'Hara",file:"O'Hara.pdf",cat:'Stochastic / Finance',color:'#d29922',ws:24,we:30},
+  // ── Machine Learning & Statistics ─────────────────────────────────
+  {abbr:'ISLR',title:'Introduction to Statistical Learning',author:'James, Witten, Hastie, Tibshirani',file:'ISLR.pdf',cat:'ML / Stats',color:'#bc8cff',ws:7,we:18},
+  {abbr:'ESL',title:'Elements of Statistical Learning (selected)',author:'Hastie, Tibshirani, Friedman',file:'ESL',cat:'ML / Stats',color:'#bc8cff',ws:18,we:28},
+  {abbr:'Géron',title:'Hands-On Machine Learning (3rd ed)',author:'Aurélien Géron',file:'Géron.pdf',cat:'ML / Stats',color:'#bc8cff',ws:10,we:20},
+  {abbr:'50 DS',title:'50 Concepts of Data Science in Python',author:'Various',file:'50 concepts Datasci Python.pdf',cat:'ML / Stats',color:'#bc8cff',ws:10,we:22},
+  // ── Coding & Algorithms ───────────────────────────────────────────
+  {abbr:'CTCI',title:'Cracking the Coding Interview',author:'Gayle McDowell',file:'CITC.pdf',cat:'Coding',color:'#f78166',ws:1,we:12},
+  {abbr:'CLRS',title:'Introduction to Algorithms',author:'Cormen, Leiserson, Rivest, Stein',file:'CLRS.pdf',cat:'Coding',color:'#f78166',ws:1,we:39},
+  // ── C++ ────────────────────────────────────────────────────────────
+  {abbr:'C++ Joshi',title:'C++ Design Patterns & Derivatives Pricing',author:'Mark Joshi',file:'C++ Joshi.pdf',cat:'C++',color:'#f78166',ws:6,we:18},
+  // ── Trading & Market Microstructure ───────────────────────────────
+  {abbr:'Harris',title:'Trading and Exchanges',author:'Larry Harris',file:'Harris.pdf',cat:'Trading',color:'#58a6ff',ws:12,we:22},
+  {abbr:'Chan-AT',title:'Algorithmic Trading',author:'Ernest Chan',file:'Chan - algo trading.pdf',cat:'Trading',color:'#58a6ff',ws:20,we:26},
+  {abbr:'Chan-MT',title:'Machine Trading',author:'Ernest Chan',file:'Chan - Machine Trading.pdf',cat:'Trading',color:'#58a6ff',ws:20,we:28},
+];
+
+const WEEKS = {
+1:{num:1,phase:1,dates:"April 1–7",title:"Ground Zero",
+  goal:"Rebuild mathematical maturity. Establish daily habits.",
+  sections:[
+    {title:"Probability / Math · 2h/day",color:"#58a6ff",items:["Ross-Prob Ch 1–3 (combinatorics, axioms, conditional probability)","Work through every example + 15 end-of-chapter problems per chapter","Mosteller: problems 1–8"]},
+    {title:"Coding · 1.5h/day",color:"#3fb950",items:["CTCI Chapters 1–3 (Arrays, Strings, Linked Lists)","LeetCode: 3 Easy problems/day","Set up GitHub repo: quant-prep-2026","Project Euler: problems 1–10"]},
+    {title:"Brain Teasers / Mental Math · 0.5h/day",color:"#d29922",items:["Secrets of Mental Math chapters 1–3","Zetamac: 5 rounds of 120 seconds (record baseline)","Green Book: Chapter 1, first 5 problems"]},
+    {title:"Finance · 0.5h/day",color:"#bc8cff",items:["The Man Who Solved the Market (30 min/day, motivation)","How the Economic Machine Works — Ray Dalio (2 episodes)"]}
+  ],
+  platforms:[
+    {name:"LeetCode",p:"3 Easy problems/day"},
+    {name:"Project Euler",p:"Problems 1–10"},
+    {name:"QuantGuide",p:"Begin — target 100% of available problems"},
+    {name:"HackerRank (Quant Kits)",p:"Not yet started (begins Week 6)"},
+    {name:"PuzzledQuant / OpenQuant",p:"Not yet started (begins Week 3)"}
+  ],
+  deliverables:["Baseline Zetamac score recorded","GitHub repo quant-prep-2026 created","Wrong Answer Journal started","Anki deck: first 30 cards"],
+  jsPuzzle:{month:"April",num:1,released:"April 1",deadline:"April 30"}
+},
+2:{num:2,phase:1,dates:"April 8–14",title:"Probability Bootcamp I",
+  sections:[
+    {title:"Probability / Math · 2h/day",color:"#58a6ff",items:["Ross-Prob Ch 4–5 (Random Variables, Continuous RVs)","Master: Binomial, Poisson, Geometric, Uniform, Exponential, Normal","Derive PMFs/PDFs from scratch","Mosteller: problems 9–18","Axler Chapter 1 (Vector Spaces)"]},
+    {title:"Coding · 1.5h/day",color:"#3fb950",items:["CTCI Chapters 4–5 (Stacks/Queues, Trees)","LeetCode: 3 problems/day (2 Easy, 1 Medium)","Project Euler: problems 11–20","Reimplement linked list, stack, BST from scratch in C++"]},
+    {title:"Brain Teasers / Mental Math · 0.5h/day",color:"#d29922",items:["Zetamac: 5 rounds (target 5% improvement)","Green Book: 5 more problems from Chapter 2","Practice 2-digit × 2-digit mental multiplication"]},
+    {title:"Finance · 0.5h/day",color:"#bc8cff",items:["MIT OCW 15.401 — Lectures 1–3","Build vocab list: P&L, Greeks, bid-ask, market maker, etc."]}
+  ],
+  platforms:[
+    {name:"LeetCode",p:"3/day: 2 Easy + 1 Medium"},
+    {name:"Project Euler",p:"Problems 11–20"},
+    {name:"HackerRank (Quant Kits)",p:"Not yet started"},
+    {name:"PuzzledQuant / OpenQuant",p:"Not yet started"}
+  ],
+  deliverables:["Can derive and explain all 6 core distributions cold","20 Project Euler problems solved","Axler Ch1 exercises complete"]
+},
+3:{num:3,phase:1,dates:"April 15–21",title:"Probability Bootcamp II",
+  sections:[
+    {title:"Probability / Math · 2h/day",color:"#58a6ff",items:["Ross-Prob Ch 6–7 (Joint distributions, Expectation)","Key skills: marginals, conditional expectation, covariance, MGFs","Mosteller: problems 19–30","Axler Chapters 2–3 (Linear maps)","HOTS: Chapters 1–2"]},
+    {title:"Coding · 1.5h/day",color:"#3fb950",items:["CTCI Chapters 6–7 (Graphs, Sorting & Searching)","LeetCode: 3 problems/day (1 Easy, 2 Medium)","Project Euler: problems 21–30","Implement BFS, DFS, Dijkstra in Python and C++"]},
+    {title:"Brain Teasers / Mental Math · 0.5h/day",color:"#d29922",items:["Zetamac: 5 rounds","Green Book Chapter 2 continued","Estimation problems: 'How many piano tuners in Chicago?'","Rankyourbrain: 15 minutes"]},
+    {title:"Finance · 0.5h/day",color:"#bc8cff",items:["Hull Chapter 1–2 (Introduction, Futures Markets)","Jane Street blog posts: what market makers actually do"]}
+  ],
+  platforms:[
+    {name:"LeetCode",p:"3/day: 1 Easy + 2 Medium"},
+    {name:"Project Euler",p:"Problems 21–30"},
+    {name:"HackerRank (Quant Kits)",p:"Not yet started"},
+    {name:"PuzzledQuant / OpenQuant",p:"Begins this week — target 300+ total by end of plan"}
+  ],
+  deliverables:["Can explain law of total expectation, LOTUS, iterated expectations","Green Book Pass 1: ~20% complete","Mosteller: 30/50 complete"]
+},
+4:{num:4,phase:1,dates:"April 22–28",title:"Linear Algebra Deep Dive",
+  sections:[
+    {title:"Probability / Math · 2h/day",color:"#58a6ff",items:["Ross-Prob Ch 8–9 (Limit theorems — LLN, CLT)","Prove CLT using MGFs","Axler Chapters 4–5 (Polynomials, Eigenvalues)","Practice: MLE and MoM estimators (preview)"]},
+    {title:"Coding · 1.5h/day",color:"#3fb950",items:["CTCI Chapters 8–9 (Dynamic Programming, Recursion)","LeetCode: 3 problems/day (all Medium)","Project Euler: problems 31–45","Matrix operations from scratch in C++ (multiply, transpose, determinant)"]},
+    {title:"Brain Teasers / Mental Math · 0.5h/day",color:"#d29922",items:["Zetamac: target 40+ on 120s","Green Book Chapter 3 (calculus and linear algebra)","HOTS: 10 brain teasers"]},
+    {title:"Finance · 0.5h/day",color:"#bc8cff",items:["Hull Chapters 3–5 (Hedging, Interest Rates, Forward/Futures pricing)"]}
+  ],
+  platforms:[
+    {name:"LeetCode",p:"3/day, all Medium"},
+    {name:"Project Euler",p:"Problems 31–45"},
+    {name:"HackerRank (Quant Kits)",p:"Not yet started"},
+    {name:"PuzzledQuant / OpenQuant",p:"Continue"}
+  ],
+  deliverables:["Can state and prove (sketch) LLN and CLT","Eigenvalues/eigenvectors for 3×3 matrices by hand","45 Project Euler problems solved"]
+},
+5:{num:5,phase:1,dates:"April 29 – May 5",title:"Integration Week I",
+  sections:[
+    {title:"Probability / Math · 2h/day",color:"#58a6ff",items:["Finish Mosteller (problems 31–50) — time each, max 15 min","Axler Chapters 6–7 (Inner product spaces, Spectral theorem)","Green Book: restart from beginning, Pass 2 begins"]},
+    {title:"Coding · 1.5h/day",color:"#3fb950",items:["CTCI Chapters 10–11 (System design, Testing)","LeetCode: 4 problems/day (2 Medium, 2 Hard attempts)","EPI: Chapters 1–4","Project Euler: problems 46–60"]},
+    {title:"Brain Teasers / Mental Math · 0.5h/day",color:"#d29922",items:["Zetamac: push for 50+","Mental division and square root estimation","HOTS: 10 more teasers"]},
+    {title:"Finance · 0.5h/day",color:"#bc8cff",items:["Hull Chapters 10–13 (Options basics, Black-Scholes intro)","Start tracking 2–3 stocks daily"]}
+  ],
+  platforms:[
+    {name:"LeetCode",p:"4/day: 2 Medium + 2 Hard attempts"},
+    {name:"Project Euler",p:"Problems 46–60"},
+    {name:"HackerRank (Quant Kits)",p:"Not yet started"},
+    {name:"PuzzledQuant / OpenQuant",p:"Continue"},
+    {name:"MyntBit",p:"Begins this week"}
+  ],
+  deliverables:["Mosteller 100% complete","CTCI core chapters complete","Axler through Chapter 7","60 Project Euler problems"],
+  jsPuzzle:{month:"May",num:2,released:"May 1",deadline:"May 31"}
+},
+6:{num:6,phase:1,dates:"May 6–12",title:"Foundation Assessment",
+  sections:[
+    {title:"Probability / Math · 2h/day",color:"#58a6ff",items:["Finish Axler (Chapters 8–10)","Ross-Prob: revisit all chapters, 5 hardest problems each","Brilliant.org probability course"]},
+    {title:"Coding · 1.5h/day",color:"#3fb950",items:["EPI Chapters 5–8","LeetCode: 4 problems/day","Project Euler: problems 61–75","First Codeforces Div 2 contest","Simple Monte Carlo simulator in Python"]},
+    {title:"Brain Teasers / Mental Math · 0.5h/day",color:"#d29922",items:["Zetamac: target 55+","Green Book Pass 2: ~40% done","HOTS: finish brain teasers section"]},
+    {title:"Finance · 0.5h/day",color:"#bc8cff",items:["Hull: finish Ch 13 (Black-Scholes-Merton)","Be able to explain put-call parity from scratch"]}
+  ],
+  platforms:[
+    {name:"LeetCode",p:"4 problems/day"},
+    {name:"Project Euler",p:"Problems 61–75"},
+    {name:"HackerRank (Quant Kits)",p:"Begins this week"},
+    {name:"PuzzledQuant / OpenQuant",p:"Continue"},
+    {name:"Codeforces",p:"First Div 2 contest"}
+  ],
+  deliverables:["Phase 1 assessment scored and weaknesses identified","75+ Project Euler","~100 LeetCode","Zetamac 50+","Green Book Pass 1 complete, Pass 2 ~40%"],
+  assessment:{title:"PHASE 1 ASSESSMENT — Friday Week 6 (3 hours)",items:["30 timed probability problems (15 min each) from Green Book","5 LeetCode Mediums in 2 hours","20 mental math problems (2-digit multiplication, division, %)","5 brain teasers (15 min each)","Explain Black-Scholes intuitively in 5 minutes (record yourself)"]},
+  cpp:{wn:1,title:"Modern C++ Foundations & Memory Model",src:"MIT OCW 6.096 + Baruch Pre-MFE Syllabus Levels 1–2",note:"C++ Track begins May 10 (Sunday of this week)",days:[
+    {d:"Sun 5/10",t:"MIT 6.096 Lectures 1–3: types, control flow, functions. Baruch syllabus review. Set up dev environment (GCC 13+, CMake, gdb, Valgrind). Write 10 small programs exercising each primitive type, reference vs pointer semantics."},
+    {d:"Mon 5/11",t:"MIT 6.096 Lectures 4–5: classes, constructors, destructors, operator overloading. Implement Complex number class with full arithmetic operator set. Practice deep copy vs shallow copy: write Matrix class with raw pointer storage, implement Rule of Three."},
+    {d:"Tue 5/12",t:"Baruch Level 1–2: namespaces, const correctness, inline functions, header/source separation. Rewrite Matrix class with proper header guards, namespace encapsulation. Implement Polynomial class with operator+, operator*, operator<<."},
+    {d:"Wed 5/13",t:"MIT 6.096 Lectures 6–7: inheritance, polymorphism, virtual functions. Build Option hierarchy: base Option class, EuropeanCall, EuropeanPut, AmericanCall subclasses. Implement virtual payoff() and price() methods. Measure vtable overhead with -fdump-class-hierarchy."},
+    {d:"Thu 5/14",t:"Memory management deep dive: stack vs heap allocation, new/delete, memory leaks. Use Valgrind on all prior code—fix every leak. Study RAII pattern. Convert raw pointers to std::unique_ptr and std::shared_ptr. Write a ResourceManager class demonstrating RAII."},
+    {d:"Fri 5/15",t:"Timed mock coding session (90 min): implement a basic Bond pricing calculator using OOP hierarchy. Remaining: MIT 6.096 Lectures 8–9 (templates intro, STL overview). Write template functions: max, swap, array_sum."},
+    {d:"Sat 5/16 ★",t:"WEEKEND PROJECT: Build a European Option Pricer using closed-form Black-Scholes. Classes: Option (abstract), EuropeanCall, EuropeanPut, BlackScholesEngine. Requirements: proper RAII, const-correctness, operator overloading for Greeks output, Valgrind-clean. Calculate delta, gamma, theta, vega, rho. Unit test all Greeks against known values.",w:true}
+  ]}
+},
+7:{num:7,phase:2,dates:"May 13–19",title:"Stochastic Processes Entry",
+  goal:"Build intermediate-to-advanced probability, statistics, and ML. Deepen coding to competition level.",
+  sections:[
+    {title:"Probability / Math · 1.5h/day",color:"#58a6ff",items:["Ross-Models Ch 1–3 (Markov Chains intro)","Practice: transition matrices, stationary distributions, absorption","Green Book Pass 2 continues"]},
+    {title:"Coding · 1.5h/day",color:"#3fb950",items:["EPI Chapters 9–12 (Trees, Heaps, Hash Tables)","LeetCode: 3 Medium/day","Codeforces: 1 virtual contest","Project Euler: problems 76–85"]},
+    {title:"Finance / ML · 1h/day",color:"#bc8cff",items:["ISLR Chapters 1–2 (Statistical Learning intro)","Hull Chapter 15 (Greeks)","Anki deck for Greeks (delta, gamma, theta, vega, rho)"]}
+  ],
+  platforms:[
+    {name:"LeetCode",p:"3 Medium/day"},
+    {name:"Project Euler",p:"Problems 76–85"},
+    {name:"HackerRank (Quant Kits)",p:"Continue all quant kits"},
+    {name:"PuzzledQuant / OpenQuant",p:"Continue"},
+    {name:"Codeforces",p:"1 virtual contest"}
+  ],
+  deliverables:["Project 1 begins: Monte Carlo Options Pricer (spare time, Weeks 7–10)"],
+  cpp:{wn:2,title:"Generic Programming & The STL",src:"Baruch Pre-MFE Levels 3–5 + QuantStart Ch 1–4 (Design Patterns)",days:[
+    {d:"Sun 5/17",t:"STL containers deep dive: vector, list, deque, map, unordered_map, set. Benchmark insertion/lookup for each container with 1M elements using <chrono>. Study iterator categories (input, output, forward, bidirectional, random-access). Write generic print_container using iterators."},
+    {d:"Mon 5/18",t:"STL algorithms: sort, stable_sort, partial_sort, nth_element, lower_bound, accumulate, transform, remove_if. Implement a time-series data processor: load CSV prices, compute rolling mean/stdev/z-score using STL algorithms only. No raw loops—algorithm-only constraint."},
+    {d:"Tue 5/19",t:"Function objects and lambdas (Baruch Level 4 + QuantStart Ch 2). Write functor classes for payoff strategies: CallPayoff, PutPayoff, DigitalPayoff. Convert to lambda equivalents. Study std::function and type erasure. Implement a generic NumericalDifferentiator<F> template."},
+    {d:"Wed 5/20",t:"Template metaprogramming intro (Baruch Advanced syllabus). Write compile-time factorial, Fibonacci, and power using template recursion. Study SFINAE with std::enable_if. Implement a type-trait is_option<T> that detects Option-derived types. constexpr functions: rewrite numerical routines as constexpr where possible."},
+    {d:"Thu 5/21",t:"QuantStart Ch 3–4: design patterns for quant finance. Implement Strategy pattern for pricing engines (AnalyticEngine, TreeEngine, MonteCarloEngine—stubs). Implement Factory pattern for option creation. Study PIMPL idiom: refactor BlackScholesEngine to hide implementation."},
+    {d:"Fri 5/22",t:"Timed session (90 min): implement a generic Matrix<T> template class with operator*, transpose(), determinant() for 2x2/3x3. Remaining time: Baruch Boost overview—study Boost.Math distributions. Write a program using boost::math for CDF/PDF/quantile calculations."},
+    {d:"Sat 5/23 ★",t:"WEEKEND PROJECT: Refactor Week 1 Black-Scholes pricer into a template-based pricing library. Components: PayoffStrategy<T> hierarchy, PricingEngine<Model, Method> template, StatisticalDistribution wrapper using Boost.Math. PIMPL on engine internals. Benchmark against Week 1 version. All code: -Wall -Wextra -Werror.",w:true}
+  ]}
+},
+8:{num:8,phase:2,dates:"May 20–26",title:"Markov Chains & Statistics Begin",
+  sections:[
+    {title:"Probability / Math · 1.5h/day",color:"#58a6ff",items:["Ross-Models Ch 4–5 (Continuous-time Markov chains, Poisson process)","Wasserman Chapters 1–3 (Probability review, Expectation)","Poisson process problems: arrivals, thinning, conditioning"]},
+    {title:"Coding · 1.5h/day",color:"#3fb950",items:["EPI Chapters 13–15 (Sorting, BSTs, Recursion)","LeetCode: 3 problems/day (Medium/Hard)","CPH Chapters 1–5","Codeforces: 1 contest"]},
+    {title:"Finance / ML · 1h/day",color:"#bc8cff",items:["ISLR Chapters 3–4 (Linear Regression, Classification)","Implement linear regression from scratch in Python"]}
+  ],
+  platforms:[
+    {name:"LeetCode",p:"3/day: Medium/Hard"},
+    {name:"Project Euler",p:"85+ cumulative target"},
+    {name:"HackerRank (Quant Kits)",p:"Continue"},
+    {name:"PuzzledQuant / OpenQuant",p:"Continue"},
+    {name:"Codeforces",p:"1 contest"}
+  ],
+  deliverables:["Ross-Models Ch 1–5 done","Project Euler 85+"],
+  cpp:{wn:3,title:"Numerical Methods in C++ (FDM & Monte Carlo)",src:"Baruch Pre-MFE Levels 6–8 + QuantStart Ch 5–8 + Oxford Calibration Modules",days:[
+    {d:"Sun 5/24",t:"Random number generation in C++: <random> library, Mersenne Twister, normal_distribution. Study Box-Muller transform—implement from scratch. Compare std::mt19937 vs minstd_rand quality and speed. Generate 10M standard normals, verify mean/stdev."},
+    {d:"Mon 5/25",t:"Monte Carlo simulation engine v1: price European call/put via MC with 1M paths. Implement antithetic variates variance reduction. Measure convergence: plot price estimate vs path count (100 to 10M). Calculate standard error and 95% confidence interval."},
+    {d:"Tue 5/26",t:"Finite Difference Methods theory: discretize Black-Scholes PDE. Implement Explicit Euler FDM for European call. Study stability conditions (CFL condition). Grid design: S-axis (0 to 4K), t-axis (0 to T). Compare FDM price to analytic BS price at various grid resolutions."},
+    {d:"Wed 5/27",t:"Implicit Euler and Crank-Nicolson FDM schemes (Baruch Level 7). Implement tridiagonal matrix solver (Thomas algorithm) in C++. Code Crank-Nicolson pricer. Compare convergence rates: Explicit vs Implicit vs CN. Study boundary conditions for American options."},
+    {d:"Thu 5/28",t:"Oxford spline interpolation module: implement cubic spline interpolation from scratch. Apply to volatility smile fitting: given 5 strike/vol pairs, interpolate full smile. Implement root-finding: bisection, Newton-Raphson, Brent's method for implied volatility extraction."},
+    {d:"Fri 5/29",t:"Timed session (90 min): extract implied volatilities using Newton-Raphson on BS formula. Remaining time: implement lattice method (binomial tree CRR model) for American put pricing. Compare to FDM American put approximation."},
+    {d:"Sat 5/30 ★",t:"WEEKEND PROJECT: Production-grade Monte Carlo Engine. Features: configurable path count, variance reduction (antithetic + control variate using geometric Asian as control), multi-threaded using std::thread (4 threads). Price: European, Asian (arithmetic), and Barrier (up-and-out) options. Output: price, std error, Greeks via bump-and-revalue. Profile with perf stat.",w:true}
+  ]}
+},
+9:{num:9,phase:2,dates:"May 27 – Jun 2",title:"Statistics Core",
+  sections:[
+    {title:"Probability / Math · 1.5h/day",color:"#58a6ff",items:["Wasserman Ch 4–7 (Inequalities, Convergence, MLE, Hypothesis Testing)","Practice MLE derivations for 10 distributions","Green Book Pass 2: complete"]},
+    {title:"Coding · 1.5h/day",color:"#3fb950",items:["EPI Chapters 16–18 (DP, Greedy, Graphs)","LeetCode: DP focus (10 problems)","CPH Chapters 6–10","Codeforces: 1 contest"]},
+    {title:"Finance / ML · 1h/day",color:"#bc8cff",items:["ISLR Chapters 5–6 (Cross-validation, Regularization)","Implement Ridge and Lasso from scratch"]}
+  ],
+  platforms:[
+    {name:"LeetCode",p:"DP focus — 10 problems"},
+    {name:"Project Euler",p:"100+ cumulative target"},
+    {name:"HackerRank (Quant Kits)",p:"Continue"},
+    {name:"PuzzledQuant / OpenQuant",p:"Continue"},
+    {name:"Codeforces",p:"1 contest"}
+  ],
+  deliverables:["Green Book Pass 2 complete","MLE for Normal/Exponential/Poisson/Binomial/Uniform cold","100+ Project Euler"],
+  jsPuzzle:{month:"June",num:3,released:"June 1",deadline:"June 30"},
+  cpp:{wn:4,title:"Modern C++ (C++17/20) & Move Semantics",src:"Baruch Advanced C++11/14/20 Module + WorldQuant MScFE Templates Unit",days:[
+    {d:"Sun 5/31",t:"Move semantics and rvalue references: lvalue vs rvalue, std::move, std::forward. Implement BigVector class with move constructor and move assignment. Benchmark: copy vs move for 10M-element vectors. Study Rule of Five. Refactor all prior classes to support move semantics."},
+    {d:"Mon 6/1",t:"Smart pointers mastery: unique_ptr, shared_ptr, weak_ptr. Implement a custom UniquePtr<T> from scratch using RAII. Study weak_ptr for breaking cycles—build an Observer pattern with shared/weak ptrs. Apply to pricing engine: shared_ptr<Option> ownership model."},
+    {d:"Tue 6/2",t:"Variadic templates and parameter packs (Baruch Advanced). Write a type-safe printf. Implement a generic make_option<T, Args...> factory. Study fold expressions (C++17). Perfect forwarding: implement emplace_back equivalent for a custom container."},
+    {d:"Wed 6/3",t:"C++17 features: structured bindings, std::optional, std::variant, std::any, if constexpr. Refactor option pricing to return std::optional<PricingResult>. Use std::variant for polymorphic payoff without vtable. Benchmark variant dispatch vs virtual dispatch."},
+    {d:"Thu 6/4",t:"C++20 features: concepts, ranges, std::span, three-way comparison. Write concepts: Priceable, Differentiable, Integrable. Rewrite container algorithms using ranges. WorldQuant MScFE: review modularization and template design patterns."},
+    {d:"Fri 6/5",t:"Timed session (90 min): implement a compile-time options pricing formula selector using if constexpr and concepts. Remaining: study type erasure patterns—implement a std::function equivalent (AnyCallable<R(Args...)>). Review error handling: exceptions vs std::expected (C++23 preview)."},
+    {d:"Sat 6/6 ★",t:"WEEKEND PROJECT: Modernize entire codebase to C++20. Replace all raw pointers with smart pointers. Add concepts to all template interfaces. Use std::variant for payoff polymorphism, benchmark vs virtual. Implement PricingResult using std::expected. All code: -std=c++20 -Wall -Wextra -Werror -O2. Run clang-tidy with modernize checks.",w:true}
+  ]}
+},
+10:{num:10,phase:2,dates:"Jun 3–9",title:"Statistical Inference Deep Dive",
+  sections:[
+    {title:"Probability / Math · 1.5h/day",color:"#58a6ff",items:["Wasserman Ch 8–11 (Bayesian Inference, Confidence Intervals)","Solve 20 Bayesian inference problems","Shiryaev: problems from Chapters 1–2"]},
+    {title:"Coding · 1.5h/day",color:"#3fb950",items:["EPI Chapters 19–20","LeetCode: 3/day, track time per problem","CPH Chapters 11–15"]},
+    {title:"Finance / ML · 1h/day",color:"#bc8cff",items:["ISLR Chapters 7–8 (Non-linear methods, Tree-based methods)","Géron: begin reading, set up ML environment","Build a random forest from scratch (simplified)"]}
+  ],
+  platforms:[
+    {name:"LeetCode",p:"3/day, tracking time per problem"},
+    {name:"Project Euler",p:"Continue cumulative"},
+    {name:"HackerRank (Quant Kits)",p:"Continue"},
+    {name:"PuzzledQuant / OpenQuant",p:"Continue"},
+    {name:"Codeforces",p:"Continue weekly contest"}
+  ],
+  deliverables:["Green Book Pass 3 begins (speed run — ≤5 min each)","Bayesian inference fluency"],
+  cpp:{wn:5,title:"Algorithms for Quant Finance & Complexity Theory",src:"MIT OCW 6.006 (Algorithms) + UIUC IE 421 Computational Methods",days:[
+    {d:"Sun 6/7",t:"MIT 6.006 Lectures 1–4: computational models, asymptotic analysis, sorting. Implement: merge sort, quicksort, heapsort in C++. Benchmark all three on 10M doubles. Study cache effects on sorting—measure L1/L2 cache misses with perf stat."},
+    {d:"Mon 6/8",t:"MIT 6.006 Lectures 5–8: hash tables, BSTs, AVL trees. Implement a custom hash map with open addressing and Robin Hood hashing. Benchmark against std::unordered_map. Study O(1) amortized operations—critical for LOB data structures. Implement an order-book-friendly price-level hash map."},
+    {d:"Tue 6/9",t:"MIT 6.006 Lectures 9–12: graph algorithms (BFS, DFS, Dijkstra, Bellman-Ford). Implement Dijkstra with priority queue in C++. UIUC IE 421: implement matrix multiplication (naive and cache-blocked). Benchmark cache-blocked vs naive on 1024x1024 matrices."},
+    {d:"Wed 6/10",t:"UIUC IE 421: MILP solvers and optimization in C++. Study simplex method basics. Implement a simple LP solver for portfolio optimization (mean-variance, 5 assets). FFT implementation: write radix-2 Cooley-Tukey FFT in C++. Apply FFT to option pricing via characteristic function (Carr-Madan sketch)."},
+    {d:"Thu 6/11",t:"Dynamic programming for finance: implement Bellman equation for optimal stopping (American option pricing via backward induction). Study LCS, edit distance—implement both. UIUC IE 421: implement Richardson extrapolation for Greeks."},
+    {d:"Fri 6/12",t:"Timed session (90 min): solve 3 algorithm problems from EPI (trees/graphs focus) in C++. Remaining time: MIT 6.006 advanced data structures—implement a segment tree for range-min queries. Study applications: real-time best bid/ask tracking."},
+    {d:"Sat 6/13 ★",t:"WEEKEND PROJECT: Build a Limit Order Book (LOB) prototype using MIT 6.006 data structures. Requirements: O(1) order insertion/cancellation via custom hash map, O(1) best bid/ask via sorted price levels (std::map for now), price-time priority matching. Process 1M synthetic orders, report throughput. Profile hotspots with perf.",w:true}
+  ]}
+},
+11:{num:11,phase:2,dates:"Jun 10–16",title:"ML Practitioner Week",
+  sections:[
+    {title:"Probability / Math · 1.5h/day",color:"#58a6ff",items:["Wasserman Chapters 12–14","Shiryaev: Chapters 3–4 problems","Hypothesis testing by hand (t-test, chi-square, F-test)"]},
+    {title:"Coding · 1.5h/day",color:"#3fb950",items:["Implement from scratch: k-NN, Naive Bayes, Logistic Regression, Decision Tree","LeetCode: 2/day","Codeforces: 1 contest"]},
+    {title:"Finance / ML · 1h/day",color:"#bc8cff",items:["ISLR Chapters 9–10 (SVMs, Unsupervised Learning)","Géron Chapters 1–5","Hull Chapters 18–20 (Volatility, Exotic options)"]}
+  ],
+  platforms:[
+    {name:"LeetCode",p:"2/day"},
+    {name:"Project Euler",p:"Continue cumulative"},
+    {name:"HackerRank (Quant Kits)",p:"Continue"},
+    {name:"PuzzledQuant / OpenQuant",p:"Continue"},
+    {name:"Codeforces",p:"1 contest"}
+  ],
+  deliverables:["All 4 ML algorithms implemented and working on toy datasets"],
+  cpp:{wn:6,title:"Concurrency, Multithreading & The C++ Memory Model",src:"Fedor Pikus CppCon Lectures + Stacy Gaudreau Low-Latency Building Blocks",days:[
+    {d:"Sun 6/14",t:"Pikus Part 1: C++ memory model, happens-before relationships, sequential consistency. Study std::thread, std::mutex, std::lock_guard, std::unique_lock. Implement a thread-safe queue using mutex. Measure mutex contention overhead: 2, 4, 8 threads writing to shared queue."},
+    {d:"Mon 6/15",t:"Pikus Part 2: atomics and memory orderings (relaxed, acquire, release, seq_cst). Implement atomic counter with each ordering—verify correctness. Study false sharing: allocate two atomic<int> on same cache line, benchmark. Fix with alignas(64). Gaudreau Part 1: core-pinned multithreading—implement pthread_setaffinity_np wrapper."},
+    {d:"Tue 6/16",t:"Lock-free SPSC queue (Gaudreau): implement using std::atomic read/write indices, fixed-size ring buffer. Benchmark: SPSC queue throughput (producer on core 0, consumer on core 1). Compare to mutex-based queue. Target: >10M messages/sec. Study memory_order_acquire/release fence placement."},
+    {d:"Wed 6/17",t:"Memory pools (Gaudreau): implement MemoryPool<T, N> using pre-allocated std::vector. O(1) allocate/deallocate via free-list. Benchmark: pool allocation vs new/delete for 1M Order objects. Integrate memory pool with LOB from Week 5. Measure allocation jitter (min/max/p99 latency)."},
+    {d:"Thu 6/18",t:"Low-latency logging (Gaudreau): implement async logger using SPSC queue + background writer thread. Critical path pushes LogEntry structs into queue—never touches disk. Background thread drains queue to file. Benchmark: logging overhead on critical path (<100ns target)."},
+    {d:"Fri 6/19",t:"Timed session (90 min): implement a thread-safe, lock-free stack using compare_exchange_weak (Treiber stack). Remaining time: study std::jthread (C++20), stop_token, counting_semaphore. Review Pikus materials on parallel algorithms (std::execution::par)."},
+    {d:"Sat 6/20 ★",t:"WEEKEND PROJECT: Integrate all Gaudreau building blocks into the LOB. Architecture: Market data thread (core 0) → SPSC queue → Matching engine thread (core 1) → SPSC queue → Logger thread (core 2). All Order objects from MemoryPool. Zero heap allocation on critical path. Benchmark: process 5M orders, measure p50/p99/max latency per order. Target: p99 < 1μs.",w:true}
+  ]}
+},
+12:{num:12,phase:2,dates:"Jun 17–23",title:"Finance Deepening",
+  sections:[
+    {title:"Probability / Math · 1.5h/day",color:"#58a6ff",items:["Wasserman Ch 15–18 (Bootstrap, Nonparametric)","Implement bootstrap confidence intervals in Python","Shiryaev: Chapter 5 problems"]},
+    {title:"Coding · 1.5h/day",color:"#3fb950",items:["EPI: redo all problems you got wrong","LeetCode: Hard focus (2/day)","Project Euler: 106–120","Codeforces: 1 contest"]},
+    {title:"Finance / ML · 1h/day",color:"#bc8cff",items:["Hull Ch 22–25 (Interest rate derivatives, credit risk)","Harris (Trading and Exchanges) Ch 1–5","Géron Chapters 6–8"]}
+  ],
+  platforms:[
+    {name:"LeetCode",p:"Hard focus — 2/day"},
+    {name:"Project Euler",p:"Problems 106–120"},
+    {name:"HackerRank (Quant Kits)",p:"Continue (Trading Interview platform begins)"},
+    {name:"PuzzledQuant / OpenQuant",p:"Continue"},
+    {name:"Codeforces",p:"1 contest"}
+  ],
+  deliverables:["Project 2 begins: Statistical Arbitrage Signal Research (Weeks 12–16)"],
+  cpp:{wn:7,title:"Exchange Protocols: FIX, ITCH & OUCH",src:"QuickFIX Open-Source + FixSpec Tutorials + UIUC FIN 566 Concepts",days:[
+    {d:"Sun 6/21",t:"FIX protocol fundamentals: study tag=value syntax, session layer (Logon 35=A, Heartbeat 35=0, Logout 35=5), application layer (NewOrderSingle 35=D, ExecutionReport 35=8). Parse a sample FIX 4.4 message by hand. Clone QuickFIX repo, build from source, study architecture."},
+    {d:"Mon 6/22",t:"Implement a FIX message parser from scratch in C++: tokenize on SOH delimiter, extract tag/value pairs into std::unordered_map<int, std::string>. Handle repeating groups. Validate checksum (tag 10). Benchmark parsing speed: target >500K messages/sec."},
+    {d:"Tue 6/23",t:"QuickFIX integration: write a FIX 4.4 client application. Implement: Logon, NewOrderSingle (buy 100 AAPL at limit $150), handle ExecutionReport callback. Study session management: sequence numbers, gap detection, resend requests."},
+    {d:"Wed 6/24",t:"Binary protocol: NASDAQ ITCH 5.0 specification study. Understand message types: SystemEvent (S), StockDirectory (R), AddOrder (A), OrderExecuted (E), OrderCancel (X). Implement ITCH parser: read binary UDP packets, extract fields using bit manipulation and struct packing."},
+    {d:"Thu 6/25",t:"OUCH protocol study: order entry format, OrderAccepted, OrderReplaced, OrderCanceled. Implement OUCH message serializer: construct binary NewOrder message from C++ struct, serialize to byte buffer with network byte order (htons/htonl). Study Simple Binary Encoding (SBE) for zero-copy serialization."},
+    {d:"Fri 6/26",t:"Timed session (90 min): given raw ITCH binary data file, parse and reconstruct full order book state for one symbol at a given timestamp. Remaining time: study UDP multicast (IGMP join, packet loss handling). Implement sequence number gap detection with retransmission request logic."},
+    {d:"Sat 6/27 ★",t:"WEEKEND PROJECT: Build a multi-protocol order gateway. Components: FIX 4.4 parser (ASCII), ITCH 5.0 parser (binary), OUCH serializer (binary). Unified internal Order struct mapped from any protocol. Feed parsed ITCH messages into LOB engine. Process synthetic ITCH data file (1M messages), reconstruct book, report NBBO. Benchmark: target >2M ITCH messages/sec.",w:true}
+  ]}
+},
+13:{num:13,phase:2,dates:"Jun 24–30",title:"Competition Math Revival",
+  sections:[
+    {title:"Probability / Math · 1.5h/day",color:"#58a6ff",items:["Finish Wasserman","AoPS: 20 competition combinatorics problems","AoPS: 20 competition number theory problems"]},
+    {title:"Coding · 1.5h/day",color:"#3fb950",items:["CPH Chapters 16–20","Codeforces: 2 contests this week","LeetCode: 3/day Hard","Project Euler: 121–135"]},
+    {title:"Finance / ML · 1h/day",color:"#bc8cff",items:["Harris Ch 6–12 (Market microstructure, limit order books)","Géron Chapters 9–11 (Neural networks intro)"]}
+  ],
+  platforms:[
+    {name:"LeetCode",p:"3/day — Hard"},
+    {name:"Project Euler",p:"Problems 121–135"},
+    {name:"HackerRank (Quant Kits)",p:"Continue"},
+    {name:"PuzzledQuant / OpenQuant",p:"Continue"},
+    {name:"Codeforces",p:"2 contests this week"}
+  ],
+  deliverables:["Green Book Pass 3 ~80% done — 80%+ within time limits"],
+  cpp:{wn:8,title:"Market Microstructure & Algorithmic Architecture",src:"QuantInsti EPAT (Microstructure Module) + QuantConnect LEAN Architecture",days:[
+    {d:"Sun 6/28",t:"EPAT free demos: LOB concepts, market vs limit orders, order types (IOC, FOK, GTC, Day). Study bid-ask spread dynamics, market impact, adverse selection. Implement a MarketSimulator class that models spread widening under volume spikes. Study VWAP and TWAP execution algorithms."},
+    {d:"Mon 6/29",t:"EPAT architecture module: Market Data Adapter, CEP engine, Order Management System. Design a C++ OMS class hierarchy: Order, OrderBook, OrderRouter, RiskManager, ExecutionManager. Implement OrderRouter with strategy pattern (MarketOrder, LimitOrder, IcebergOrder routing logic)."},
+    {d:"Tue 6/30",t:"QuantConnect LEAN engine study: clone LEAN GitHub repo, study C#/C++ backend architecture. Map LEAN's data flow: DataFeed → Algorithm → Brokerage. Implement equivalent C++ data pipeline: CSVDataFeed → SignalEngine → OrderRouter → SimulatedExchange."},
+    {d:"Wed 7/1",t:"Execution algorithms in C++: implement VWAP execution engine (split parent order into child orders matching historical volume profile). Implement TWAP (uniform time slicing). Study Almgren-Chriss optimal execution model—implement simplified version with linear temporary impact."},
+    {d:"Thu 7/2",t:"Risk management module: implement real-time PnL calculator, position limits, max drawdown circuit breaker. Study Greeks-based risk: delta exposure limits, gamma scalping triggers. Integrate risk checks into OMS—reject orders exceeding position limits."},
+    {d:"Fri 7/3",t:"Timed session (90 min): implement a basic market-making algorithm in C++. Strategy: quote bid/ask around mid-price with configurable spread, manage inventory risk by skewing quotes. Remaining time: study QuantConnect's alpha model framework."},
+    {d:"Sat 7/4 ★",t:"WEEKEND PROJECT: Assemble a complete (simulated) trading system. Architecture: CSVDataFeed → ITCH Parser → LOB Reconstruction → SignalEngine (simple mean-reversion) → OMS (with risk limits) → SimulatedExchange (FIFO matching) → PnL Tracker. All components connected via lock-free SPSC queues. Core-pinned threads. Output: trade log, PnL curve, execution quality metrics.",w:true}
+  ]}
+},
+14:{num:14,phase:2,dates:"Jul 1–7",title:"Phase 2 Assessment & Integration",
+  sections:[
+    {title:"Probability / Math · 1.5h/day",color:"#58a6ff",items:["Create 1-page cheat sheets: all distributions, key theorems, MLE/MoM, Markov chains","Shiryaev: hardest problems from each chapter"]},
+    {title:"Coding · 1.5h/day",color:"#3fb950",items:["LeetCode: 5 Hard problems in 3 hours (timed)","EPI: final pass on weak chapters","Project Euler: 136–150"]},
+    {title:"Finance / ML · 1h/day",color:"#bc8cff",items:["ISLR: complete remaining chapters","Review all Greeks, put-call parity, Black-Scholes"]}
+  ],
+  platforms:[
+    {name:"LeetCode",p:"5 Hard problems in 3 hours, timed"},
+    {name:"Project Euler",p:"Problems 136–150"},
+    {name:"HackerRank (Quant Kits)",p:"Continue"},
+    {name:"PuzzledQuant / OpenQuant",p:"Continue"},
+    {name:"Kaggle",p:"Begins this week"}
+  ],
+  deliverables:["Phase 2 assessment: target Zetamac 65+","200+ LeetCode","Project 1 complete","Project 2 in progress"],
+  jsPuzzle:{month:"July",num:4,released:"July 1",deadline:"July 31"},
+  assessment:{title:"PHASE 2 ASSESSMENT — Friday Week 14 (3 hours)",items:["20 timed probability/statistics problems (Green Book hard + Shiryaev)","3 LeetCode Hards in 90 minutes","10 brain teasers in 60 minutes","5 finance questions (Greeks, BSM, market making)","5 ML questions (bias-variance, regularization, cross-validation)","Zetamac: should be 65+"]},
+  cpp:{wn:9,title:"Kernel Bypass & Ultra-Low-Latency Networking",src:"TecMaven Academy Syllabus + Fedor Pikus (CPU Optimization)",days:[
+    {d:"Sun 7/5",t:"TecMaven syllabus study: Linux networking stack overhead analysis. Trace a packet: NIC → driver interrupt → kernel socket buffer → copy to userspace. Measure overhead with strace and perf. Study io_uring: async I/O with submission/completion queues. Implement basic io_uring TCP echo server."},
+    {d:"Mon 7/6",t:"DPDK concepts (TecMaven): poll-mode drivers, hugepages, memory zones, mbufs. Study DPDK architecture diagrams. Implement a DPDK-style polling architecture in userspace: busy-polling a socket with SO_BUSY_POLL, measure latency reduction vs blocking recv()."},
+    {d:"Tue 7/7",t:"Custom memory allocators (TecMaven): implement a slab allocator for fixed-size objects. Study hugepages: configure 2MB hugepages, mmap with MAP_HUGETLB, measure TLB miss reduction with perf stat. Integrate hugepage-backed MemoryPool into LOB engine."},
+    {d:"Wed 7/8",t:"SIMD intrinsics (TecMaven + Pikus CPU optimization): study SSE/AVX instruction sets. Implement SIMD-accelerated operations: array sum, dot product, min/max finding using _mm256 intrinsics. Apply to Greeks calculation: vectorize delta computation across 8 options simultaneously."},
+    {d:"Thu 7/9",t:"Cache optimization (Pikus): study cache line size (64B), prefetching, data layout. Implement Structure-of-Arrays (SoA) vs Array-of-Structures (AoS) for tick data. Benchmark: iterate 10M ticks computing moving average—SoA vs AoS. Study branch prediction: rewrite hot loops to be branch-free using conditional moves."},
+    {d:"Fri 7/10",t:"Timed session (90 min): optimize the LOB matching engine for minimum latency. Techniques: __builtin_expect for branch hints, __attribute__((hot/cold)), -O3 -march=native compilation. Profile with perf stat: measure IPC, cache misses, branch mispredictions."},
+    {d:"Sat 7/11 ★",t:"WEEKEND PROJECT: Build an ultra-low-latency tick handler. Pipeline: Raw UDP socket (busy-poll) → ITCH binary parser (zero-copy, packed structs) → LOB update (memory-pooled orders, SPSC queues) → Signal computation (SIMD-accelerated EWMA). All allocations from hugepage-backed pool. Core-pinned. Benchmark: measure tick-to-signal latency. Target: p99 < 5μs for full pipeline.",w:true}
+  ]}
+},
+15:{num:15,phase:3,dates:"Jul 8–14",title:"Time Series & Advanced Stats",
+  goal:"Master stochastic calculus foundations, advanced ML, time series. Build finance knowledge to interview level.",
+  sections:[
+    {title:"Focus Areas",color:"#d29922",items:["AR, MA, ARMA, ARIMA models — fit to real financial data","Géron deep learning","Stationarity, autocorrelation, ADF test","GARCH models for volatility modeling"]}
+  ],
+  platforms:[
+    {name:"LeetCode",p:"Continue grinding (cumulative target 250+ by end of July)"},
+    {name:"Project Euler",p:"160+ cumulative target by end of July"},
+    {name:"HackerRank (Quant Kits)",p:"Continue"},
+    {name:"PuzzledQuant / OpenQuant",p:"Continue"}
+  ],
+  deliverables:["Time series models implemented and tested on financial data"],
+  cpp:{wn:10,title:"Pybind11: Bridging C++ Execution to Python Research",src:"Pybind11 Documentation + NDC Conference Tutorials",days:[
+    {d:"Sun 7/12",t:"Pybind11 setup and basics: install pybind11, build first module. Expose a C++ function (black_scholes_call) to Python. Study CMake integration with pybind11_add_module. Expose the Option class hierarchy: constructor, payoff(), price(). Call from Python, verify against scipy.stats.norm."},
+    {d:"Mon 7/13",t:"Advanced bindings: expose STL containers (vector<double> ↔ Python list), overloaded functions, static methods, properties. Bind the Monte Carlo engine: expose simulate() returning std::vector<double> of prices. Study NumPy integration: pybind11::array_t<double> for zero-copy array passing."},
+    {d:"Tue 7/14",t:"NumPy buffer protocol: accept NumPy arrays in C++, operate on them without copying. Implement a C++ function that takes a NumPy array of spot prices and returns a NumPy array of BS prices—fully vectorized in C++. Benchmark: C++ via pybind11 vs pure NumPy vectorized vs Python loop."},
+    {d:"Wed 7/15",t:"GIL management: study pybind11::gil_scoped_release for releasing GIL during C++ computation. Implement multi-threaded Monte Carlo that releases GIL, runs 4 C++ threads, returns result. Benchmark: with GIL held vs released. Study pybind11::gil_scoped_acquire for callbacks into Python."},
+    {d:"Thu 7/16",t:"Expose the full pricing library to Python: FDM pricer, MC pricer, LOB simulator. Create a Python research notebook that: loads market data with pandas, calls C++ MC pricer via pybind11, computes Greeks, plots results with matplotlib."},
+    {d:"Fri 7/17",t:"Timed session (90 min): build a pybind11 module that exposes a simplified LOB. Python script: feed orders, query book state, run a basic strategy. Remaining time: study alternatives (nanobind, cppyy). Compare compilation time and runtime overhead."},
+    {d:"Sat 7/18 ★",t:"WEEKEND PROJECT: Create a complete Python-accessible quant research toolkit backed by C++. Package: veratori_quant (pip-installable via scikit-build). Modules: pricing (BS, MC, FDM), risk (Greeks, VaR), data (LOB reconstruction from ITCH). Jupyter demo notebook: load tick data → reconstruct book in C++ → compute signals → backtest strategy → plot PnL.",w:true}
+  ]}
+},
+16:{num:16,phase:3,dates:"Jul 15–21",title:"Stochastic Calculus Begins",
+  sections:[
+    {title:"Focus Areas",color:"#d29922",items:["Shreve-I Ch 1–2 (Binomial asset pricing)","GARCH models implementation","Risk-neutral vs real-world probability","Binomial tree for option pricing"]}
+  ],
+  platforms:[
+    {name:"LeetCode",p:"Continue grinding"},
+    {name:"Project Euler",p:"Continue cumulative"},
+    {name:"HackerRank (Quant Kits)",p:"Continue"},
+    {name:"PuzzledQuant / OpenQuant",p:"Continue"}
+  ],
+  deliverables:["GARCH model implemented","Binomial tree pricer working"],
+  cpp:{wn:11,title:"High-Performance Matching Engines & FPGA Concepts",src:"Mercury + Trishul GitHub Repos + Open-Source LOB Implementations",days:[
+    {d:"Sun 7/19",t:"Study Mercury repo (eelixir/mercury): architecture walkthrough. Analyze how it achieves 3.2M orders/sec with 320ns insertion. Study data structures: price level management, order queues per price, hash-map-based order lookup. Map Mercury's architecture to your own LOB—identify performance gaps."},
+    {d:"Mon 7/20",t:"Rebuild LOB with Mercury-inspired architecture: replace std::map with a cache-friendly sorted array of PriceLevel structs. Each PriceLevel contains intrusive doubly-linked list of Orders (memory-pooled). Implement O(1) order lookup via hash map (order_id → Order*). Benchmark against Week 5 LOB."},
+    {d:"Tue 7/21",t:"Matching engine optimization: implement price-time priority matching with zero allocation. Study Mercury's throughput measurement methodology. Run identical 5M-order benchmark. Target: >1M orders/sec sustained throughput. Profile with perf: identify remaining hotspots."},
+    {d:"Wed 7/22",t:"Study Trishul repo (shreejitverma/trishul): FPGA hardware RTL concepts. Understand Verilog ITCH decoder architecture. Study single-cycle order book concept. Document design principles: pipelining, parallel comparison, deterministic latency. Document how FPGA matching engines achieve <100ns."},
+    {d:"Thu 7/23",t:"Advanced LOB features: implement iceberg orders (hidden quantity), stop orders (trigger on price cross), market-on-close orders. Add order modification (amend quantity/price). Implement trade reporting: match ID, aggressor side, timestamp. Study exchange fee structures and maker/taker model."},
+    {d:"Fri 7/24",t:"Timed session (90 min): implement a full order book with cancel/replace from scratch in 90 minutes (interview simulation). Remaining time: study cache-oblivious algorithms. Implement van Emde Boas tree for price level management—benchmark vs sorted array vs std::map."},
+    {d:"Sat 7/25 ★",t:"WEEKEND PROJECT: Production-grade matching engine. Features: price-time priority, iceberg support, self-trade prevention, multiple order types (limit, market, IOC, FOK). Binary ITCH-format output of trade/order messages. Feed from ITCH parser, output execution reports in OUCH format. Sustained throughput benchmark: target >2M orders/sec with p99 matching latency <500ns. Generate performance report with latency histogram.",w:true}
+  ]}
+},
+17:{num:17,phase:3,dates:"Jul 22–28",title:"Discrete Stochastic Calculus",
+  sections:[
+    {title:"Focus Areas",color:"#d29922",items:["Shreve-I Ch 3–4","Martingales and stopping times (15 problems)","Binomial tree pricer in C++","Risk-neutral pricing formula derivation"]}
+  ],
+  platforms:[
+    {name:"LeetCode",p:"Continue grinding"},
+    {name:"Project Euler",p:"Continue cumulative"},
+    {name:"HackerRank (Quant Kits)",p:"Continue"},
+    {name:"PuzzledQuant / OpenQuant",p:"Continue"}
+  ],
+  deliverables:["Martingale problems completed","C++ binomial tree pricer done"],
+  cpp:{wn:12,title:"System Integration, Interview Projects & Review",src:"All Resources — Full Synthesis + Interview Preparation",days:[
+    {d:"Sun 7/26",t:"Full system integration day: connect all components end-to-end. Architecture: UDP receiver → ITCH parser → LOB + Matching Engine → Signal Generator → OMS → Risk Manager → Execution Reporter → Async Logger. Run on 1 hour of synthetic tick data. Fix integration bugs. Measure end-to-end latency."},
+    {d:"Mon 7/27",t:"Interview project polishing: refactor entire codebase. Add comprehensive Doxygen comments. Write README.md with architecture diagram (ASCII). Add unit tests using Google Test for every module. Ensure all code compiles with -std=c++20 -O3 -Wall -Wextra -Werror -fsanitize=address,undefined."},
+    {d:"Tue 7/28",t:"Interview prep: C++ technical questions deep review. Topics: virtual dispatch internals (vtable layout), template instantiation, SFINAE, move semantics edge cases, exception safety guarantees (basic, strong, nothrow), memory model (acquire-release, seq_cst). Write 1-page cheat sheets for each topic."},
+    {d:"Wed 7/29",t:"Interview prep: system design for trading systems. Practice whiteboard exercises: design a market data distribution system, design an order routing system with failover, design a risk engine with sub-millisecond latency. Study: TCP vs UDP tradeoffs, multicast, co-location, exchange architecture."},
+    {d:"Thu 7/30",t:"Timed mock interview simulation (full 5 hours): Round 1 (60 min): implement SPSC queue + memory pool from scratch. Round 2 (60 min): 3 algorithm problems (EPI-style). Round 3 (60 min): system design—LOB with matching. Round 4 (60 min): C++ language deep dive (Q&A). Round 5 (60 min): review and debrief, identify gaps."},
+    {d:"Fri 7/31",t:"Gap remediation based on mock results. Re-study weak areas. Final review of all 12 weekend projects—ensure each builds and runs cleanly. Prepare 2-minute verbal explanations for each project (elevator pitch for interviews). Record yourself explaining the matching engine architecture."},
+    {d:"Sat 8/1 ★ CAPSTONE",t:"CAPSTONE: Full-day integration test and portfolio assembly. Run the complete trading system for 8 hours of synthetic data. Document final performance metrics. Push all 12 projects to GitHub with clean READMEs. Write a master portfolio document: architecture decisions, performance benchmarks, lessons learned. Prepare interview talking points for each system component.",w:true}
+  ]}
+},
+18:{num:18,phase:3,dates:"Jul 29 – Aug 4",title:"Continuous Stochastic Calculus",
+  sections:[
+    {title:"Focus Areas",color:"#d29922",items:["Shreve-I finish; Shreve-II Ch 1","Measure theory basics (sigma-algebras, filtrations)","Itô integral introduction","PROJECT 3 BEGINS: ML-Based Factor Model (Weeks 18–23)"]}
+  ],
+  platforms:[
+    {name:"LeetCode",p:"Continue grinding (cumulative 300+ by end of August)"},
+    {name:"Project Euler",p:"190+ cumulative target by end of August"},
+    {name:"HackerRank (Quant Kits)",p:"Continue"},
+    {name:"PuzzledQuant / OpenQuant",p:"Continue"},
+    {name:"QuantConnect",p:"Begins this week — 2–3 strategies target"}
+  ],
+  deliverables:["Project 3 begins: ML-Based Factor Model","QuantConnect first strategy started","C++ Track COMPLETE — 12 weekend projects done"],
+  jsPuzzle:{month:"August",num:5,released:"August 1",deadline:"August 31"}
+},
+19:{num:19,phase:3,dates:"Aug 5–11",title:"Brownian Motion Week",
+  sections:[
+    {title:"Focus Areas",color:"#d29922",items:["Shreve-II Ch 2–3; properties of Brownian Motion","Simulate BM paths in Python and C++","Quadratic variation and its properties","Geometric Brownian Motion for stock prices"]}
+  ],
+  platforms:[
+    {name:"LeetCode",p:"Continue grinding"},
+    {name:"Project Euler",p:"Continue cumulative"},
+    {name:"HackerRank (Quant Kits)",p:"Continue"},
+    {name:"PuzzledQuant / OpenQuant",p:"Continue"}
+  ],
+  deliverables:["BM path simulator implemented","GBM understanding solidified"]
+},
+20:{num:20,phase:3,dates:"Aug 12–18",title:"Itô Calculus",
+  sections:[
+    {title:"Focus Areas",color:"#d29922",items:["Shreve-II Ch 4","Derive Black-Scholes PDE using Itô's lemma","Euler-Maruyama SDE simulation","WorldQuant BRAIN: Register this week; build alphas through year-end"]}
+  ],
+  platforms:[
+    {name:"LeetCode",p:"Continue grinding"},
+    {name:"Project Euler",p:"Continue cumulative"},
+    {name:"HackerRank (Quant Kits)",p:"Continue"},
+    {name:"PuzzledQuant / OpenQuant",p:"Continue"}
+  ],
+  deliverables:["WorldQuant BRAIN registration complete","Itô's lemma derivations mastered","Euler-Maruyama SDE simulator in Python"]
+},
+21:{num:21,phase:3,dates:"Aug 19–25",title:"Risk-Neutral Pricing",
+  sections:[
+    {title:"Focus Areas",color:"#d29922",items:["Shreve-II Ch 5","Girsanov's theorem, change of measure","Risk-neutral measure Q vs physical measure P","Complete derivatives pricing library in Python"]}
+  ],
+  platforms:[
+    {name:"LeetCode",p:"Continue grinding"},
+    {name:"Project Euler",p:"Continue cumulative"},
+    {name:"HackerRank (Quant Kits)",p:"Continue"},
+    {name:"PuzzledQuant / OpenQuant",p:"Continue"}
+  ],
+  deliverables:["Derivatives pricing library in Python complete","Girsanov theorem applied to option pricing"]
+},
+22:{num:22,phase:3,dates:"Aug 26 – Sep 1",title:"Phase 3 Assessment",
+  sections:[
+    {title:"Activities",color:"#d29922",items:["Resume polish","Application list finalization","QuantConnect mean-reversion strategy","Zetamac target 75+","Phase 3 assessment Friday (3 hours)"]}
+  ],
+  platforms:[
+    {name:"LeetCode",p:"Cumulative: 300+ by end of September"},
+    {name:"Project Euler",p:"Cumulative: 210+ by end of September"},
+    {name:"HackerRank (Quant Kits)",p:"Continue all kits"},
+    {name:"PuzzledQuant / OpenQuant",p:"Continue toward 200+ total"}
+  ],
+  deliverables:["Resume polished","Application list finalized","QuantConnect strategy built"],
+  jsPuzzle:{month:"September",num:6,released:"September 1",deadline:"September 30"},
+  assessment:{title:"PHASE 3 ASSESSMENT — Friday Week 22 (3 hours)",items:["15 advanced probability problems (Shiryaev + hard Green Book)","5 stochastic calculus problems (Shreve exercises)","5 ML conceptual questions","3 LeetCode Hards in 90 minutes","Market making simulation: 10 rounds of pricing","5 finance questions (options, Greeks, BSM assumptions)","Zetamac: should be 75+"]}
+},
+23:{num:23,phase:4,dates:"Sep 2–8",title:"Application Launch",
+  goal:"Reach interview-ready state. Submit applications. Start mock interviews. Maximize platform problem volume.",
+  sections:[
+    {title:"Focus",color:"#f78166",items:["Submit to DE Shaw, Two Sigma","Mock interviews begin (2/week)","QuantGuide: 10 problems/day","Finalize resume and firm-specific cover letters"]}
+  ],
+  platforms:[
+    {name:"LeetCode",p:"Cumulative: 350+ by end of October"},
+    {name:"Project Euler",p:"Cumulative: 230+ by end of October"},
+    {name:"HackerRank (Quant Kits)",p:"All kits complete"},
+    {name:"QuantGuide",p:"10 new problems/week"}
+  ],
+  deliverables:["DE Shaw and Two Sigma applications submitted","2 mock interviews completed"]
+},
+24:{num:24,phase:4,dates:"Sep 9–15",title:"Full Grinding Mode",
+  sections:[
+    {title:"Focus",color:"#f78166",items:["5 hard Shiryaev problems/day","Implement Kalman Filter","10 platform problems/day","Debrief all mock interviews"]}
+  ],
+  platforms:[
+    {name:"LeetCode",p:"350+ cumulative target"},
+    {name:"Project Euler",p:"230+ cumulative target"},
+    {name:"HackerRank (Quant Kits)",p:"All kits complete"},
+    {name:"Platform total",p:"10 problems/day"}
+  ],
+  deliverables:["Kalman Filter implemented","Shiryaev hardest problems completed"]
+},
+25:{num:25,phase:4,dates:"Sep 16–22",title:"Jane Street Intensive",
+  sections:[
+    {title:"Focus",color:"#f78166",items:["Solve all past Jane Street monthly puzzles","OCaml/functional programming basics","Submit Jane Street application","Study Jane Street culture, interview process, past problems"]}
+  ],
+  platforms:[
+    {name:"LeetCode",p:"Continue 350+ target"},
+    {name:"Jane Street Puzzles",p:"All past puzzles solved"},
+    {name:"PuzzledQuant / OpenQuant",p:"200+ total target"}
+  ],
+  deliverables:["Jane Street application submitted","OCaml basics understood","All available JS puzzles solved"]
+},
+26:{num:26,phase:4,dates:"Sep 23–29",title:"Citadel / HRT Intensive",
+  sections:[
+    {title:"Focus",color:"#f78166",items:["C++ low-latency focus","Speed round: 20 teasers in 60 min","Submit Citadel, Citadel Securities, HRT applications","Review all C++ projects for interview talking points"]}
+  ],
+  platforms:[
+    {name:"LeetCode",p:"Continue grinding — Hard focus"},
+    {name:"QuantGuide",p:"10 new problems/week"},
+    {name:"Codeforces",p:"1 contest/week"}
+  ],
+  deliverables:["Citadel and HRT applications submitted","Can do 20 brain teasers in 60 min","All C++ projects interview-ready"]
+},
+27:{num:27,phase:4,dates:"Sep 30 – Oct 6",title:"Broad Application Wave",
+  sections:[
+    {title:"Applications to Submit",color:"#f78166",items:["Point72","Millennium","AQR","SIG (Susquehanna International Group)","IMC Trading","Optiver","Akuna Capital","Jump Trading","Wolverine Trading","DRW"]}
+  ],
+  platforms:[
+    {name:"LeetCode",p:"Continue grinding"},
+    {name:"Platform Total",p:"10 problems/day minimum"}
+  ],
+  deliverables:["10 Tier 2 firm applications submitted","Mock interviews 2/week ongoing"],
+  jsPuzzle:{month:"October",num:7,released:"October 1",deadline:"October 31"}
+},
+28:{num:28,phase:4,dates:"Oct 7–13",title:"Bank Quant & Broader",
+  sections:[
+    {title:"Focus",color:"#f78166",items:["PROJECT 4 BEGINS: Real-Time Market Microstructure Analyzer (Weeks 28–33)","Submit: Goldman Sachs Strats, Morgan Stanley, JP Morgan, Barclays, BofA","Study bank quant vs trading firm differences","Prepare for different interview styles"]}
+  ],
+  platforms:[
+    {name:"LeetCode",p:"Continue grinding"},
+    {name:"QuantGuide",p:"10 new problems/week"},
+    {name:"Project Euler",p:"230+ cumulative target"}
+  ],
+  deliverables:["Bank quant applications submitted","Project 4 started"]
+},
+29:{num:29,phase:4,dates:"Oct 14–20",title:"Stress Testing",
+  sections:[
+    {title:"Schedule",color:"#f78166",items:["Mon/Wed/Fri: Full 2.5h mock days (4 rounds each)","Tue/Thu: Targeted weakness remediation","Daily: Zetamac maintain 80+","Mock format: probability + coding + brain teasers + finance"]}
+  ],
+  platforms:[
+    {name:"Mock Interviews",p:"3 full mock days this week"},
+    {name:"LeetCode",p:"Maintain daily habit"},
+    {name:"QuantGuide",p:"10 new problems/week"}
+  ],
+  deliverables:["15+ mock interviews total (cumulative)","All weak areas identified and addressed"]
+},
+30:{num:30,phase:4,dates:"Oct 21–27",title:"Phase 4 Assessment",
+  sections:[
+    {title:"Activities",color:"#f78166",items:["Compile personal formula sheet from memory","50-problem brain teaser mega-review","All Tier 1 applications submitted","Phase 4 comprehensive self-test (Friday, 4 hours)"]}
+  ],
+  platforms:[
+    {name:"LeetCode",p:"350+ cumulative achieved"},
+    {name:"Project Euler",p:"230+ cumulative achieved"},
+    {name:"PuzzledQuant / OpenQuant",p:"250+ total"}
+  ],
+  deliverables:["All applications submitted (30–50 firms)","Personal formula sheet complete","Phase 4 self-test completed"],
+  assessment:{title:"PHASE 4 COMPREHENSIVE SELF-TEST — Friday Week 30 (4 hours)",items:["20 probability problems (8 min each)","10 brain teasers (10 min each)","3 LeetCode Hards (90 min)","5 stochastic calculus problems (60 min)","10 finance questions (verbal, recorded)","10 ML questions (verbal, recorded)","Zetamac: target 80+ | Market making: 15 rounds"]}
+},
+31:{num:31,phase:5,dates:"Oct 28 – Nov 3",title:"Interview Execution — Week 31",
+  goal:"Execute interviews with confidence. Handle rejections and iterate. Close out the year at peak readiness.",
+  sections:[
+    {title:"Pre-Interview Day",color:"#bc8cff",items:["Morning (2h): 10 QuantGuide problems (timed) + firm-specific prep + Zetamac 5 rounds","Afternoon (2h): Mock interview (simulate target firm's style) + project review","Evening (1h): Light formula review + recent firm news + visualization"]},
+    {title:"Non-Interview Day (5h)",color:"#58a6ff",items:["1h Advanced problems","1h Platform grinding (new problems only)","1h Coding","1h Deep topic review","1h Mock interview or debrief"]},
+    {title:"Emergency 24h Prep Protocol",color:"#d29922",items:["Green Book: 50 hardest problems (2h)","Zetamac: 10 rounds (20 min)","LeetCode: 5 Mediums (1.5h)","Brain teasers: 20 rapid fire (1h)","Review all projects, prepare to discuss (1h)","Firm-specific research (30 min)","Sleep 8 hours — non-negotiable"]}
+  ],
+  platforms:[
+    {name:"LeetCode",p:"7+ per week"},
+    {name:"Project Euler",p:"5+ per week"},
+    {name:"Platform Total",p:"40+ per week"},
+    {name:"QuantGuide",p:"10/day on pre-interview days"}
+  ],
+  deliverables:["40 platform problems minimum","7 LeetCode problems","3 mock interviews","5 Project Euler problems","Daily Zetamac (maintain 80+)"],
+  jsPuzzle:{month:"November",num:8,released:"November 1",deadline:"November 30"}
+},
+32:{num:32,phase:5,dates:"Nov 4–10",title:"Interview Execution — Week 32",
+  sections:[
+    {title:"Pre-Interview Day",color:"#bc8cff",items:["Morning (2h): 10 QuantGuide problems (timed) + firm-specific prep + Zetamac 5 rounds","Afternoon (2h): Mock interview (simulate target firm's style) + project review","Evening (1h): Light formula review + recent firm news + visualization"]},
+    {title:"Non-Interview Day (5h)",color:"#58a6ff",items:["1h Advanced problems","1h Platform grinding (new problems only)","1h Coding","1h Deep topic review","1h Mock interview or debrief"]}
+  ],
+  platforms:[{name:"LeetCode",p:"7+ per week"},{name:"Project Euler",p:"5+ per week"},{name:"Platform Total",p:"40+ per week"}],
+  deliverables:["40 platform problems minimum","3 mock interviews","Daily Zetamac (maintain 80+)"]
+},
+33:{num:33,phase:5,dates:"Nov 11–17",title:"Interview Execution — Week 33",
+  sections:[
+    {title:"Pre-Interview Day",color:"#bc8cff",items:["Morning (2h): 10 QuantGuide problems (timed) + firm-specific prep + Zetamac 5 rounds","Afternoon (2h): Mock interview (simulate target firm's style) + project review","Evening (1h): Light formula review + recent firm news + visualization"]},
+    {title:"Non-Interview Day (5h)",color:"#58a6ff",items:["1h Advanced problems","1h Platform grinding (new problems only)","1h Coding","1h Deep topic review","1h Mock interview or debrief"]}
+  ],
+  platforms:[{name:"LeetCode",p:"7+ per week"},{name:"Project Euler",p:"5+ per week"},{name:"Platform Total",p:"40+ per week"}],
+  deliverables:["40 platform problems minimum","3 mock interviews","Daily Zetamac (maintain 80+)"]
+},
+34:{num:34,phase:5,dates:"Nov 18–24",title:"Interview Execution — Week 34",
+  sections:[
+    {title:"Pre-Interview Day",color:"#bc8cff",items:["Morning (2h): 10 QuantGuide problems (timed) + firm-specific prep + Zetamac 5 rounds","Afternoon (2h): Mock interview (simulate target firm's style) + project review","Evening (1h): Light formula review + recent firm news + visualization"]},
+    {title:"Non-Interview Day (5h)",color:"#58a6ff",items:["1h Advanced problems","1h Platform grinding (new problems only)","1h Coding","1h Deep topic review","1h Mock interview or debrief"]}
+  ],
+  platforms:[{name:"LeetCode",p:"7+ per week"},{name:"Project Euler",p:"5+ per week"},{name:"Platform Total",p:"40+ per week"}],
+  deliverables:["40 platform problems minimum","3 mock interviews","Daily Zetamac (maintain 80+)"]
+},
+35:{num:35,phase:5,dates:"Nov 25 – Dec 1",title:"Putnam Prep Week",
+  sections:[
+    {title:"Putnam Preparation",color:"#d29922",items:["Work through Putnam problems from 2010–2025","Focus: probability, combinatorics, algebra","Putnam performance overlaps heavily with quant interview style","Register through university by October (deadline passed — confirm registration)","Putnam exam: First Saturday of December"]},
+    {title:"Pre-Interview Day (if applicable)",color:"#bc8cff",items:["Morning (2h): 10 QuantGuide problems (timed) + firm-specific prep + Zetamac 5 rounds","Afternoon (2h): Mock interview + project review","Evening (1h): Light formula review + recent firm news"]}
+  ],
+  platforms:[{name:"LeetCode",p:"7+ per week"},{name:"Project Euler",p:"5+ per week"},{name:"Platform Total",p:"40+ per week"}],
+  deliverables:["Putnam registration confirmed","15+ Putnam problems from 2010-2025 solved","Daily Zetamac (maintain 80+)"],
+  jsPuzzle:{month:"December",num:9,released:"December 1",deadline:"December 31"}
+},
+36:{num:36,phase:5,dates:"Dec 2–8",title:"Putnam Week + Interviews",
+  sections:[
+    {title:"Putnam Exam",color:"#d29922",items:["First Saturday of December — Putnam exam","Morning session: Problems A1–A6","Afternoon session: Problems B1–B6","Review performance after, update journal"]},
+    {title:"Non-Putnam Days",color:"#bc8cff",items:["Continue pre-interview schedule","1h Advanced problems","1h Platform grinding (new problems only)","1h Coding","1h Deep topic review","1h Mock interview or debrief"]}
+  ],
+  platforms:[{name:"LeetCode",p:"7+ per week"},{name:"Project Euler",p:"5+ per week"},{name:"Platform Total",p:"40+ per week"}],
+  deliverables:["Putnam exam taken","40+ platform problems","3 mock interviews"]
+},
+37:{num:37,phase:5,dates:"Dec 9–15",title:"Interview Execution — Week 37",
+  sections:[
+    {title:"Pre-Interview Day",color:"#bc8cff",items:["Morning (2h): 10 QuantGuide problems (timed) + firm-specific prep + Zetamac 5 rounds","Afternoon (2h): Mock interview (simulate target firm's style) + project review","Evening (1h): Light formula review + recent firm news + visualization"]},
+    {title:"Project 5 (if time)",color:"#3fb950",items:["Full Research Paper (SSRN submission)","Quantitative analysis and research writing","Independent research on market microstructure or factor models"]}
+  ],
+  platforms:[{name:"LeetCode",p:"7+ per week"},{name:"Project Euler",p:"5+ per week"},{name:"Platform Total",p:"40+ per week"}],
+  deliverables:["40 platform problems minimum","3 mock interviews","Project 5 started if time allows"]
+},
+38:{num:38,phase:5,dates:"Dec 16–22",title:"Interview Execution — Week 38",
+  sections:[
+    {title:"Pre-Interview Day",color:"#bc8cff",items:["Morning (2h): 10 QuantGuide problems (timed) + firm-specific prep + Zetamac 5 rounds","Afternoon (2h): Mock interview (simulate target firm's style) + project review","Evening (1h): Light formula review + recent firm news + visualization"]},
+    {title:"Year-End Targets Check",color:"#d29922",items:["Green Book: 4–5 complete passes","LeetCode: 350+","Project Euler: 250+","Mock Interviews: 30+","Zetamac: 80+","Applications Sent: 30–50 firms"]}
+  ],
+  platforms:[{name:"LeetCode",p:"350+ cumulative"},{name:"Project Euler",p:"250+ cumulative"},{name:"Platform Total",p:"300+ total problems"}],
+  deliverables:["All year-end targets on track","3 mock interviews","Daily Zetamac (maintain 80+)"]
+},
+39:{num:39,phase:5,dates:"Dec 23–31",title:"Year-End Reflection",
+  sections:[
+    {title:"Year-End Targets",color:"#bc8cff",items:["Green Book: 4–5 complete passes","Mosteller: 50/50 complete","HOTS: Complete","QuantGuide: ~100% of available problems","OpenQuant / PuzzledQuant: 200+ problems","Trading Interview: 100+ problems","LeetCode: 350+ problems","Project Euler: 250+ problems","HackerRank Quant Kits: All kits complete","Codeforces: 30+ contests, 1600+ rating","Kaggle: 2–3 competitions entered","~2,000+ total problems"]},
+    {title:"Portfolio",color:"#3fb950",items:["Books completed: 18+ (all Tier 1 books)","Projects: 4–5 complete, GitHub portfolio","Mock Interviews: 30+","Zetamac: 80+","Applications Sent: 30–50 firms","C++ Projects: 12 weekend projects complete"]}
+  ],
+  platforms:[
+    {name:"LeetCode",p:"350+ ACHIEVED"},
+    {name:"Project Euler",p:"250+ ACHIEVED"},
+    {name:"Platform Total",p:"2,000+ ACHIEVED"}
+  ],
+  deliverables:["Year-end reflection document written","GitHub portfolio complete","All outstanding applications followed up"]
+}
+};
+
+let currentWeek = 1;
+const STORAGE_KEY = 'quant-plan-checks';
+
+function getChecks() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'); } catch(e) { return {}; }
+}
+function saveCheck(key, val) {
+  const c = getChecks();
+  c[key] = val;
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(c));
+}
+
+function phaseColor(ph) {
+  return ['','#388bfd','#3fb950','#d29922','#f78166','#bc8cff'][ph];
+}
+function phaseName(ph) {
+  return ['','Foundation Revival','Core Quant Build','Advanced + Finance','Peak Prep + Apps','Interview Execution'][ph];
+}
+function phaseTagClass(ph) {
+  return ['','p1-tag','p2-tag','p3-tag','p4-tag','p5-tag'][ph];
+}
+
+function buildNav() {
+  const nav = document.getElementById('week-nav');
+  const checks = getChecks();
+  const libActive = currentWeek === 0 ? ' active' : '';
+  let html = `<div style="padding:8px 0;border-bottom:1px solid var(--border)">
+    <button class="lib-btn${libActive}" onclick="showLibrary()">
+      <svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor"><path d="M1 2.5A1.5 1.5 0 012.5 1h3A1.5 1.5 0 017 2.5v3A1.5 1.5 0 015.5 7h-3A1.5 1.5 0 011 5.5v-3zm8 0A1.5 1.5 0 0110.5 1h3A1.5 1.5 0 0115 2.5v3A1.5 1.5 0 0113.5 7h-3A1.5 1.5 0 019 5.5v-3zm-8 8A1.5 1.5 0 012.5 9h3A1.5 1.5 0 017 10.5v3A1.5 1.5 0 015.5 15h-3A1.5 1.5 0 011 13.5v-3zm8 0A1.5 1.5 0 0110.5 9h3A1.5 1.5 0 0115 10.5v3A1.5 1.5 0 0113.5 15h-3A1.5 1.5 0 019 13.5v-3z"/></svg>
+      📚 Book Library
+    </button>
+  </div>`;
+  PHASES.forEach(ph => {
+    const dot = `<span class="pl-dot" style="background:${ph.color}"></span>`;
+    html += `<div class="pg"><div class="pl">${dot}Phase ${ph.id}: ${ph.name}</div>`;
+    ph.weeks.forEach(wn => {
+      const w = WEEKS[wn];
+      const hasCpp = !!w.cpp;
+      const hasJs = !!w.jsPuzzle;
+      const active = wn === currentWeek ? ' active' : '';
+      html += `<button class="wbtn${active}" onclick="showWeek(${wn})">
+        <span class="wnum">W${wn}</span>${w.title}${hasCpp ? '<span class="wcpp">C++</span>' : ''}${hasJs ? '<span class="wcpp-js">JS★</span>' : ''}
+      </button>`;
+    });
+    html += '</div>';
+  });
+  nav.innerHTML = html;
+}
+
+function showWeek(num) {
+  currentWeek = num;
+  buildNav();
+  renderWeek(num);
+}
+
+function showLibrary() {
+  currentWeek = 0;
+  buildNav();
+  renderLibrary();
+}
+
+function renderLibrary() {
+  const cats = [...new Set(BOOKS.map(b=>b.cat))];
+  let html = `<div class="blib-header">
+    <h2>📚 Book Library</h2>
+    <p>${BOOKS.length} books · Click any card to open the PDF in a new tab</p>
+  </div>`;
+  cats.forEach(cat => {
+    const catBooks = BOOKS.filter(b=>b.cat===cat);
+    html += `<div class="blib-section">
+      <div class="blib-section-title">
+        <span>${cat}</span>
+        <span style="font-weight:400;font-size:10px">${catBooks.length} books</span>
+      </div>
+      <div class="blib-grid">`;
+    catBooks.forEach(b => {
+      html += `<a class="bcard" href="${burl(b.file)}" target="_blank" rel="noopener">
+        <span class="bcard-abbr" style="background:${b.color}22;color:${b.color}">${b.abbr}</span>
+        <div class="bcard-title">${b.title}</div>
+        <div class="bcard-author">${b.author}</div>
+        <div class="bcard-weeks">
+          <span class="bcard-wbadge">Wk ${b.ws}–${b.we}</span>
+        </div>
+        <div class="bcard-open">↗ Open PDF</div>
+      </a>`;
+    });
+    html += '</div></div>';
+  });
+  const main = document.getElementById('main');
+  main.innerHTML = html;
+  main.scrollTop = 0;
+}
+
+function renderWeek(num) {
+  const w = WEEKS[num];
+  if (!w) return;
+  const checks = getChecks();
+  const ph = w.phase;
+  const color = phaseColor(ph);
+  const tagCls = phaseTagClass(ph);
+
+  let html = `<div class="wh">
+    <span class="ptag ${tagCls}">Phase ${ph} — ${phaseName(ph)}</span>
+    <h2>Week ${num}: ${w.title}</h2>
+    <div class="wd">${w.dates}</div>
+    ${w.goal ? `<div class="wg">${w.goal}</div>` : ''}
+  </div>`;
+
+  // Book reference pills for this week
+  const activeBooks = BOOKS.filter(b => num >= b.ws && num <= b.we);
+  if (activeBooks.length > 0) {
+    html += '<div class="book-pills">';
+    activeBooks.forEach(b => {
+      html += `<a class="bpill" href="${burl(b.file)}" target="_blank" rel="noopener" title="${b.title} — ${b.author}">
+        <span class="bpill-icon">📖</span>${b.abbr}
+      </a>`;
+    });
+    html += '</div>';
+  }
+
+  // Sections grid
+  if (w.sections && w.sections.length > 0) {
+    html += '<div class="grid">';
+    w.sections.forEach(sec => {
+      html += `<div class="card">
+        <div class="ct"><span class="ctd" style="background:${sec.color}"></span>${sec.title}</div>
+        <ul>${sec.items.map(i => `<li>${i}</li>`).join('')}</ul>
+      </div>`;
+    });
+    html += '</div>';
+  }
+
+  // Platforms
+  if (w.platforms && w.platforms.length > 0) {
+    html += `<div class="card" style="margin-bottom:14px">
+      <div class="ct"><span class="ctd" style="background:#8b949e"></span>Platform Problems This Week</div>
+      <table class="ptbl">
+        <thead><tr><th>Platform</th><th>Problems / Target</th></tr></thead>
+        <tbody>${w.platforms.map(p => `<tr><td class="pn">${p.name}</td><td>${p.p}</td></tr>`).join('')}</tbody>
+      </table>
+    </div>`;
+  }
+
+  // Deliverables
+  if (w.deliverables && w.deliverables.length > 0) {
+    html += `<div class="card" style="margin-bottom:14px">
+      <div class="ct"><span class="ctd" style="background:#3fb950"></span>Deliverables</div>
+      <div id="dlvr-list">`;
+    w.deliverables.forEach((d, i) => {
+      const key = `w${num}-d${i}`;
+      const checked = checks[key];
+      html += `<div class="dlvr${checked ? ' chk-row' : ''}" onclick="toggleCheck('${key}', this)">
+        <div class="cb${checked ? ' chk' : ''}"></div>
+        <span>${d}</span>
+      </div>`;
+    });
+    html += '</div></div>';
+  }
+
+  // Assessment block
+  if (w.assessment) {
+    html += `<div class="assess">
+      <h4>📊 ${w.assessment.title}</h4>
+      <ul>${w.assessment.items.map(i => `<li>${i}</li>`).join('')}</ul>
+    </div>`;
+  }
+  if (w.phase4Assessment) {
+    html += `<div class="assess">
+      <h4>📊 ${w.phase4Assessment.title}</h4>
+      <ul>${w.phase4Assessment.items.map(i => `<li>${i}</li>`).join('')}</ul>
+    </div>`;
+  }
+
+  // Jane Street Puzzle
+  if (w.jsPuzzle) {
+    const jp = w.jsPuzzle;
+    const solvedKey = `js-solved-${jp.num}`;
+    const notesKey = `js-notes-${jp.num}`;
+    const c = getChecks();
+    const solved = !!c[solvedKey];
+    const notes = localStorage.getItem(notesKey) || '';
+    const solvedCount = Array.from({length:9},(_,i)=>!!c[`js-solved-${i+1}`]).filter(Boolean).length;
+    const pct = Math.round(solvedCount/9*100);
+    html += `<div class="js-puzzle">
+      <div class="js-puzzle-head">
+        <span class="js-badge">JS PUZZLE ${jp.num}/9</span>
+        <div><h3>${jp.month} 2026 Puzzle</h3><div class="js-meta">Released ${jp.released} · Due ${jp.deadline}</div></div>
+        <span class="js-deadline">⚑ ${jp.deadline}</span>
+      </div>
+      <div class="js-mandatory">★ MANDATORY — Jane Street monthly puzzle — do not skip</div>
+      <div class="js-progress-row">
+        <div class="js-progress-bar"><div class="js-progress-fill" style="width:${pct}%"></div></div>
+        <span class="js-progress-label">${solvedCount}/9 solved (${pct}%)</span>
+      </div>
+      <div class="js-check${solved ? '' : ''}" onclick="toggleJsSolved('${solvedKey}', this)">
+        <div class="js-cb${solved ? ' solved' : ''}"></div>
+        <span>${solved ? '★ Puzzle solved' : 'Mark as solved'}</span>
+      </div>
+      <div class="js-notes-label">Notes / Solution approach</div>
+      <textarea class="js-notes" placeholder="Write your approach, key insight, or link to solution…" oninput="saveNotes('${notesKey}', this.value)">${notes}</textarea>
+    </div>`;
+  }
+
+  // C++ Track
+  if (w.cpp) {
+    const cpp = w.cpp;
+    html += `<div class="cpp-wrap">
+      <div class="cpp-head">
+        <span class="cpp-badge">C++ WEEK ${cpp.wn}</span>
+        <div><h3>${cpp.title}</h3><div class="cpp-src">${cpp.src}</div></div>
+      </div>
+      ${cpp.note ? `<div class="note-box">📌 ${cpp.note}</div>` : ''}
+      <table class="dtbl" style="margin-top:12px">
+        <thead><tr><th style="width:110px">Day</th><th>Tasks (5 hours)</th></tr></thead>
+        <tbody>${cpp.days.map(day => `
+          <tr class="${day.w ? 'wkend' : ''}">
+            <td class="dn">${day.d}</td>
+            <td>${day.t}</td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>`;
+  }
+
+  document.getElementById('main').innerHTML = html;
+  document.getElementById('main').scrollTop = 0;
+}
+
+function toggleJsSolved(key, el) {
+  const c = getChecks();
+  const newVal = !c[key];
+  saveCheck(key, newVal);
+  const cb = el.querySelector('.js-cb');
+  cb.classList.toggle('solved', newVal);
+  el.querySelector('span').textContent = newVal ? '★ Puzzle solved' : 'Mark as solved';
+  // Re-render progress bar
+  const solvedCount = Array.from({length:9},(_,i)=>!!getChecks()[`js-solved-${i+1}`]).filter(Boolean).length;
+  const pct = Math.round(solvedCount/9*100);
+  const fill = document.querySelector('.js-progress-fill');
+  const label = document.querySelector('.js-progress-label');
+  if (fill) fill.style.width = pct + '%';
+  if (label) label.textContent = `${solvedCount}/9 solved (${pct}%)`;
+}
+
+function saveNotes(key, val) {
+  localStorage.setItem(key, val);
+}
+
+function toggleCheck(key, el) {
+  const c = getChecks();
+  const newVal = !c[key];
+  saveCheck(key, newVal);
+  const cb = el.querySelector('.cb');
+  cb.classList.toggle('chk', newVal);
+  el.classList.toggle('chk-row', newVal);
+}
+
+// Init
+buildNav();
+renderWeek(1);
+</script>
+</body>
+</html>

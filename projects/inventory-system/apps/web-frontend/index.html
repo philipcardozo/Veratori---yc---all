@@ -10,8 +10,9 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
   <script src="firebase-auth.js?v=3"></script>
+  <script src="franchise-config.js?v=1"></script>
+  <script src="role-guard.js?v=1"></script>
   <script>requireAuth();</script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <style>
     :root {
       --bg-base:   #070b12;
@@ -533,6 +534,24 @@
       transition:all .13s ease;
     }
     .report-modal-cancel:hover { border-color:rgba(255,255,255,0.14); color:#94a3b8; }
+    .report-date-row {
+      display:flex; align-items:center; justify-content:space-between;
+      gap:10px; margin:0 0 14px;
+      padding:9px 11px; border-radius:8px;
+      background:rgba(255,255,255,0.025); border:1px solid rgba(255,255,255,0.06);
+    }
+    .report-date-row label { font-size:10.5px; color:#94a3b8; letter-spacing:.04em; text-transform:uppercase; }
+    .report-date-row input[type="date"] {
+      background:#0a1220; color:#e2e8f0;
+      border:1px solid rgba(255,255,255,0.08); border-radius:6px;
+      padding:5px 8px; font-size:12px; font-family:'Inter',sans-serif;
+      color-scheme: dark;
+    }
+    .report-date-row input[type="date"]:focus { outline:none; border-color:#76b900; }
+    .report-source-note {
+      font-size:10px; color:#64748b; margin:-6px 0 12px; text-align:center; line-height:1.4;
+    }
+    .report-source-note .live { color:#76b900; font-weight:600; }
 
     /* Report generation progress */
     .report-progress-overlay {
@@ -559,6 +578,79 @@
       backdrop-filter:blur(8px); border:1px solid var(--border);
     }
     .drag-hint.hidden { opacity:0; }
+
+    /* ── Quad View overlay ── */
+    .quad-overlay {
+      display:none; position:fixed; inset:0; z-index:1500;
+      background:rgba(0,0,0,0.85); backdrop-filter:blur(8px);
+      align-items:center; justify-content:center;
+    }
+    .quad-overlay.open { display:flex; }
+    .quad-wrap {
+      width:96vw; height:92vh; display:flex; flex-direction:column;
+      background:#06090f; border:1px solid rgba(255,255,255,0.10);
+      border-radius:10px; overflow:hidden;
+      box-shadow:0 20px 80px rgba(0,0,0,0.7);
+    }
+    .quad-bar {
+      display:flex; align-items:center; justify-content:space-between;
+      padding:10px 14px; background:#0a1220; border-bottom:1px solid rgba(255,255,255,0.07);
+    }
+    .quad-title { display:flex; align-items:center; gap:8px; font-size:12.5px; font-weight:600; color:#e2e8f0; }
+    .quad-bar-actions { display:flex; gap:6px; }
+    .quad-action {
+      display:inline-flex; align-items:center; gap:5px;
+      padding:6px 11px; border-radius:6px;
+      background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08);
+      color:#94a3b8; font-size:11px; font-weight:600; font-family:inherit; cursor:pointer;
+      transition:all .12s ease;
+    }
+    .quad-action svg { width:11px; height:11px; fill:currentColor; }
+    .quad-action:hover { background:rgba(255,255,255,0.07); color:#e2e8f0; border-color:rgba(255,255,255,0.15); }
+    .quad-action.primary { background:rgba(118,185,0,0.16); border-color:rgba(118,185,0,0.32); color:#a3e635; }
+    .quad-action.primary:hover { background:rgba(118,185,0,0.26); color:#fff; }
+    .quad-action.primary.on { background:#76b900; color:#fff; border-color:#76b900; }
+    .quad-action.close:hover { background:rgba(239,68,68,0.18); color:#ef4444; border-color:rgba(239,68,68,0.35); }
+    .quad-grid {
+      flex:1; display:grid; grid-template-columns:1fr 1fr; grid-template-rows:1fr 1fr;
+      gap:2px; background:#0a1220; padding:2px;
+    }
+    .quad-cell {
+      position:relative; background:#000; overflow:hidden;
+      display:flex; align-items:center; justify-content:center;
+    }
+    .quad-cell-empty {
+      color:#475569; font-size:12px; font-weight:500; text-align:center;
+      display:flex; flex-direction:column; align-items:center; gap:6px; padding:20px;
+    }
+    .quad-cell-empty svg { width:36px; height:36px; fill:#334155; }
+    .quad-cell-empty .quad-empty-hint { font-size:10.5px; color:#334155; }
+    .quad-cell img.quad-feed {
+      width:100%; height:100%; object-fit:contain; display:block;
+    }
+    .quad-cell-label {
+      position:absolute; top:8px; left:8px;
+      display:flex; align-items:center; gap:6px;
+      padding:4px 9px; border-radius:5px;
+      background:rgba(0,0,0,0.6); backdrop-filter:blur(4px);
+      font-size:10.5px; font-weight:600; color:#e2e8f0; letter-spacing:.02em;
+      pointer-events:none;
+    }
+    .quad-cell-label .dot {
+      width:6px; height:6px; border-radius:50%; background:#10b981;
+      box-shadow:0 0 6px rgba(16,185,129,0.6);
+    }
+    .quad-cell-label .dot.off { background:#475569; box-shadow:none; }
+    .quad-cell-label .slot-tag {
+      font-size:9px; color:#60a5fa; font-weight:700; letter-spacing:.05em;
+    }
+    .quad-cell-stats {
+      position:absolute; top:8px; right:8px;
+      padding:3px 8px; border-radius:5px;
+      background:rgba(0,0,0,0.55); backdrop-filter:blur(4px);
+      font-size:10px; color:#94a3b8; pointer-events:none;
+    }
+    .quad-cell-stats .yolo-on { color:#a3e635; font-weight:700; }
 
     /* Panel restore buttons (when panels are closed) */
     .panel-restore-bar {
@@ -660,6 +752,9 @@
         <button class="cam-btn" id="cameraRescanBtn" style="background:var(--green-dim);border-color:rgba(16,185,129,.2);color:var(--green)" title="Rescan connected cameras">
           <svg viewBox="0 0 24 24"><path d="M17.65 6.35A7.95 7.95 0 0012 4a8 8 0 108 8h-2a6 6 0 11-1.76-4.24L13 11h7V4l-2.35 2.35z"/></svg>Rescan
         </button>
+        <button class="cam-btn" id="quadViewBtn" onclick="openQuadView()" style="background:rgba(59,130,246,.12);border-color:rgba(59,130,246,.25);color:#60a5fa" title="Open Quad View — see all 4 slots side-by-side">
+          <svg viewBox="0 0 24 24"><path d="M3 3h8v8H3V3zm10 0h8v8h-8V3zM3 13h8v8H3v-8zm10 0h8v8h-8v-8z"/></svg>Quad View
+        </button>
       </div>
       <div id="yoloStatusBar" style="display:none;font-size:11px;color:#76b900;padding:3px 0 0;display:flex;align-items:center;gap:6px">
         <span style="width:6px;height:6px;border-radius:50%;background:#76b900;display:inline-block;box-shadow:0 0 6px rgba(118,185,0,0.6)"></span>
@@ -711,10 +806,6 @@
       <div class="nv-header">
         <div class="nv-badge"><span class="nv-dot"></span>NVIDIA AI</div>
         <span class="nv-mode-pill" id="nvModePill">Pre-Open</span>
-        <button class="nv-generate-btn" id="nvGenerateBtn" onclick="nvGenerate()">
-          <svg viewBox="0 0 24 24" style="width:11px;height:11px;fill:#fff"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
-          Generate Report
-        </button>
       </div>
       <div class="nv-stat-row" id="nvStatRow" style="display:none">
         <div class="nv-stat"><div class="nv-stat-val" id="nvStatFrames">—</div><div class="nv-stat-lbl">Frames</div></div>
@@ -729,10 +820,10 @@
           <div>Click <strong style="color:var(--nv)">Generate Report</strong> to run<br>DeepStream business inference</div>
         </div>
       </div>
-      <button class="nv-download-btn" id="nvViewFull" style="display:none" onclick="openReportModal()">
-        <svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
-        Download Report
-      </button>
+      <a class="nv-download-btn" id="nvViewFull" style="display:none" href="home.html">
+        <svg viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>
+        Weekly Report — open in Franchise Hub
+      </a>
     </div>
     <div class="resize-handle" data-dir="n" data-panel="nvidia"></div>
     <div class="resize-handle" data-dir="s" data-panel="nvidia"></div>
@@ -822,39 +913,38 @@
 
 </div><!-- /canvas -->
 
-<!-- Restore bar (for closed panels) -->
-<!-- Report type selection modal -->
-<div class="report-modal-overlay" id="reportModal">
-  <div class="report-modal">
-    <div class="report-modal-title">Generate Business Report</div>
-    <div class="report-modal-sub">Select a period. VERA will analyze your network data and generate a PDF you can download instantly.</div>
-    <div class="report-options">
-      <div class="report-option" onclick="generateReport('weekly')">
-        <div class="report-option-icon">
-          <svg viewBox="0 0 24 24" style="width:26px;height:26px;fill:#76b900"><path d="M17 12h-5v5h5v-5zM16 1v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19a2 2 0 002 2h14a2 2 0 002-2V5c0-1.1-.9-2-2-2h-1V1h-2zm3 18H5V8h14v11z"/></svg>
-        </div>
-        <div class="report-option-label">Weekly Report</div>
-        <div class="report-option-desc">Last 7 days of performance data</div>
+<!-- ── Quad View — 2×2 grid of camera slots ────────────────────────────── -->
+<div class="quad-overlay" id="quadOverlay" onclick="if(event.target===this) closeQuadView()">
+  <div class="quad-wrap">
+    <div class="quad-bar">
+      <div class="quad-title">
+        <svg viewBox="0 0 24 24" style="width:14px;height:14px;fill:#60a5fa"><path d="M3 3h8v8H3V3zm10 0h8v8h-8V3zM3 13h8v8H3v-8zm10 0h8v8h-8v-8z"/></svg>
+        Quad View — Live YOLO across all 4 slots
       </div>
-      <div class="report-option" onclick="generateReport('monthly')">
-        <div class="report-option-icon">
-          <svg viewBox="0 0 24 24" style="width:26px;height:26px;fill:#76b900"><path d="M9 11H7v2h2v-2zm4 0h-2v2h2v-2zm4 0h-2v2h2v-2zm2-7h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20a2 2 0 002 2h14a2 2 0 002-2V6c0-1.1-.9-2-2-2zm0 16H5V9h14v11z"/></svg>
-        </div>
-        <div class="report-option-label">Monthly Report</div>
-        <div class="report-option-desc">Last 30 days of performance data</div>
+      <div class="quad-bar-actions">
+        <button class="quad-action" onclick="quadRescan()" title="Re-scan cameras">
+          <svg viewBox="0 0 24 24"><path d="M17.65 6.35A7.95 7.95 0 0012 4a8 8 0 108 8h-2a6 6 0 11-1.76-4.24L13 11h7V4l-2.35 2.35z"/></svg>
+          Rescan
+        </button>
+        <button class="quad-action primary" onclick="quadToggleYolo()" id="quadYoloBtn" title="Toggle YOLO on all active slots">
+          <svg viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+          YOLO All
+        </button>
+        <button class="quad-action close" onclick="closeQuadView()" title="Close">
+          <svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
       </div>
     </div>
-    <button class="report-modal-cancel" onclick="closeReportModal()">Cancel</button>
+    <div class="quad-grid">
+      <div class="quad-cell" data-slot="0"></div>
+      <div class="quad-cell" data-slot="1"></div>
+      <div class="quad-cell" data-slot="2"></div>
+      <div class="quad-cell" data-slot="3"></div>
+    </div>
   </div>
 </div>
 
-<!-- Report generation progress -->
-<div class="report-progress-overlay" id="reportProgress">
-  <div class="report-progress-spinner"></div>
-  <div class="report-progress-label" id="reportProgressLabel">Analyzing data with VERA…</div>
-  <div class="report-progress-sub">This may take a few seconds</div>
-</div>
-
+<!-- Restore bar (for closed panels) -->
 <div class="panel-restore-bar empty" id="restoreBar">
   <span>Closed</span>
 </div>
@@ -1451,8 +1541,8 @@ if (cameraRescanBtn) cameraRescanBtn.addEventListener('click', () => fetchCamera
 
 function fetchCameras(refresh) {
   cameraList.innerHTML='<div class="camera-no-items">Scanning…</div>';
-  const url = (refresh ? 'http://localhost:5001/cameras?refresh=1' : 'http://localhost:5001/cameras');
-  fetch(url)
+  const url = `${YOLO_SERVER}/cameras${refresh ? '?refresh=1' : ''}`;
+  fetch(url, {credentials:'include'})
     .then(r=>r.json()).then(data=>{
       availableCameras=data.cameras||[]; activeCameraIndex=data.active_index;
       renderCameraList(); updateActiveLabel();
@@ -1482,10 +1572,11 @@ function updateActiveLabel() {
 function switchCamera(index) {
   if (cameraSwitching) return;
   cameraSwitching=true;
-  fetch('http://localhost:5001/camera/select', {
+  fetch(`${YOLO_SERVER}/camera/select`, {
     method:'POST',
     headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({index})
+    body: JSON.stringify({index}),
+    credentials:'include'
   }).then(r=>r.json()).then(data=>{
     cameraSwitching=false;
     if (!data.ok) { console.error('Camera switch failed:', data.error); return; }
@@ -1507,7 +1598,7 @@ function switchCamera(index) {
 //  YOLO LOCAL SERVER  (localhost:5001)
 //  Uses canvas + /snapshot polling — MJPEG <img> blocked by Chrome cross-origin
 // ═══════════════════════════════════════════════════════
-const YOLO_SERVER   = 'http://localhost:5001';
+const YOLO_SERVER   = window.getApiBase(window.getCurrentFranchiseId());
 let yoloConnected   = false;
 let yoloActive      = false;  // true = YOLO inference ON on the server
 let yoloFrameTimer  = null;
@@ -1554,7 +1645,7 @@ function handleYoloBtn() {
 
 function toggleYolo() {
   _yoloBtnLoading(yoloActive ? 'Disabling…' : 'Enabling…');
-  fetch(`${YOLO_SERVER}/yolo/toggle`, { method: 'POST', signal: AbortSignal.timeout(3000) })
+  fetch(`${YOLO_SERVER}/yolo/toggle`, { method: 'POST', signal: AbortSignal.timeout(3000), credentials:'include' })
     .then(r => r.json())
     .then(data => {
       yoloActive = data.yolo;
@@ -1612,7 +1703,7 @@ function connectYoloServer() {
   label.textContent = 'Connecting…';
   btn.style.opacity = '0.6';
 
-  fetch(`${YOLO_SERVER}/status`, { signal: AbortSignal.timeout(3000) })
+  fetch(`${YOLO_SERVER}/status`, { signal: AbortSignal.timeout(3000), credentials:'include' })
     .then(r => r.json())
     .then(data => {
       yoloConnected = true;
@@ -1655,7 +1746,7 @@ function reconnectYoloServer() {
   noFeed.innerHTML = 'Reconnecting to YOLO server…';
   document.getElementById('yoloStatusText').textContent = 'Reconnecting…';
 
-  fetch(`${YOLO_SERVER}/reconnect`, { method:'POST', signal: AbortSignal.timeout(3000) })
+  fetch(`${YOLO_SERVER}/reconnect`, { method:'POST', signal: AbortSignal.timeout(3000), credentials:'include' })
     .then(() => setTimeout(connectYoloServer, 1500))
     .catch(()  => setTimeout(connectYoloServer, 1500));
 }
@@ -1665,8 +1756,8 @@ function pollYoloStatus() {
 
   // Poll status + tracked food/drink inventory in parallel
   Promise.all([
-    fetch(`${YOLO_SERVER}/status`,    { signal: AbortSignal.timeout(2000) }).then(r => r.json()),
-    fetch(`${YOLO_SERVER}/inventory`, { signal: AbortSignal.timeout(2000) }).then(r => r.json()),
+    fetch(`${YOLO_SERVER}/status`,    { signal: AbortSignal.timeout(2000), credentials:'include' }).then(r => r.json()),
+    fetch(`${YOLO_SERVER}/inventory`, { signal: AbortSignal.timeout(2000), credentials:'include' }).then(r => r.json()),
   ])
   .then(([data, inventory]) => {
     const stTxt = document.getElementById('yoloStatusText');
@@ -1702,7 +1793,7 @@ function pollYoloStatus() {
 // Auto-try YOLO server when page loads
 window.addEventListener('load', () => {
   setTimeout(() => {
-    fetch(`${YOLO_SERVER}/status`, { signal: AbortSignal.timeout(1500) })
+    fetch(`${YOLO_SERVER}/status`, { signal: AbortSignal.timeout(1500), credentials:'include' })
       .then(() => connectYoloServer())
       .catch(() => {});
   }, 800);
@@ -1716,13 +1807,23 @@ window.addEventListener('load', () => {
 const _locParam = new URLSearchParams(window.location.search).get('loc');
 const isCamMode = _locParam === 'cam' || _locParam === null;
 
+// Multi-tenant guard: if this user can't access the franchise referenced in
+// the URL, bounce them back to the hub. Runs async after Firebase resolves.
+window.VeratoriRole?.load().then(() => {
+  const fid = window.getCurrentFranchiseId();
+  if (!window.VeratoriRole.canAccess(fid)) {
+    console.warn('[role] dashboard access denied for', fid, '→ redirecting to hub');
+    window.location.replace('home.html');
+  }
+});
+
 let nvCamPollTimer = null;
 let camAlertsPollTimer = null;
 
 // Camera Demo: poll /alerts every 5s and feed the System Alerts panel.
 function startCamModeAlerts() {
   function pollAlerts() {
-    fetch(`${YOLO_SERVER}/alerts`, { signal: AbortSignal.timeout(2000) })
+    fetch(`${YOLO_SERVER}/alerts`, { signal: AbortSignal.timeout(2000), credentials:'include' })
       .then(r => r.json())
       .then(data => updateAlerts(Array.isArray(data) ? data : []))
       .catch(() => updateAlerts([]));
@@ -1780,7 +1881,7 @@ function nvInitCamMode() {
   }
 
   function pollCamStats() {
-    fetch(`${YOLO_SERVER}/sales`, { signal: AbortSignal.timeout(1500) })
+    fetch(`${YOLO_SERVER}/sales`, { signal: AbortSignal.timeout(1500), credentials:'include' })
       .then(r => r.json())
       .then(data => {
         const today  = data.today  || { count: 0, revenue_usd: 0 };
@@ -1919,330 +2020,112 @@ async function nvLoadLatest() {
   } catch {}
 }
 
-// ═══════════════════════════════════════════════════════
-//  PDF REPORT GENERATION
-// ═══════════════════════════════════════════════════════
-const CLAUDE_REPORT_KEY = 'sk-api-J1Kq_xGwJPEktcIcjjPJb1rPVUoHuvJAtqtq39dpRV2_TSIqUM5bkt17Ei02y91h8uMnWAJH3k1cQg7_bygUi_btWLnw-n_Ro9QAA';
 
-const REPORT_DATA = {
-  network: { revenue:29810, revDelta:'+8.2%', units:694, alerts:6, dsFrames:86400, dsConf:'91.4%', gpuLoad:'12%' },
-  locations: [
-    { name:'Canal Street',  rev:8240,  revDelta:'+12%', units:197, alerts:2, topSku:'Mango Tango (47 u)',       status:'alert'   },
-    { name:'43rd Street',   rev:6150,  revDelta:'+7%',  units:143, alerts:0, topSku:'Strawberry Bliss (42 u)', status:'nominal' },
-    { name:'44th Street',   rev:4890,  revDelta:'-3%',  units:112, alerts:1, topSku:'Coconut Dream (33 u)',    status:'warning' },
-    { name:'45th Street',   rev:7320,  revDelta:'+21%', units:168, alerts:3, topSku:'Mango Tango (56 u)',      status:'alert'   },
-    { name:'46th Street',   rev:3210,  revDelta:'+2%',  units:74,  alerts:0, topSku:'Guava Breeze (24 u)',     status:'nominal' },
-  ],
-  alerts: [
-    { priority:'CRITICAL', location:'Canal Street', item:'Passion Fruit', message:'4 units remaining — will not last the day at current velocity' },
-    { priority:'CRITICAL', location:'45th Street',  item:'Coconut Dream', message:'Sold out — removed from display, restock required immediately' },
-    { priority:'WARNING',  location:'Canal Street', item:'Maui Custard',  message:'On display 4d 18h — remove before noon (freshness policy)' },
-    { priority:'WARNING',  location:'45th Street',  item:'Lychee Rose',   message:'Below 10 units — automated reorder triggered, ETA 14:00' },
-    { priority:'WARNING',  location:'44th Street',  item:'Revenue',       message:'Trending 8% below weekly average — monitor through 15:00' },
-    { priority:'INFO',     location:'45th Street',  item:'Foot Traffic',  message:'287 entries vs 210 avg — elevated demand recorded by DeepStream' },
-  ],
-};
 
-function openReportModal() {
-  document.getElementById('reportModal').style.display = 'flex';
+// ═══════════════════════════════════════════════════════
+//  QUAD VIEW — 4-camera live wall
+// ═══════════════════════════════════════════════════════
+const QUAD_API_BASE = YOLO_SERVER;  // tracks the current franchise's tunnel host
+let QUAD = { open:false, slots:[], pollTimer:null, snapshotTimer:null, anyYolo:false };
+
+function openQuadView() {
+  QUAD.open = true;
+  document.getElementById('quadOverlay').classList.add('open');
+  quadRefreshSlots();
+  // Refresh the slot layout every 4s (status, name changes) and re-poll snapshots every 200ms per slot
+  QUAD.pollTimer = setInterval(quadRefreshSlots, 4000);
 }
-function closeReportModal() {
-  document.getElementById('reportModal').style.display = 'none';
+function closeQuadView() {
+  QUAD.open = false;
+  document.getElementById('quadOverlay').classList.remove('open');
+  if (QUAD.pollTimer) { clearInterval(QUAD.pollTimer); QUAD.pollTimer = null; }
+  if (QUAD.snapshotTimer) { clearInterval(QUAD.snapshotTimer); QUAD.snapshotTimer = null; }
 }
 
-async function generateReport(period) {
-  closeReportModal();
-  const overlay = document.getElementById('reportProgress');
-  const label   = document.getElementById('reportProgressLabel');
-  overlay.style.display = 'flex';
-
-  let aiContent = null;
+async function quadRefreshSlots() {
   try {
-    label.textContent = 'VERA is analyzing your data…';
-    aiContent = await callClaudeForReport(period);
-    label.textContent = 'Building PDF…';
+    const resp = await fetch(`${QUAD_API_BASE}/slots`, { cache:'no-store', credentials:'include' });
+    if (!resp.ok) throw new Error(`/slots ${resp.status}`);
+    const data = await resp.json();
+    QUAD.slots = data.slots || [];
   } catch (err) {
-    console.warn('[Report] Claude API error, using fallback content:', err.message);
-    label.textContent = 'Building PDF…';
+    console.warn('[Quad] /slots fetch failed:', err.message);
+    QUAD.slots = [0,1,2,3].map(i => ({slot:i, active:false, status:{connected:false, error:'Server unreachable'}}));
   }
-
-  try {
-    await buildAndDownloadPDF(period, aiContent);
-  } finally {
-    overlay.style.display = 'none';
-  }
+  renderQuadCells();
 }
 
-async function callClaudeForReport(period) {
-  const d = REPORT_DATA;
-  const today = new Date().toLocaleDateString('en-US', { weekday:'long', month:'long', day:'numeric', year:'numeric' });
-  const periodLabel = period === 'weekly' ? 'past 7 days' : 'past 30 days';
-
-  const prompt = `You are writing a ${period} business intelligence report for Veratori — a network of 5 franchise frozen yogurt / açaí bowl locations in New York City. Each location uses NVIDIA DeepStream (YOLO on Jetson Orin) for real-time computer vision inventory tracking.
-
-TODAY'S DATA — ${today}:
-Network revenue: $${d.network.revenue.toLocaleString()} (${d.network.revDelta} vs prior period)
-Units sold: ${d.network.units} across 5 locations
-Active alerts: ${d.network.alerts}
-DeepStream: ${d.network.dsFrames.toLocaleString()} frames processed, ${d.network.dsConf} avg confidence, ${d.network.gpuLoad} GPU load on Jetson Orin
-
-LOCATION PERFORMANCE:
-${d.locations.map(l => `- ${l.name}: $${l.rev.toLocaleString()} revenue (${l.revDelta}), ${l.units} units sold, ${l.alerts} alert(s), top SKU: ${l.topSku}`).join('\n')}
-
-ACTIVE ALERTS:
-${d.alerts.map(a => `- [${a.priority}] ${a.location} — ${a.item}: ${a.message}`).join('\n')}
-
-Write a concise, professional ${periodLabel} executive report. Structure it with exactly these four sections, each starting with the section title on its own line in ALL CAPS:
-
-EXECUTIVE SUMMARY
-2-3 sentences. Total network performance, key wins, key risks.
-
-TOP INSIGHTS
-3-4 bullet points starting with a dash (-). Most actionable data-driven findings.
-
-RECOMMENDATIONS
-3-4 bullet points starting with a dash (-). Specific, prioritized actions for the owner. Include timing where relevant.
-
-OUTLOOK
-1-2 sentences. What to monitor closely in the coming ${period === 'weekly' ? 'week' : 'month'}.
-
-Rules: Plain text only, no markdown, no asterisks, no hashtags. Be direct and specific — use the exact numbers provided.`;
-
-  const resp = await fetch('https://api.minimax.io/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${CLAUDE_REPORT_KEY}`,
-    },
-    body: JSON.stringify({
-      model: 'MiniMax-Text-01',
-      temperature: 0.4,
-      max_tokens: 1200,
-      messages: [
-        { role: 'system', content: 'You are VERA, Veratori\'s business intelligence AI. Generate structured plain-text reports. Never use markdown. Use ALL CAPS section headers. Use dash (-) for bullet points.' },
-        { role: 'user', content: prompt },
-      ],
-    }),
-  });
-
-  if (!resp.ok) throw new Error(`Report API ${resp.status}`);
-  const data = await resp.json();
-  return data.choices[0].message.content.trim();
-}
-
-async function buildAndDownloadPDF(period, aiContent) {
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF({ orientation:'portrait', unit:'mm', format:'a4' });
-  const PW = 210, PH = 297, M = 16;
-  let y = 0;
-
-  // Palette
-  const C = {
-    dark:   [6,  10,  17],
-    card:   [13, 20,  36],
-    row1:   [9,  15,  27],
-    row2:   [11, 18,  32],
-    nv:     [118,185, 0],
-    white:  [241,245,249],
-    muted:  [148,163,184],
-    dim:    [71, 85, 105],
-    red:    [239, 68, 68],
-    amber:  [245,158, 11],
-    blue:   [59, 130,246],
-  };
-
-  const today  = new Date();
-  const dStr   = today.toLocaleDateString('en-US', { month:'long', day:'numeric', year:'numeric' });
-  const pLabel = period === 'weekly' ? 'Weekly' : 'Monthly';
-
-  // ── HEADER BAND ─────────────────────────────────────────────────
-  doc.setFillColor(...C.dark);
-  doc.rect(0, 0, PW, 48, 'F');
-
-  // Green accent strip
-  doc.setFillColor(...C.nv);
-  doc.rect(0, 0, PW, 2.5, 'F');
-
-  // V mark
-  doc.setFillColor(...C.nv);
-  doc.roundedRect(M, 10, 11, 11, 2, 2, 'F');
-  doc.setTextColor(6, 10, 17);
-  doc.setFontSize(9); doc.setFont('helvetica', 'bold');
-  doc.text('V', M + 5.5, 18, { align:'center' });
-
-  // Brand name + report title
-  doc.setTextColor(...C.white);
-  doc.setFontSize(17); doc.setFont('helvetica', 'bold');
-  doc.text('VERATORI', M + 15, 18.5);
-
-  doc.setFontSize(8.5); doc.setFont('helvetica', 'normal');
-  doc.setTextColor(...C.nv);
-  doc.text(`${pLabel} Business Intelligence Report`, M + 15, 25.5);
-
-  doc.setFontSize(7.5); doc.setTextColor(...C.dim);
-  doc.text('Generated by VERA — Veratori Enterprise Retail AI · NVIDIA DeepStream', M + 15, 38);
-  doc.text(dStr, PW - M, 38, { align:'right' });
-
-  y = 58;
-
-  // ── KPI CARDS ─────────────────────────────────────────────────
-  const kpis = [
-    { label:'Network Revenue', val:`$${REPORT_DATA.network.revenue.toLocaleString()}`, sub:REPORT_DATA.network.revDelta+' vs prior', accent:C.nv    },
-    { label:'Units Sold',      val:REPORT_DATA.network.units.toString(),               sub:'All 5 locations',                        accent:C.blue  },
-    { label:'Active Alerts',   val:REPORT_DATA.network.alerts.toString(),              sub:'Require attention',                      accent:C.amber },
-    { label:'DS Accuracy',     val:REPORT_DATA.network.dsConf,                         sub:'Jetson Orin · YOLO',                     accent:C.nv    },
-  ];
-  const cw = (PW - M * 2 - 9) / 4;
-  kpis.forEach((k, i) => {
-    const cx = M + i * (cw + 3);
-    doc.setFillColor(...C.card);
-    doc.roundedRect(cx, y, cw, 24, 2, 2, 'F');
-    doc.setFillColor(...k.accent);
-    doc.rect(cx, y, cw, 2, 'F');
-    doc.setFontSize(15); doc.setFont('helvetica', 'bold');
-    doc.setTextColor(...k.accent);
-    doc.text(k.val, cx + cw / 2, y + 13, { align:'center' });
-    doc.setFontSize(6.5); doc.setFont('helvetica', 'normal');
-    doc.setTextColor(...C.muted);
-    doc.text(k.label, cx + cw / 2, y + 18, { align:'center' });
-    doc.setTextColor(...C.dim);
-    doc.text(k.sub, cx + cw / 2, y + 22, { align:'center' });
-  });
-  y += 32;
-
-  // ── SECTION HELPER ─────────────────────────────────────────────
-  function sectionHead(title) {
-    if (y > PH - 40) { doc.addPage(); y = M; }
-    doc.setFillColor(...C.dim);
-    doc.rect(M, y, PW - M * 2, 0.5, 'F');
-    y += 4;
-    doc.setFontSize(7); doc.setFont('helvetica', 'bold');
-    doc.setTextColor(...C.muted);
-    doc.text(title, M, y);
-    y += 6;
-  }
-
-  // ── LOCATION TABLE ─────────────────────────────────────────────
-  sectionHead('LOCATION BREAKDOWN');
-
-  // Table header row
-  doc.setFillColor(...C.card);
-  doc.rect(M, y, PW - M * 2, 7, 'F');
-  doc.setFontSize(6.5); doc.setFont('helvetica', 'bold');
-  doc.setTextColor(...C.dim);
-  const cols = [M+3, M+50, M+78, M+106, M+124, M+140];
-  ['Location','Revenue','vs Prior','Units','Alerts','Top SKU'].forEach((h,i) => doc.text(h, cols[i], y+4.8));
-  y += 7;
-
-  REPORT_DATA.locations.forEach((loc, idx) => {
-    if (y > PH - 20) { doc.addPage(); y = M; }
-    doc.setFillColor(...(idx % 2 === 0 ? C.row1 : C.row2));
-    doc.rect(M, y, PW - M * 2, 9, 'F');
-
-    const dot = loc.status === 'nominal' ? C.nv : loc.status === 'warning' ? C.amber : C.red;
-    doc.setFillColor(...dot);
-    doc.circle(M + 1.8, y + 4.5, 1.2, 'F');
-
-    doc.setFontSize(7.5); doc.setFont('helvetica', 'bold'); doc.setTextColor(...C.white);
-    doc.text(loc.name, cols[0], y + 5.8);
-    doc.setFont('helvetica', 'normal');
-    doc.text(`$${loc.rev.toLocaleString()}`, cols[1], y + 5.8);
-    doc.setTextColor(...(loc.revDelta.startsWith('+') ? C.nv : C.red));
-    doc.text(loc.revDelta, cols[2], y + 5.8);
-    doc.setTextColor(...C.white);
-    doc.text(loc.units.toString(), cols[3], y + 5.8);
-    doc.setTextColor(loc.alerts > 0 ? C.amber : C.nv);
-    doc.text(loc.alerts.toString(), cols[4], y + 5.8);
-    doc.setTextColor(...C.dim); doc.setFontSize(6.5);
-    doc.text(loc.topSku, cols[5], y + 5.8);
-    y += 9;
-  });
-  y += 8;
-
-  // ── ACTIVE ALERTS ─────────────────────────────────────────────
-  sectionHead('ACTIVE ALERTS');
-  REPORT_DATA.alerts.forEach(alert => {
-    if (y > PH - 20) { doc.addPage(); y = M; }
-    const ac = alert.priority === 'CRITICAL' ? C.red : alert.priority === 'WARNING' ? C.amber : C.blue;
-    doc.setFillColor(Math.min(ac[0] * 0.12 + 6, 30), Math.min(ac[1] * 0.06 + 10, 25), Math.min(ac[2] * 0.05 + 17, 35));
-    doc.roundedRect(M, y, PW - M * 2, 11, 1.5, 1.5, 'F');
-    doc.setFillColor(...ac);
-    doc.rect(M, y, 2.5, 11, 'F');
-    doc.setFontSize(6); doc.setFont('helvetica', 'bold'); doc.setTextColor(...ac);
-    doc.text(alert.priority, M + 5, y + 4);
-    doc.setFontSize(7.5); doc.setFont('helvetica', 'bold'); doc.setTextColor(...C.white);
-    doc.text(`${alert.location}  —  ${alert.item}`, M + 5, y + 8.5);
-    doc.setFont('helvetica', 'normal'); doc.setTextColor(...C.muted); doc.setFontSize(6.5);
-    const msgLines = doc.splitTextToSize(alert.message, PW - M * 2 - 72);
-    doc.text(msgLines[0], M + 78, y + 8.5);
-    y += 13;
-  });
-  y += 6;
-
-  // ── AI ANALYSIS ───────────────────────────────────────────────
-  if (y > PH - 50) { doc.addPage(); y = M; }
-
-  // AI section header band
-  doc.setFillColor(...C.nv);
-  doc.roundedRect(M, y, PW - M * 2, 9, 2, 2, 'F');
-  doc.setFontSize(8); doc.setFont('helvetica', 'bold');
-  doc.setTextColor(6, 10, 17);
-  doc.text('AI ANALYSIS  —  VERA · Veratori Enterprise Retail AI', M + 4, y + 6);
-  y += 14;
-
-  const fallback = `EXECUTIVE SUMMARY\nYour network generated $29,810 today across 694 units, up 8.2% versus the prior period. Canal Street leads at $8,240 and 45th Street is the fastest-growing location at +21%, constrained only by inventory depletion. One location, 44th Street, requires monitoring as it trends 3% below average.\n\nTOP INSIGHTS\n- Passion Fruit at Canal Street and Coconut Dream at 45th Street are sold out or critically low — revenue is being lost right now.\n- 45th Street recorded 287 customer entries versus a 210 average; elevated demand is a recurring pattern that warrants permanent allocation increases.\n- 44th Street underperformance appears traffic-driven, not product-driven — a targeted digital promotion could close the gap.\n- DeepStream processed 86,400 frames overnight at 91.4% confidence — vision infrastructure is fully healthy.\n\nRECOMMENDATIONS\n- Dispatch an emergency restock run to 45th Street (Coconut Dream) and Canal Street (Passion Fruit) before 16:00 today.\n- Increase standing Mango Tango allocation at all five locations — it leads sales network-wide.\n- Activate a loyalty push notification targeting 44th Street's Midtown East customer segment this afternoon.\n- Review Maui Custard freshness rotation schedule; a 4d 18h display time signals a process gap.\n\nOUTLOOK\nMonitor 44th Street through the afternoon session and assess whether the underperformance extends into tomorrow. If 45th Street restocking lands before 16:00, an additional $800–$1,200 in revenue recovery is achievable today.`;
-
-  const content = aiContent || fallback;
-  const SECTION_HEADERS = ['EXECUTIVE SUMMARY','TOP INSIGHTS','RECOMMENDATIONS','OUTLOOK'];
-
-  content.split('\n').forEach(rawLine => {
-    const line = rawLine.trim();
-    if (!line) { y += 2.5; return; }
-    if (y > PH - 16) { doc.addPage(); y = M; }
-
-    if (SECTION_HEADERS.some(h => line.toUpperCase().startsWith(h))) {
-      y += 3;
-      doc.setFontSize(7.5); doc.setFont('helvetica', 'bold'); doc.setTextColor(...C.nv);
-      doc.text(line, M, y);
-      y += 5.5;
-    } else if (line.startsWith('-')) {
-      doc.setFontSize(7.5); doc.setFont('helvetica', 'normal'); doc.setTextColor(...C.muted);
-      doc.setFillColor(...C.nv);
-      doc.circle(M + 1.5, y - 1, 1, 'F');
-      const wrapped = doc.splitTextToSize(line.slice(1).trim(), PW - M * 2 - 8);
-      wrapped.forEach((wl, wi) => {
-        if (y > PH - 16) { doc.addPage(); y = M; }
-        doc.text(wl, M + 5, y);
-        y += 4.5;
-      });
-    } else {
-      doc.setFontSize(7.5); doc.setFont('helvetica', 'normal'); doc.setTextColor(...C.white);
-      const wrapped = doc.splitTextToSize(line, PW - M * 2);
-      wrapped.forEach(wl => {
-        if (y > PH - 16) { doc.addPage(); y = M; }
-        doc.text(wl, M, y);
-        y += 4.8;
-      });
+function renderQuadCells() {
+  const cells = document.querySelectorAll('.quad-cell');
+  cells.forEach((cell, idx) => {
+    const s = QUAD.slots.find(x => x.slot === idx) || {slot:idx, active:false};
+    if (!s.active) {
+      cell.innerHTML = `
+        <div class="quad-cell-empty">
+          <svg viewBox="0 0 24 24"><path d="M9.4 10.5l4.77-8.26C13.47 2.09 12.75 2 12 2c-2.4 0-4.6.85-6.32 2.25l3.66 6.35.06-.1zM21.54 9c-.92-2.92-3.15-5.26-6-6.34L11.88 9h9.66zm.26 1h-7.49l.29.5L19 19.16c1.85-1.6 3-3.93 3-6.5 0-.43-.05-.87-.11-1.29-.04-.11-.06-.21-.09-.32-.07-.36-.18-.71-.31-1.05zM8.54 12L3.13 2.92C2.41 3.42 1.85 4.04 1.39 4.74c.18.34.36.66.55.95L4.99 11 .94 11.32l-1.4-2.46c.13-.95.36-1.86.7-2.72l8.32 14.4c1.04-.27 1.95-.74 2.7-1.32L8.54 12zM3.91 4.06C2.74 5.5 2 7.16 2 9h6.21l1.6-2.77c.18.34.36.67.56.96l-3.06 5.31c-.21.36-.38.74-.52 1.13L3.91 4.06z"/></svg>
+          <div>Slot ${idx + 1} — empty</div>
+          <div class="quad-empty-hint">Plug a camera in and click Rescan</div>
+        </div>`;
+      return;
     }
+    const live = s.status?.connected && !s.status?.error;
+    const yoloOn = !!s.status?.yolo;
+    const fps = s.status?.fps || 0;
+    cell.innerHTML = `
+      <img class="quad-feed" id="quadImg-${idx}" alt="Slot ${idx+1}" src="${QUAD_API_BASE}/snapshot?camera=${idx}&_=${Date.now()}">
+      <div class="quad-cell-label">
+        <span class="dot ${live ? '' : 'off'}"></span>
+        <span class="slot-tag">SLOT ${idx + 1}</span>
+        <span>${s.camera_name || 'No camera'}</span>
+      </div>
+      <div class="quad-cell-stats">
+        ${fps.toFixed(1)} fps · <span class="${yoloOn ? 'yolo-on' : ''}">YOLO ${yoloOn ? 'ON' : 'off'}</span>
+      </div>`;
   });
 
-  // ── FOOTER (all pages) ─────────────────────────────────────────
-  const total = doc.internal.getNumberOfPages();
-  for (let p = 1; p <= total; p++) {
-    doc.setPage(p);
-    doc.setFillColor(...C.dark);
-    doc.rect(0, PH - 11, PW, 11, 'F');
-    doc.setFillColor(...C.nv);
-    doc.rect(0, PH - 11, PW, 1, 'F');
-    doc.setFontSize(6.5); doc.setFont('helvetica', 'normal'); doc.setTextColor(...C.dim);
-    doc.text(`Veratori Intelligence Platform · ${pLabel} Report · ${dStr}`, M, PH - 5);
-    doc.text(`Page ${p} of ${total}`, PW - M, PH - 5, { align:'right' });
+  // Start a snapshot refresh loop only when at least one active slot exists
+  if (!QUAD.snapshotTimer && QUAD.slots.some(s => s.active)) {
+    QUAD.snapshotTimer = setInterval(quadRefreshSnapshots, 200);   // ~5 fps wall update
   }
 
-  const fname = `Veratori_${pLabel}_Report_${today.toISOString().slice(0,10)}.pdf`;
-  doc.save(fname);
+  // Reflect YOLO state on the button
+  const anyOn = QUAD.slots.some(s => s.active && s.status?.yolo);
+  QUAD.anyYolo = anyOn;
+  const btn = document.getElementById('quadYoloBtn');
+  if (btn) {
+    btn.classList.toggle('on', anyOn);
+    btn.innerHTML = `<svg viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>${anyOn ? 'Stop YOLO' : 'YOLO All'}`;
+  }
 }
 
+function quadRefreshSnapshots() {
+  if (!QUAD.open) return;
+  QUAD.slots.forEach(s => {
+    if (!s.active) return;
+    const img = document.getElementById(`quadImg-${s.slot}`);
+    if (img) img.src = `${QUAD_API_BASE}/snapshot?camera=${s.slot}&_=${Date.now()}`;
+  });
+}
+
+async function quadRescan() {
+  try {
+    await fetch(`${QUAD_API_BASE}/cameras?refresh=1`, { cache:'no-store', credentials:'include' });
+    quadRefreshSlots();
+  } catch (err) { console.warn('[Quad] rescan failed:', err); }
+}
+
+async function quadToggleYolo() {
+  // Toggle without a ?camera= → server flips YOLO on all active slots
+  try {
+    await fetch(`${QUAD_API_BASE}/yolo/toggle`, { method:'POST', credentials:'include' });
+    setTimeout(quadRefreshSlots, 200);
+  } catch (err) { console.warn('[Quad] toggle failed:', err); }
+}
+
+// Escape closes the quad view
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && QUAD.open) closeQuadView();
+});
 
 // ═══════════════════════════════════════════════════════
 //  INIT

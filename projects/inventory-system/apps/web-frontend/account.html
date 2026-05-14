@@ -9,7 +9,10 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-functions-compat.js"></script>
     <script src="firebase-auth.js?v=3"></script>
+    <script src="franchise-config.js?v=1"></script>
+    <script src="role-guard.js?v=1"></script>
     <script>requireAuth();</script>
     <style>
         :root {
@@ -340,8 +343,82 @@
                 </div>
             </div>
 
+            <!-- Team Management (owner-only — toggled via JS) -->
+            <div class="card team-card" id="teamCard" style="display:none; margin-top:24px;">
+                <div class="card-header" style="display:flex; align-items:center; justify-content:space-between;">
+                    <div class="card-title">
+                        <svg viewBox="0 0 24 24" style="width:18px;height:18px;fill:currentColor"><path d="M16 11c1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3 1.34 3 3 3zm-8 0c1.66 0 3-1.34 3-3S9.66 5 8 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
+                        Team
+                    </div>
+                    <button class="btn btn-primary" id="addManagerBtn" style="font-size:13px; padding:8px 14px;">
+                        + Add manager
+                    </button>
+                </div>
+                <div class="msg" id="teamMsg" style="display:none;"></div>
+                <div id="teamTableWrap" style="margin-top:8px;">
+                    <div style="color:var(--text-muted); font-size:13px; padding:12px 0;">Loading team…</div>
+                </div>
+                <div style="margin-top:14px; padding-top:14px; border-top:1px solid var(--border); font-size:12px; color:var(--text-muted); line-height:1.55;">
+                    <strong style="color:var(--text-secondary);">Jetson identities</strong> — provision a per-franchise Firebase Auth identity for each store's Jetson. Copy the returned credentials into <code style="background:var(--bg-input); padding:2px 6px; border-radius:4px; font-size:11px;">/etc/veratori/jetson-auth.env</code> on that Jetson before running <code style="background:var(--bg-input); padding:2px 6px; border-radius:4px; font-size:11px;">scripts/jetson-setup.sh</code>.
+                    <div style="display:flex; flex-wrap:wrap; gap:6px; margin-top:10px;">
+                        <button class="btn btn-ghost team-jet-btn" data-franchise="canal" style="font-size:12px; padding:6px 10px;">Provision canal</button>
+                        <button class="btn btn-ghost team-jet-btn" data-franchise="f43"   style="font-size:12px; padding:6px 10px;">Provision f43</button>
+                        <button class="btn btn-ghost team-jet-btn" data-franchise="f44"   style="font-size:12px; padding:6px 10px;">Provision f44</button>
+                        <button class="btn btn-ghost team-jet-btn" data-franchise="f45"   style="font-size:12px; padding:6px 10px;">Provision f45</button>
+                        <button class="btn btn-ghost team-jet-btn" data-franchise="f46"   style="font-size:12px; padding:6px 10px;">Provision f46</button>
+                        <button class="btn btn-ghost team-jet-btn" data-franchise="cam"   style="font-size:12px; padding:6px 10px;">Provision cam</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Add Manager modal -->
+            <div id="addManagerOverlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); backdrop-filter:blur(4px); z-index:3000; align-items:center; justify-content:center;">
+                <div style="background:var(--bg-card); border:1px solid var(--border); border-radius:14px; padding:28px 26px; width:min(440px, 92vw); box-shadow:0 24px 60px rgba(0,0,0,0.5);">
+                    <div style="font-size:17px; font-weight:700; color:var(--text-primary); margin-bottom:18px;">Add manager</div>
+                    <form id="addManagerForm">
+                        <div class="form-group">
+                            <label for="mgrEmail">Email</label>
+                            <input type="email" id="mgrEmail" class="form-input" required placeholder="manager@example.com" autocomplete="off">
+                        </div>
+                        <div class="form-group">
+                            <label>Franchises this manager can access</label>
+                            <div id="mgrFranchises" style="display:grid; grid-template-columns:1fr 1fr; gap:8px; padding:10px; background:var(--bg-input); border-radius:8px; border:1px solid var(--border);">
+                                <label style="display:flex; align-items:center; gap:8px; font-size:13px; color:var(--text-secondary); cursor:pointer;"><input type="checkbox" value="canal"> Canal Street</label>
+                                <label style="display:flex; align-items:center; gap:8px; font-size:13px; color:var(--text-secondary); cursor:pointer;"><input type="checkbox" value="f43"> 43rd Street</label>
+                                <label style="display:flex; align-items:center; gap:8px; font-size:13px; color:var(--text-secondary); cursor:pointer;"><input type="checkbox" value="f44"> 44th Street</label>
+                                <label style="display:flex; align-items:center; gap:8px; font-size:13px; color:var(--text-secondary); cursor:pointer;"><input type="checkbox" value="f45"> 45th Street</label>
+                                <label style="display:flex; align-items:center; gap:8px; font-size:13px; color:var(--text-secondary); cursor:pointer;"><input type="checkbox" value="f46"> 46th Street</label>
+                                <label style="display:flex; align-items:center; gap:8px; font-size:13px; color:var(--text-secondary); cursor:pointer;"><input type="checkbox" value="cam"> Camera Demo</label>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="mgrPassword">Starter password (optional)</label>
+                            <input type="text" id="mgrPassword" class="form-input" placeholder="Leave blank for auto-generated + email reset link">
+                            <div class="form-hint">If set, manager signs in with this password and changes it from this page later.</div>
+                        </div>
+                        <div class="msg" id="mgrMsg" style="display:none;"></div>
+                        <div style="display:flex; gap:10px; margin-top:16px;">
+                            <button type="button" class="btn btn-ghost" id="mgrCancel" style="flex:1;">Cancel</button>
+                            <button type="submit" class="btn btn-primary" id="mgrSubmit" style="flex:2;">Add</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Provision Jetson result modal -->
+            <div id="jetsonResultOverlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.75); backdrop-filter:blur(4px); z-index:3000; align-items:center; justify-content:center;">
+                <div style="background:var(--bg-card); border:1px solid var(--border); border-radius:14px; padding:28px 26px; width:min(560px, 94vw); box-shadow:0 24px 60px rgba(0,0,0,0.6);">
+                    <div style="font-size:17px; font-weight:700; color:var(--text-primary); margin-bottom:6px;">Jetson credentials</div>
+                    <div style="font-size:12px; color:var(--text-muted); margin-bottom:14px;">Copy these to <code style="background:var(--bg-input); padding:2px 6px; border-radius:4px;">/etc/veratori/jetson-auth.env</code> on the target Jetson. <strong style="color:#f59e0b;">Shown once — closing this dialog destroys the password.</strong></div>
+                    <pre id="jetsonEnvOutput" style="background:var(--bg-input); border:1px solid var(--border); border-radius:8px; padding:14px; font-family:ui-monospace, SFMono-Regular, monospace; font-size:12px; color:var(--text-secondary); white-space:pre; overflow-x:auto; max-height:300px;"></pre>
+                    <div style="display:flex; gap:10px; margin-top:14px;">
+                        <button class="btn btn-ghost" id="jetCopyBtn" style="flex:1;">Copy to clipboard</button>
+                        <button class="btn btn-primary" id="jetCloseBtn" style="flex:1;">Close</button>
+                    </div>
+                </div>
+            </div>
+
             <!-- Session -->
-            <div class="session-bar">
                 <div class="session-info">
                     <div class="session-label">Active Session</div>
                     <div class="session-desc">You are currently signed in. Logging out will end your session and redirect to the login page.</div>
@@ -492,6 +569,200 @@
         const style = document.createElement('style');
         style.textContent = '@keyframes spin { to { transform: rotate(360deg); } }';
         document.head.appendChild(style);
+    </script>
+
+    <!-- ─── Team management (owner-only) ─────────────────────────────────── -->
+    <script>
+    (async function teamPanel() {
+        const teamCard = document.getElementById('teamCard');
+        const teamMsg  = document.getElementById('teamMsg');
+        const tableWrap = document.getElementById('teamTableWrap');
+
+        // Gate to owner role only — managers don't see the panel at all.
+        let profile;
+        try {
+            profile = await window.VeratoriRole.load();
+        } catch (e) {
+            console.warn('[team] role-guard failed:', e);
+            return;
+        }
+        if (profile.role !== 'owner') return;
+        teamCard.style.display = '';
+
+        // Firestore-region-bound Functions client. Must match index.js setGlobalOptions.
+        const functions = firebase.functions('us-central1');
+
+        const FRANCHISE_LABELS = {
+            canal: 'Canal',
+            f43:   '43rd',
+            f44:   '44th',
+            f45:   '45th',
+            f46:   '46th',
+            cam:   'Demo',
+        };
+
+        function showMsg(el, text, kind) {
+            el.style.display = '';
+            el.textContent = text;
+            el.className = 'msg ' + (kind === 'error' ? 'msg-error' :
+                                     kind === 'ok'    ? 'msg-success' : '');
+        }
+
+        async function refreshTeam() {
+            try {
+                const res = await functions.httpsCallable('listManagers')({});
+                renderTable(res.data.users || []);
+            } catch (e) {
+                tableWrap.innerHTML = `<div style="color:#ef4444; font-size:13px; padding:12px;">Failed to load team: ${e.message}</div>`;
+            }
+        }
+
+        function renderTable(users) {
+            if (!users.length) {
+                tableWrap.innerHTML = '<div style="color:var(--text-muted); font-size:13px; padding:12px 0;">No team members yet.</div>';
+                return;
+            }
+            const rows = users.map(u => {
+                const isMe = (u.email || '').toLowerCase() === (profile.email || '').toLowerCase();
+                const franList = (u.role === 'owner')
+                    ? '<span style="color:var(--accent);">All locations</span>'
+                    : (u.franchises || []).map(f => `<span style="display:inline-block; padding:2px 7px; background:var(--bg-input); border-radius:10px; font-size:11px; margin-right:4px;">${FRANCHISE_LABELS[f] || f}</span>`).join('') || '<span style="color:var(--text-muted); font-size:11px;">none</span>';
+                const disabledBadge = u.disabled ? '<span style="display:inline-block; padding:2px 7px; background:rgba(239,68,68,0.15); color:#ef4444; border-radius:10px; font-size:10px; margin-left:6px;">DISABLED</span>' : '';
+                const lastSeen = u.lastSignIn ? new Date(u.lastSignIn).toLocaleDateString() : 'never';
+                const revokeBtn = (isMe || u.disabled)
+                    ? '<span style="color:var(--text-muted); font-size:11px;">—</span>'
+                    : `<button class="btn btn-ghost team-revoke-btn" data-email="${u.email}" style="font-size:11px; padding:4px 10px; color:#ef4444;">Revoke</button>`;
+                return `
+                    <tr style="border-bottom:1px solid var(--border);">
+                        <td style="padding:10px 8px; font-size:13px; color:var(--text-secondary);">${u.email}${disabledBadge}</td>
+                        <td style="padding:10px 8px; font-size:12px; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px;">${u.role}</td>
+                        <td style="padding:10px 8px;">${franList}</td>
+                        <td style="padding:10px 8px; font-size:11px; color:var(--text-muted);">${lastSeen}</td>
+                        <td style="padding:10px 8px; text-align:right;">${revokeBtn}</td>
+                    </tr>`;
+            }).join('');
+            tableWrap.innerHTML = `
+                <table style="width:100%; border-collapse:collapse; margin-top:10px;">
+                    <thead>
+                        <tr style="border-bottom:1px solid var(--border);">
+                            <th style="padding:8px; text-align:left; font-size:11px; text-transform:uppercase; letter-spacing:0.5px; color:var(--text-muted); font-weight:600;">Email</th>
+                            <th style="padding:8px; text-align:left; font-size:11px; text-transform:uppercase; letter-spacing:0.5px; color:var(--text-muted); font-weight:600;">Role</th>
+                            <th style="padding:8px; text-align:left; font-size:11px; text-transform:uppercase; letter-spacing:0.5px; color:var(--text-muted); font-weight:600;">Locations</th>
+                            <th style="padding:8px; text-align:left; font-size:11px; text-transform:uppercase; letter-spacing:0.5px; color:var(--text-muted); font-weight:600;">Last seen</th>
+                            <th style="padding:8px;"></th>
+                        </tr>
+                    </thead>
+                    <tbody>${rows}</tbody>
+                </table>`;
+            tableWrap.querySelectorAll('.team-revoke-btn').forEach(btn => {
+                btn.addEventListener('click', () => revokeManager(btn.dataset.email));
+            });
+        }
+
+        async function revokeManager(email) {
+            if (!confirm(`Revoke ${email}? They will lose dashboard access on next sign-in.`)) return;
+            try {
+                await functions.httpsCallable('revokeUser')({ email });
+                showMsg(teamMsg, `Revoked ${email}.`, 'ok');
+                refreshTeam();
+            } catch (e) {
+                showMsg(teamMsg, `Could not revoke: ${e.message}`, 'error');
+            }
+        }
+
+        // ── Add Manager modal ──────────────────────────────────────────────
+        const addBtn      = document.getElementById('addManagerBtn');
+        const addOverlay  = document.getElementById('addManagerOverlay');
+        const addForm     = document.getElementById('addManagerForm');
+        const addCancel   = document.getElementById('mgrCancel');
+        const mgrMsg      = document.getElementById('mgrMsg');
+
+        function openAddModal()  { addOverlay.style.display = 'flex'; mgrMsg.style.display = 'none'; addForm.reset(); }
+        function closeAddModal() { addOverlay.style.display = 'none'; }
+
+        addBtn.addEventListener('click', openAddModal);
+        addCancel.addEventListener('click', closeAddModal);
+        addOverlay.addEventListener('click', (e) => { if (e.target === addOverlay) closeAddModal(); });
+
+        addForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email      = document.getElementById('mgrEmail').value.trim();
+            const password   = document.getElementById('mgrPassword').value.trim() || undefined;
+            const franchises = Array.from(document.querySelectorAll('#mgrFranchises input:checked'))
+                                    .map(c => c.value);
+            if (!email || !franchises.length) {
+                showMsg(mgrMsg, 'Email and at least one franchise are required.', 'error');
+                return;
+            }
+            const submit = document.getElementById('mgrSubmit');
+            submit.disabled = true;
+            submit.textContent = 'Adding…';
+            try {
+                const res = await functions.httpsCallable('setUserClaims')({
+                    email, role: 'manager', franchises, password,
+                });
+                const created = res.data.created;
+                showMsg(mgrMsg,
+                    created
+                        ? `Created ${email}. ${password ? 'Starter password set.' : 'Password reset link sent.'}`
+                        : `Updated claims for ${email}.`,
+                    'ok');
+                setTimeout(() => { closeAddModal(); refreshTeam(); }, 1500);
+            } catch (e) {
+                showMsg(mgrMsg, `Failed: ${e.message}`, 'error');
+            } finally {
+                submit.disabled = false;
+                submit.textContent = 'Add';
+            }
+        });
+
+        // ── Provision Jetson ───────────────────────────────────────────────
+        const jetOverlay = document.getElementById('jetsonResultOverlay');
+        const jetOutput  = document.getElementById('jetsonEnvOutput');
+        const jetCopy    = document.getElementById('jetCopyBtn');
+        const jetClose   = document.getElementById('jetCloseBtn');
+
+        function closeJetModal() {
+            jetOverlay.style.display = 'none';
+            jetOutput.textContent = '';  // destroy password from DOM
+        }
+        jetClose.addEventListener('click', closeJetModal);
+        jetOverlay.addEventListener('click', (e) => { if (e.target === jetOverlay) closeJetModal(); });
+        jetCopy.addEventListener('click', () => {
+            navigator.clipboard.writeText(jetOutput.textContent).then(() => {
+                jetCopy.textContent = 'Copied!';
+                setTimeout(() => { jetCopy.textContent = 'Copy to clipboard'; }, 1500);
+            });
+        });
+
+        document.querySelectorAll('.team-jet-btn').forEach(btn => {
+            btn.addEventListener('click', async () => {
+                const franchise_id = btn.dataset.franchise;
+                if (!confirm(`Provision a new Jetson identity for "${franchise_id}"?\n\nIf one already exists, its password will be rotated and the old one will stop working.`)) return;
+                const orig = btn.textContent;
+                btn.disabled = true;
+                btn.textContent = 'Provisioning…';
+                try {
+                    const res = await functions.httpsCallable('provisionJetson')({ franchise_id });
+                    const d = res.data;
+                    jetOutput.textContent =
+                        `# /etc/veratori/jetson-auth.env  (mode 0600, root-owned)\n` +
+                        `FIREBASE_EMAIL=${d.email}\n` +
+                        `FIREBASE_PASSWORD=${d.password}\n` +
+                        `FIREBASE_API_KEY=${d.web_api_key}\n` +
+                        `FIREBASE_PROJECT_ID=${d.project_id}\n`;
+                    jetOverlay.style.display = 'flex';
+                } catch (e) {
+                    alert(`Provision failed: ${e.message}`);
+                } finally {
+                    btn.disabled = false;
+                    btn.textContent = orig;
+                }
+            });
+        });
+
+        refreshTeam();
+    })();
     </script>
 </body>
 </html>

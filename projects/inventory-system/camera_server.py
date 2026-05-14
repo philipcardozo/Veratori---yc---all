@@ -1,585 +1,315 @@
 """
-Veratori Camera Demo Server
-Streams YOLO-annotated frames from the See3CAM_24CUG via MJPEG over HTTP.
+Veratori multi-camera server.
+
+Manages up to 4 camera slots, each running its own YOLO model + SalesTracker.
+HTTP layer routes requests by ?camera=<slot> query param; missing param
+defaults to slot 0 for backwards-compat with the single-cam endpoints
+already wired into the frontend.
 
 Endpoints:
-  GET /stream        — MJPEG stream (use as <img src="...">)
-  POST /reconnect    — Re-initialise the camera
-  GET /status        — JSON health check
-
-Run (from inventory-system folder):
-  "/Users/felipecardozo/Desktop/Company Veratori /Veratori/.venv/bin/python" camera_server.py
+  GET  /stream?camera=N          MJPEG stream from slot N (default 0)
+  GET  /snapshot?camera=N        Single JPEG from slot N
+  GET  /status?camera=N          Slot health
+  GET  /cameras                  All detected cams + ranked tiers (?refresh=1 forces rescan)
+  GET  /slots                    Current slot → camera assignment
+  POST /slots/{N}/assign         body: {"camera_idx": <int|null>}
+  GET  /detections?camera=N      Per-slot detections (no param = slot 0)
+  GET  /inventory                Aggregated across all slots
+  GET  /inventory?camera=N       One slot
+  GET  /sales                    Aggregated totals + merged recent feed
+  GET  /sales?camera=N           One slot
+  GET  /alerts                   Aggregated freshness alerts
+  GET  /report?...               Weekly aggregation JSON (existing)
+  GET  /report.docx?...          Weekly report download (existing)
+  GET  /report.pdf?...           Weekly report PDF (existing)
+  POST /yolo/toggle              Toggle inference on all active slots
+  POST /yolo/toggle?camera=N     Toggle inference on one slot
+  POST /reconnect?camera=N       Re-init a slot's capture
+  POST /camera/select            Legacy: body {"index": <cam_idx>} re-assigns slot 0
 """
 
-import cv2
-import threading
-import time
 import json
 import os
-import subprocess
+import threading
+import time
 import webbrowser
+from datetime import datetime, timedelta
 from http.server import BaseHTTPRequestHandler
 from socketserver import ThreadingMixIn, TCPServer
-from ultralytics import YOLO
-from sales_tracker import SalesTracker, is_food_drink
+from urllib.parse import urlparse, parse_qs
+
+from camera_slots import SlotManager, MAX_SLOTS
+import report_builder
+
 
 class ThreadingHTTPServer(ThreadingMixIn, TCPServer):
     allow_reuse_address = True
-    daemon_threads = True
+    daemon_threads      = True
 
-# ── Config ────────────────────────────────────────────────────────────────────
-PORT       = 5001
-MODEL_PATH = os.path.join(os.path.dirname(__file__), "models/yolov8n.pt")
-SALES_DIR  = os.path.join(os.path.dirname(__file__), "sales")
-CONF_THRESH = 0.40
-FRAME_W     = 640
-FRAME_H     = 480
 
-# Colour palette for bounding boxes (one per class, cycling)
-PALETTE = [
-    (16,185,129), (59,130,246), (245,158,11), (239,68,68),
-    (139,92,246), (236,72,153), (14,165,233), (34,197,94),
-    (251,146,60), (99,102,241),
-]
+PORT      = 5001
+_MODEL_DIR  = os.path.join(os.path.dirname(__file__), "models")
+MODEL_PATH  = (
+    os.path.join(_MODEL_DIR, "yolov8n.engine")
+    if os.path.exists(os.path.join(_MODEL_DIR, "yolov8n.engine"))
+    else os.path.join(_MODEL_DIR, "yolov8n.pt")
+)
+SALES_DIR   = os.path.join(os.path.dirname(__file__), "sales")
+SLOTS_CONFIG = os.path.join(os.path.dirname(__file__), "slots.json")
 
-# ── Shared state ──────────────────────────────────────────────────────────────
-lock             = threading.Lock()
-latest_frame     = None   # bytes (JPEG)
-yolo_enabled     = False  # toggled by POST /yolo/toggle
-camera_status    = {"connected": False, "error": None, "fps": 0, "yolo": False}
-model            = None
-latest_detections = []    # food/drink only — list of {label, conf, count}
-_last_empty_log  = 0.0    # throttle for "no detections" spam (1/sec)
-sales_tracker    = SalesTracker(SALES_DIR)
-_capture_should_stop = threading.Event()   # signal to capture_loop to exit cleanly
+slots: SlotManager = SlotManager(SALES_DIR, MODEL_PATH, SLOTS_CONFIG)
 
-# Camera selection state (used by GET /cameras and POST /camera/select)
-available_cameras    = []      # list of {idx, name, tier} populated at scan time
-active_camera_idx    = None    # AVFoundation index currently in use
-requested_camera_idx = None    # set by /camera/select, picked up by capture_loop
 
-# ── Camera + inference thread ─────────────────────────────────────────────────
-# Keywords that identify phone / virtual cameras — always tried last
-_PHONE_KEYWORDS   = ["iphone", "ipad", "android", "continuity", "droidcam",
-                     "epoccam", "camo", "ndccam", "obs virtual", "mmhmm"]
-# Keywords that identify built-in cameras — tried before phones but after USB
-_BUILTIN_KEYWORDS = ["facetime", "built-in", "builtin", "integrated", "isight"]
-
-def _ranked_camera_indices():
-    """
-    Query system_profiler for all AVFoundation cameras and return their indices
-    sorted into three priority tiers:
-      Tier 0 — external USB/IP cameras  (e.g. See3CAM, webcam)
-      Tier 1 — built-in cameras         (e.g. FaceTime HD)
-      Tier 2 — phone / virtual cameras  (e.g. iPhone Continuity Camera)
-    Returns a flat list of (index, name, tier) tuples in priority order.
-    Also caches the full list into the module-level `available_cameras` so the
-    HTTP API can expose it to the dashboard.
-    """
-    global available_cameras
+def _slot_id_from_query(q: dict, default: int = 0) -> int:
+    """Extract ?camera=N from a parsed query dict, clamped to [0, MAX_SLOTS-1]."""
+    raw = (q.get("camera") or [str(default)])[0]
     try:
-        result = subprocess.run(
-            ["system_profiler", "SPCameraDataType", "-json"],
-            capture_output=True, text=True, timeout=5
-        )
-        cameras = json.loads(result.stdout).get("SPCameraDataType", [])
-        if cameras:
-            tiers = {0: [], 1: [], 2: []}
-            for i, cam in enumerate(cameras):
-                name = cam.get("_name", f"Camera {i}")
-                nl   = name.lower()
-                if any(k in nl for k in _PHONE_KEYWORDS):
-                    tier = 2
-                elif any(k in nl for k in _BUILTIN_KEYWORDS):
-                    tier = 1
-                else:
-                    tier = 0   # external / USB — highest priority
-                tiers[tier].append((i, name))
-                print(f"[camera] [{['USB/ext','built-in','phone'][tier]}] index {i} → {name}")
-            ranked = []
-            for t in (0, 1, 2):
-                ranked.extend([(i, n, t) for i, n in tiers[t]])
-            available_cameras = [
-                {"idx": i, "name": n, "tier": t} for (i, n, t) in ranked
-            ]
-            return ranked
-    except Exception as e:
-        print(f"[camera] system_profiler lookup failed: {e}")
-    # Fallback: just try indices 0-6 with no tier info
-    fallback = [(i, f"index {i}", 1) for i in range(7)]
-    available_cameras = [{"idx": i, "name": n, "tier": t} for (i, n, t) in fallback]
-    return fallback
+        n = int(raw)
+    except (TypeError, ValueError):
+        n = default
+    return max(0, min(MAX_SLOTS - 1, n))
 
-def _try_open(idx, name):
-    """Try to open camera at idx; return cap if live frames confirmed, else None."""
-    cap = cv2.VideoCapture(idx, cv2.CAP_AVFOUNDATION)
-    if not cap.isOpened():
-        cap.release()
-        return None
-    cap.set(cv2.CAP_PROP_FRAME_WIDTH,  FRAME_W)
-    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, FRAME_H)
-    for _ in range(5):
-        ret, frame = cap.read()
-        if ret and frame is not None:
-            print(f"[camera] ✓ Live frames from '{name}' (index {idx})")
-            return cap
-        time.sleep(0.1)
-    print(f"[camera] ✗ '{name}' (index {idx}) opened but no frames — skipping")
-    cap.release()
-    return None
 
-def find_best_camera():
-    """
-    Open the best available camera using a three-tier priority:
-      1st — external USB cameras  (See3CAM, webcams, …)
-      2nd — built-in camera       (FaceTime HD, …)
-      3rd — phone / virtual cam   (iPhone Continuity, DroidCam, …)
-    Stops and returns the first tier that yields a working camera.
-    """
-    global active_camera_idx
-    ranked = _ranked_camera_indices()
+def _json_response(handler, status, payload):
+    body = json.dumps(payload).encode()
+    handler.send_response(status)
+    handler.send_header("Content-Type",   "application/json")
+    handler.send_header("Content-Length", len(body))
+    handler.send_header("Cache-Control",  "no-cache, no-store")
+    handler._cors()
+    handler.end_headers()
+    handler.wfile.write(body)
 
-    # Group by tier so we don't fall through to phone if a USB cam exists
-    tiers: dict[int, list] = {0: [], 1: [], 2: []}
-    for idx, name, tier in ranked:
-        tiers[tier].append((idx, name))
 
-    for tier_num in (0, 1, 2):
-        entries = tiers[tier_num]
-        if not entries:
-            continue
-        tier_label = ['USB/external', 'built-in', 'phone/virtual'][tier_num]
-        print(f"[camera] Trying tier {tier_num} ({tier_label}): {[n for _,n in entries]}")
-        for idx, name in entries:
-            cap = _try_open(idx, name)
-            if cap:
-                active_camera_idx = idx
-                return cap
-        # If at least one camera existed in this tier but none worked, still
-        # continue to the next tier (e.g. See3CAM unplugged → fall to built-in).
-
-    active_camera_idx = None
-    return None
-
-def open_camera_at(idx):
-    """Open a specific AVFoundation index. Returns cap or None."""
-    global active_camera_idx
-    name = next(
-        (c["name"] for c in available_cameras if c["idx"] == idx),
-        f"index {idx}"
-    )
-    cap = _try_open(idx, name)
-    if cap:
-        active_camera_idx = idx
-    return cap
-
-# Keep old name as alias so any external callers still work
-find_see3cam = find_best_camera
-
-def draw_detections(frame, results):
-    for r in results:
-        for box in r.boxes:
-            x1,y1,x2,y2 = map(int, box.xyxy[0])
-            cls   = int(box.cls[0])
-            conf  = float(box.conf[0])
-            label = model.names[cls] if hasattr(model, 'names') else str(cls)
-            color = PALETTE[cls % len(PALETTE)]
-            # Box
-            cv2.rectangle(frame, (x1,y1), (x2,y2), color, 2)
-            # Label background
-            text  = f"{label}  {conf:.0%}"
-            (tw, th), _ = cv2.getTextSize(text, cv2.FONT_HERSHEY_SIMPLEX, 0.45, 1)
-            cv2.rectangle(frame, (x1, y1-th-6), (x1+tw+6, y1), color, -1)
-            cv2.putText(frame, text, (x1+3, y1-3),
-                        cv2.FONT_HERSHEY_SIMPLEX, 0.45, (255,255,255), 1, cv2.LINE_AA)
-    return frame
-
-def capture_loop():
-    global latest_frame, camera_status, model, _last_empty_log, latest_detections, requested_camera_idx
-
-    print("[server] Loading YOLO model…")
-    try:
-        model = YOLO(MODEL_PATH)
-        print(f"[server] Model loaded: {MODEL_PATH}")
-    except Exception as e:
-        print(f"[server] Model load failed: {e}")
-        camera_status["error"] = f"Model load failed: {e}"
-        return
-
-    cap = find_best_camera()
-    if cap is None:
-        camera_status["error"] = "No camera found (USB, built-in, or phone)"
-        print("[camera] ERROR:", camera_status["error"])
-        _serve_error_frame()
-        return
-
-    camera_status["connected"] = True
-    camera_status["error"]     = None
-
-    t0 = time.time()
-    fc = 0
-
-    while True:
-        # Allow a clean shutdown when reconnect() asks us to exit
-        if _capture_should_stop.is_set():
-            print("[camera] capture_loop received stop signal — exiting cleanly")
-            cap.release()
-            return
-
-        # Honour an explicit camera switch request from the dashboard
-        if requested_camera_idx is not None and requested_camera_idx != active_camera_idx:
-            target = requested_camera_idx
-            requested_camera_idx = None
-            print(f"[camera] Switching to index {target} (requested by client)")
-            cap.release()
-            new_cap = open_camera_at(target)
-            if new_cap is not None:
-                cap = new_cap
-                camera_status["connected"] = True
-                camera_status["error"]     = None
-            else:
-                camera_status["error"] = f"Could not open camera index {target}"
-                print(f"[camera] Switch failed — falling back to best available")
-                cap = find_best_camera()
-                if cap is None:
-                    _serve_error_frame()
-                    time.sleep(2)
-                    continue
-
-        ok, frame = cap.read()
-        if not ok:
-            camera_status["connected"] = False
-            camera_status["error"] = "Frame read failed — camera disconnected?"
-            print("[camera] Frame read failed, waiting 2s…")
-            time.sleep(2)
-            cap.release()
-            cap = find_best_camera()
-            if cap is None:
-                _serve_error_frame()
-                continue
-            camera_status["connected"] = True
-            camera_status["error"] = None
-            continue
-
-        # Run YOLO only when enabled
-        if yolo_enabled:
-            try:
-                # model.track() assigns persistent IDs across frames so the sales
-                # tracker can apply its 5-second appearance / disappearance rules.
-                results = model.track(frame, conf=CONF_THRESH, persist=True, verbose=False)
-                frame   = draw_detections(frame, results)
-
-                # Build per-track list (for sales tracker) + aggregated counts
-                # for the food/drink Live Inventory panel.
-                tracker_input = []
-                counts = {}
-                for r in results:
-                    for box in r.boxes:
-                        cls   = int(box.cls[0])
-                        conf  = float(box.conf[0])
-                        label = model.names[cls] if hasattr(model, 'names') else str(cls)
-                        tid   = int(box.id[0]) if box.id is not None else None
-                        if tid is not None and is_food_drink(label):
-                            tracker_input.append({
-                                "track_id": tid,
-                                "label":    label,
-                                "conf":     conf,
-                            })
-                        if is_food_drink(label):
-                            row = counts.setdefault(label, {"label": label, "count": 0, "conf": 0.0})
-                            row["count"] += 1
-                            row["conf"]   = max(row["conf"], conf)
-
-                # Drive the sales state machine — emits sales when items vanish.
-                sales_tracker.update(tracker_input)
-
-                new_detections = sorted(counts.values(), key=lambda x: -x["count"])
-                with lock:
-                    latest_detections = new_detections
-
-                if new_detections:
-                    print(f"[yolo] FOOD/DRINK: { {d['label']: d['count'] for d in new_detections} }")
-                else:
-                    now = time.time()
-                    if now - _last_empty_log >= 1.0:
-                        print(f"[yolo] no food/drink (conf={CONF_THRESH})")
-                        _last_empty_log = now
-            except Exception as e:
-                print(f"[yolo] Inference error: {e}")
-        else:
-            with lock:
-                latest_detections = []
-            # Drain tracker so vanished items don't get falsely sold while paused
-            sales_tracker.update([])
-
-        # FPS overlay
-        fc += 1
-        elapsed = time.time() - t0
-        if elapsed >= 1.0:
-            camera_status["fps"]  = round(fc / elapsed, 1)
-            camera_status["yolo"] = yolo_enabled
-            fc = 0
-            t0 = time.time()
-
-        _, jpg = cv2.imencode('.jpg', frame, [cv2.IMWRITE_JPEG_QUALITY, 82])
-        with lock:
-            latest_frame = jpg.tobytes()
-
-    cap.release()
-
-_reconnecting = False
-def reconnect():
-    """
-    Restart the capture thread.
-      1. Signal any running capture_loop to stop (it watches _capture_should_stop)
-      2. Wait briefly for it to release the camera
-      3. Spawn a fresh capture_loop in a new thread
-    Debounced — ignores parallel reconnect requests.
-    """
-    global latest_frame, camera_status, _reconnecting
-    if _reconnecting:
-        return
-    _reconnecting = True
-    camera_status = {"connected": False, "error": "Reconnecting…", "fps": 0}
-    with lock:
-        latest_frame = None
-
-    # Tell any active capture_loop to exit, then clear so the new one runs
-    _capture_should_stop.set()
-    time.sleep(1.5)
-    _capture_should_stop.clear()
-
-    def _start():
-        global _reconnecting
-        try:
-            capture_loop()
-        finally:
-            _reconnecting = False
-    t = threading.Thread(target=_start, daemon=True)
-    t.start()
-
-def _serve_error_frame():
-    """Push a black frame with an error message when camera is unavailable."""
-    global latest_frame
-    blank = __import__('numpy').zeros((FRAME_H, FRAME_W, 3), dtype='uint8')
-    msg   = camera_status.get("error", "No camera")
-    cv2.putText(blank, msg, (10, FRAME_H//2),
-                cv2.FONT_HERSHEY_SIMPLEX, 0.55, (239,68,68), 1, cv2.LINE_AA)
-    cv2.putText(blank, "Click Reconnect to retry", (10, FRAME_H//2+28),
-                cv2.FONT_HERSHEY_SIMPLEX, 0.45, (148,163,184), 1, cv2.LINE_AA)
-    _, jpg = cv2.imencode('.jpg', blank)
-    with lock:
-        latest_frame = jpg.tobytes()
-
-# ── HTTP handler ───────────────────────────────────────────────────────────────
 class Handler(BaseHTTPRequestHandler):
     def log_message(self, fmt, *args):
-        pass  # suppress per-request logs
+        pass
+
+    # Origins allowed to make credentialed cross-origin requests. Wildcard
+    # Allow-Origin is incompatible with Allow-Credentials: true, so we echo
+    # back the request's Origin only when it matches this allow-list. Anything
+    # else gets no CORS headers (browser blocks the request — fail-closed).
+    _ALLOWED_ORIGINS = {
+        "https://veratori-f3a5a.web.app",
+        "https://veratori-f3a5a.firebaseapp.com",
+        "http://localhost:5001",
+        "http://localhost:3000",
+        "http://127.0.0.1:5001",
+    }
 
     def _cors(self):
-        self.send_header("Access-Control-Allow-Origin",  "*")
+        origin = self.headers.get("Origin", "")
+        if origin in self._ALLOWED_ORIGINS:
+            self.send_header("Access-Control-Allow-Origin",      origin)
+            self.send_header("Access-Control-Allow-Credentials", "true")
+            self.send_header("Vary",                             "Origin")
+        else:
+            # No Origin header (server-to-server or curl) — allow but no cookies.
+            self.send_header("Access-Control-Allow-Origin", "*")
         self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
-        self.send_header("Access-Control-Allow-Headers", "Content-Type")
+        self.send_header("Access-Control-Allow-Headers", "Content-Type, Authorization")
 
     def do_OPTIONS(self):
-        self.send_response(200)
-        self._cors()
-        self.end_headers()
+        self.send_response(200); self._cors(); self.end_headers()
 
+    # ── GET ──────────────────────────────────────────────────────────────────
     def do_GET(self):
-        if self.path == "/stream":
+        parsed = urlparse(self.path)
+        q      = parse_qs(parsed.query)
+        path   = parsed.path
+
+        if path == "/stream":
+            slot = slots.slots[_slot_id_from_query(q)]
             self.send_response(200)
             self.send_header("Content-Type", "multipart/x-mixed-replace; boundary=frame")
-            self._cors()
-            self.end_headers()
+            self._cors(); self.end_headers()
             try:
                 while True:
-                    with lock:
-                        frame = latest_frame
+                    with slot.lock:
+                        frame = slot.latest_frame
                     if frame:
                         self.wfile.write(b"--frame\r\n")
                         self.wfile.write(b"Content-Type: image/jpeg\r\n\r\n")
                         self.wfile.write(frame)
                         self.wfile.write(b"\r\n")
                         self.wfile.flush()
-                    time.sleep(0.033)   # ~30 fps cap
+                    time.sleep(0.033)
             except (BrokenPipeError, ConnectionResetError):
                 pass
 
-        elif self.path.startswith("/snapshot"):
-            with lock:
-                frame = latest_frame
+        elif path == "/snapshot":
+            slot = slots.slots[_slot_id_from_query(q)]
+            with slot.lock:
+                frame = slot.latest_frame
             if frame:
                 self.send_response(200)
-                self.send_header("Content-Type", "image/jpeg")
+                self.send_header("Content-Type",   "image/jpeg")
                 self.send_header("Content-Length", len(frame))
-                self.send_header("Cache-Control", "no-cache, no-store")
-                self._cors()
-                self.end_headers()
+                self.send_header("Cache-Control",  "no-cache, no-store")
+                self._cors(); self.end_headers()
                 self.wfile.write(frame)
             else:
-                self.send_response(503)
-                self._cors()
-                self.end_headers()
+                self.send_response(503); self._cors(); self.end_headers()
 
-        elif self.path == "/status":
-            body = json.dumps(camera_status).encode()
-            self.send_response(200)
-            self.send_header("Content-Type", "application/json")
-            self.send_header("Content-Length", len(body))
-            self._cors()
-            self.end_headers()
-            self.wfile.write(body)
+        elif path == "/status":
+            slot = slots.slots[_slot_id_from_query(q)]
+            _json_response(self, 200, slot.status)
 
-        elif self.path.startswith("/cameras"):
-            # Re-scan if ?refresh=1 is present so newly plugged-in cameras show up
-            if "refresh=1" in self.path:
-                _ranked_camera_indices()
-            payload = {
-                "cameras":      list(available_cameras),
-                "active_index": active_camera_idx,
-            }
-            body = json.dumps(payload).encode()
-            self.send_response(200)
-            self.send_header("Content-Type", "application/json")
-            self.send_header("Content-Length", len(body))
-            self.send_header("Cache-Control", "no-cache, no-store")
-            self._cors()
-            self.end_headers()
-            self.wfile.write(body)
+        elif path == "/cameras":
+            if q.get("refresh") == ["1"] or "refresh=1" in parsed.query:
+                slots.rescan()
+            _json_response(self, 200, {
+                "cameras":      list(slots.available_cameras),
+                "active_index": slots.slots[0].camera_idx,  # legacy single-cam field
+            })
 
-        elif self.path == "/detections":
-            with lock:
-                payload = list(latest_detections)
-            body = json.dumps(payload).encode()
-            self.send_response(200)
-            self.send_header("Content-Type", "application/json")
-            self.send_header("Content-Length", len(body))
-            self.send_header("Cache-Control", "no-cache, no-store")
-            self._cors()
-            self.end_headers()
-            self.wfile.write(body)
+        elif path == "/slots":
+            _json_response(self, 200, {"slots": slots.slots_snapshot()})
 
-        elif self.path == "/inventory":
-            payload = sales_tracker.get_inventory()
-            body = json.dumps(payload).encode()
-            self.send_response(200)
-            self.send_header("Content-Type", "application/json")
-            self.send_header("Content-Length", len(body))
-            self.send_header("Cache-Control", "no-cache, no-store")
-            self._cors()
-            self.end_headers()
-            self.wfile.write(body)
+        elif path == "/detections":
+            slot = slots.slots[_slot_id_from_query(q)]
+            with slot.lock:
+                payload = list(slot.latest_detections)
+            _json_response(self, 200, payload)
 
-        elif self.path == "/sales":
-            payload = sales_tracker.get_sales_summary()
-            body = json.dumps(payload).encode()
-            self.send_response(200)
-            self.send_header("Content-Type", "application/json")
-            self.send_header("Content-Length", len(body))
-            self.send_header("Cache-Control", "no-cache, no-store")
-            self._cors()
-            self.end_headers()
-            self.wfile.write(body)
+        elif path == "/inventory":
+            if "camera" in q:
+                slot = slots.slots[_slot_id_from_query(q)]
+                payload = slot.sales_tracker.get_inventory() if slot.sales_tracker else []
+            else:
+                payload = slots.aggregated_inventory()
+            _json_response(self, 200, payload)
 
-        elif self.path == "/alerts":
-            payload = sales_tracker.get_alerts()
-            body = json.dumps(payload).encode()
+        elif path == "/sales":
+            if "camera" in q:
+                slot = slots.slots[_slot_id_from_query(q)]
+                payload = slot.sales_tracker.get_sales_summary() if slot.sales_tracker else \
+                          {"today": {"date": None, "count": 0, "revenue_usd": 0.0}, "recent": []}
+            else:
+                payload = slots.aggregated_sales_summary()
+            _json_response(self, 200, payload)
+
+        elif path == "/alerts":
+            _json_response(self, 200, slots.aggregated_alerts())
+
+        elif path == "/report" or (path.startswith("/report") and not path.endswith(".docx") and not path.endswith(".pdf")):
+            # JSON aggregation for the dashboard reporting card.
+            end    = (q.get("end")    or [datetime.now().strftime("%Y-%m-%d")])[0]
+            period = (q.get("period") or [""])[0]
+            start  = (q.get("start")  or [""])[0]
+            if not start:
+                try:
+                    end_dt = datetime.strptime(end, "%Y-%m-%d")
+                except ValueError:
+                    end_dt = datetime.now()
+                    end    = end_dt.strftime("%Y-%m-%d")
+                back  = 29 if period == "monthly" else 6
+                start = (end_dt - timedelta(days=back)).strftime("%Y-%m-%d")
+            tracker = slots.slots[0].sales_tracker
+            payload = tracker.get_report(start, end) if tracker else None
+            if payload is None:
+                _json_response(self, 400, {"error": "bad date format or no tracker"})
+            else:
+                _json_response(self, 200, payload)
+
+        elif path == "/report.docx" or path == "/report.pdf":
+            want_pdf  = path.endswith(".pdf")
+            franchise = (q.get("franchise") or ["cam"])[0]
+            week      = (q.get("week")      or [""])[0]
+            if not week:
+                from datetime import date as _d
+                yr, wk, _ = _d.today().isocalendar()
+                week = f"{yr}-W{wk:02d}"
+            tracker = slots.slots[0].sales_tracker
+            try:
+                docx_bytes = report_builder.build_report(franchise, week, tracker)
+                if want_pdf:
+                    payload = report_builder.docx_bytes_to_pdf_bytes(docx_bytes)
+                    mime, ext = "application/pdf", "pdf"
+                else:
+                    payload, mime, ext = docx_bytes, \
+                        "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "docx"
+            except Exception as e:
+                print(f"[report] generation failed: {e}")
+                _json_response(self, 500, {"error": str(e)}); return
+            fname = f"Veratori_Weekly_Report_{franchise}_{week}.{ext}"
             self.send_response(200)
-            self.send_header("Content-Type", "application/json")
-            self.send_header("Content-Length", len(body))
-            self.send_header("Cache-Control", "no-cache, no-store")
-            self._cors()
-            self.end_headers()
-            self.wfile.write(body)
+            self.send_header("Content-Type",        mime)
+            self.send_header("Content-Length",      len(payload))
+            self.send_header("Content-Disposition", f'attachment; filename="{fname}"')
+            self.send_header("Cache-Control",       "no-cache, no-store")
+            self._cors(); self.end_headers()
+            self.wfile.write(payload)
 
         else:
-            self.send_response(404)
-            self.end_headers()
+            self.send_response(404); self.end_headers()
 
+    # ── POST ─────────────────────────────────────────────────────────────────
     def do_POST(self):
-        if self.path == "/yolo/toggle":
-            global yolo_enabled
-            yolo_enabled = not yolo_enabled
-            camera_status["yolo"] = yolo_enabled
-            state = "on" if yolo_enabled else "off"
-            print(f"[yolo] Inference {state.upper()}")
-            body = json.dumps({"ok": True, "yolo": yolo_enabled}).encode()
-            self.send_response(200)
-            self.send_header("Content-Type", "application/json")
-            self.send_header("Content-Length", len(body))
-            self._cors()
-            self.end_headers()
-            self.wfile.write(body)
+        parsed = urlparse(self.path)
+        q      = parse_qs(parsed.query)
+        path   = parsed.path
+
+        if path == "/yolo/toggle":
+            slot_id = _slot_id_from_query(q, default=-1) if "camera" in q else None
+            result = slots.toggle_yolo(slot_id if slot_id is not None and slot_id >= 0 else None)
+            _json_response(self, 200, result)
             return
 
-        elif self.path == "/camera/select":
-            global requested_camera_idx
+        if path == "/camera/select":
+            # Legacy single-cam path: re-assigns slot 0.
             length = int(self.headers.get("Content-Length") or 0)
             try:
                 data = json.loads(self.rfile.read(length) or b"{}")
                 idx  = int(data.get("index"))
             except Exception as e:
-                body = json.dumps({"ok": False, "error": f"bad request: {e}"}).encode()
-                self.send_response(400)
-                self.send_header("Content-Type", "application/json")
-                self.send_header("Content-Length", len(body))
-                self._cors()
-                self.end_headers()
-                self.wfile.write(body)
-                return
-            requested_camera_idx = idx
-            print(f"[camera] /camera/select → index {idx}")
-            body = json.dumps({"ok": True, "requested_index": idx}).encode()
-            self.send_response(200)
-            self.send_header("Content-Type", "application/json")
-            self.send_header("Content-Length", len(body))
-            self._cors()
-            self.end_headers()
-            self.wfile.write(body)
+                _json_response(self, 400, {"ok": False, "error": f"bad request: {e}"}); return
+            slots.assign(0, idx)
+            _json_response(self, 200, {"ok": True, "slot": 0, "camera_idx": idx})
             return
 
-        elif self.path == "/reconnect":
-            reconnect()
-            body = b'{"ok":true}'
-            self.send_response(200)
-            self.send_header("Content-Type", "application/json")
-            self.send_header("Content-Length", len(body))
-            self._cors()
-            self.end_headers()
-            self.wfile.write(body)
-        else:
-            self.send_response(404)
-            self.end_headers()
+        # POST /slots/{N}/assign  body: {"camera_idx": <int|null>}
+        if path.startswith("/slots/") and path.endswith("/assign"):
+            try:
+                slot_id = int(path.split("/")[2])
+            except (ValueError, IndexError):
+                _json_response(self, 400, {"ok": False, "error": "bad slot id"}); return
+            length = int(self.headers.get("Content-Length") or 0)
+            try:
+                data = json.loads(self.rfile.read(length) or b"{}")
+                cam_idx = data.get("camera_idx")
+                if cam_idx is not None:
+                    cam_idx = int(cam_idx)
+            except Exception as e:
+                _json_response(self, 400, {"ok": False, "error": f"bad request: {e}"}); return
+            try:
+                slots.assign(slot_id, cam_idx)
+            except ValueError as e:
+                _json_response(self, 400, {"ok": False, "error": str(e)}); return
+            _json_response(self, 200, {"ok": True, "slot": slot_id, "camera_idx": cam_idx})
+            return
 
-# ── Entry point ───────────────────────────────────────────────────────────────
+        if path == "/reconnect":
+            slot_id = _slot_id_from_query(q) if "camera" in q else 0
+            slot = slots.slots[slot_id]
+            slot.configure(slot.camera_idx, slot.camera_name)
+            _json_response(self, 200, {"ok": True, "slot": slot_id})
+            return
+
+        self.send_response(404); self.end_headers()
+
+
 if __name__ == "__main__":
-    print(f"[server] Starting Veratori Camera Server on port {PORT}")
-    # Warm-up: push a loading frame immediately
-    try:
-        import numpy as np
-        blank = np.zeros((FRAME_H, FRAME_W, 3), dtype='uint8')
-        cv2.putText(blank, "Loading model and camera…", (10, FRAME_H//2),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.6, (148,163,184), 1, cv2.LINE_AA)
-        _, jpg = cv2.imencode('.jpg', blank)
-        with lock:
-            latest_frame = jpg.tobytes()
-    except Exception:
-        pass
-
-    # Start capture in background thread
-    t = threading.Thread(target=capture_loop, daemon=True)
-    t.start()
+    print(f"[server] Starting Veratori multi-cam server on port {PORT}")
+    slots.auto_assign()
 
     server = ThreadingHTTPServer(("0.0.0.0", PORT), Handler)
-    print(f"[server] Ready → http://localhost:{PORT}/stream")
-    print(f"[server] Status → http://localhost:{PORT}/status")
-    print(f"[server] Reconnect → POST http://localhost:{PORT}/reconnect")
+    print(f"[server] Ready → http://localhost:{PORT}/stream?camera=0")
+    print(f"[server] Slots → http://localhost:{PORT}/slots")
 
-    # Open the dashboard in the default browser after a short warm-up delay
     DASHBOARD_URL = "https://veratori-f3a5a.web.app/"
     def _open_browser():
-        time.sleep(2.5)   # let the camera thread start capturing first
+        time.sleep(2.5)
         print(f"[server] Opening dashboard → {DASHBOARD_URL}")
         webbrowser.open(DASHBOARD_URL)
     threading.Thread(target=_open_browser, daemon=True).start()

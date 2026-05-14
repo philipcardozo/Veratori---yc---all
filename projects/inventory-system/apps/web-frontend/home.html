@@ -9,7 +9,10 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
   <script src="firebase-auth.js?v=3"></script>
+  <script src="franchise-config.js?v=1"></script>
+  <script src="role-guard.js?v=1"></script>
   <script>requireAuth();</script>
   <style>
     :root {
@@ -563,6 +566,129 @@
     .net-cell-status { font-size: 9px; font-weight: 500; }
     .net-cell-status.live  { color: var(--green); }
     .net-cell-status.warn  { color: var(--amber); }
+
+    /* ─── Report Modal — week picker calendar ─── */
+    .rpt-overlay {
+      display:none; position:fixed; inset:0; z-index:2000;
+      background:rgba(0,0,0,0.75); backdrop-filter:blur(6px);
+      align-items:center; justify-content:center;
+    }
+    .rpt-overlay.open { display:flex; }
+    .rpt-modal {
+      width:520px; max-width:92vw; background:#0c1420;
+      border:1px solid var(--border-md); border-radius:12px;
+      padding:22px 22px 18px;
+      box-shadow:0 20px 60px rgba(0,0,0,0.6);
+      animation:rptIn .18s ease-out;
+    }
+    @keyframes rptIn { from { opacity:0; transform:translateY(8px) scale(.98); } to { opacity:1; transform:none; } }
+    .rpt-title { font-size:15px; font-weight:700; color:var(--text-1); }
+    .rpt-sub   { font-size:11px; color:var(--text-3); margin-top:4px; margin-bottom:16px; line-height:1.5; position:relative; }
+    .rpt-fmt-toggle {
+      display:inline-flex; align-items:center; gap:1px;
+      color:var(--nv); font-weight:600; font-family:'SF Mono', ui-monospace, monospace;
+      cursor:pointer; padding:1px 5px; margin-left:2px; border-radius:4px;
+      background:rgba(118,185,0,0.08); border:1px solid rgba(118,185,0,0.20);
+      transition:background .12s ease, border-color .12s ease;
+      position:relative;  /* anchor the dropdown */
+    }
+    .rpt-fmt-toggle:hover { background:rgba(118,185,0,0.16); border-color:rgba(118,185,0,0.40); }
+    .rpt-fmt-toggle::after {
+      content:''; width:0; height:0; margin-left:3px;
+      border-left:3px solid transparent; border-right:3px solid transparent;
+      border-top:3.5px solid var(--nv); opacity:.7;
+    }
+    .rpt-fmt-menu {
+      display:none; position:absolute;
+      top:100%; left:50%; transform:translateX(-50%);
+      margin-top:4px; min-width:230px; z-index:10;
+      background:#0a1220; border:1px solid var(--border-md); border-radius:7px;
+      box-shadow:0 8px 24px rgba(0,0,0,0.6);
+      padding:4px;
+    }
+    .rpt-fmt-menu.open { display:block; }
+    .rpt-fmt-opt {
+      padding:8px 10px; border-radius:5px; cursor:pointer;
+      font-size:11.5px; font-weight:600; color:var(--text-1);
+      font-family:'SF Mono', ui-monospace, monospace;
+      display:flex; align-items:center; justify-content:space-between; gap:8px;
+      transition:background .1s ease;
+    }
+    .rpt-fmt-opt:hover { background:rgba(118,185,0,0.10); }
+    .rpt-fmt-opt.active { background:rgba(118,185,0,0.18); color:var(--nv); }
+    .rpt-fmt-hint { font-size:10px; font-weight:400; color:var(--text-3); font-family:'Inter', sans-serif; }
+    .rpt-cal-head {
+      display:flex; align-items:center; justify-content:space-between;
+      margin-bottom:10px;
+    }
+    .rpt-cal-nav {
+      width:26px; height:26px; border-radius:6px;
+      background:rgba(255,255,255,0.04); border:1px solid var(--border);
+      color:var(--text-2); cursor:pointer; display:flex; align-items:center; justify-content:center;
+      transition:all .12s ease;
+    }
+    .rpt-cal-nav:hover { background:rgba(255,255,255,0.08); color:var(--text-1); }
+    .rpt-cal-nav svg { width:14px; height:14px; fill:currentColor; }
+    .rpt-cal-month { font-size:12.5px; font-weight:600; color:var(--text-1); letter-spacing:.02em; }
+    .rpt-cal {
+      display:grid; grid-template-columns:repeat(7, 1fr);
+      gap:2px; background:rgba(255,255,255,0.025);
+      padding:6px; border-radius:8px;
+    }
+    .rpt-cal-dow { font-size:9px; color:var(--text-3); text-transform:uppercase; letter-spacing:.06em;
+      text-align:center; padding:4px 0; font-weight:600; }
+    .rpt-cal-week {
+      display:contents;
+    }
+    .rpt-cal-day {
+      aspect-ratio:1; display:flex; align-items:center; justify-content:center;
+      font-size:11px; color:var(--text-2); cursor:pointer;
+      border-radius:5px; background:transparent;
+      transition:background .1s ease, color .1s ease;
+    }
+    .rpt-cal-day.dim { color:var(--text-4); }
+    .rpt-cal-day.today { box-shadow:inset 0 0 0 1px var(--nv); color:var(--nv); font-weight:700; }
+    .rpt-cal-day.future { color:var(--text-4); cursor:not-allowed; opacity:.5; }
+    .rpt-cal-day.selected:not(.future) { background:rgba(118,185,0,0.22); color:#fff; }
+    .rpt-cal-day.selected.future       { background:rgba(118,185,0,0.10); }
+    .rpt-cal-day.selected:first-of-type, .rpt-cal-day.week-start.selected { border-top-left-radius:5px; border-bottom-left-radius:5px; }
+    .rpt-cal-day.week-end.selected     { border-top-right-radius:5px; border-bottom-right-radius:5px; }
+    .rpt-cal-week-mark {
+      grid-column:1 / -1; display:none; /* purely a hover/selected row tagger via JS */
+    }
+    .rpt-selected-label {
+      margin-top:14px; padding:9px 12px; border-radius:7px;
+      background:rgba(118,185,0,0.08); border:1px solid rgba(118,185,0,0.25);
+      font-size:11.5px; color:#cbe6a0; display:flex; align-items:center; justify-content:space-between;
+    }
+    .rpt-selected-label .lbl { color:var(--text-3); font-size:10px; text-transform:uppercase; letter-spacing:.05em; }
+    .rpt-selected-label .val { font-weight:600; color:#e2e8f0; }
+    .rpt-buttons { display:flex; gap:8px; margin-top:18px; }
+    .rpt-btn {
+      flex:1; padding:10px; border-radius:7px;
+      font-size:12px; font-weight:600; cursor:pointer; font-family:inherit;
+      border:1px solid var(--border-md); background:transparent; color:var(--text-2);
+      transition:all .12s ease;
+    }
+    .rpt-btn:hover { color:var(--text-1); border-color:rgba(255,255,255,0.18); }
+    .rpt-btn.primary { background:var(--nv); border-color:var(--nv); color:#fff; }
+    .rpt-btn.primary:hover { background:#82c500; border-color:#82c500; }
+    .rpt-btn.primary:disabled { opacity:.45; cursor:not-allowed; background:var(--nv); }
+
+    .rpt-progress {
+      display:none; position:fixed; inset:0; z-index:2100;
+      background:rgba(0,0,0,0.8); backdrop-filter:blur(6px);
+      align-items:center; justify-content:center; flex-direction:column; gap:14px;
+    }
+    .rpt-progress.open { display:flex; }
+    .rpt-spinner {
+      width:42px; height:42px; border-radius:50%;
+      border:3px solid rgba(118,185,0,0.18); border-top-color:var(--nv);
+      animation:rptSpin .8s linear infinite;
+    }
+    @keyframes rptSpin { to { transform:rotate(360deg); } }
+    .rpt-progress-label { font-size:12.5px; color:var(--text-1); font-weight:500; }
+    .rpt-progress-sub   { font-size:10.5px; color:var(--text-3); }
   </style>
 </head>
 <body>
@@ -1017,6 +1143,13 @@ function showVera(context) {
 }
 
 function showFranchise(id) {
+  // Multi-tenant guard: refuse to render a franchise the user isn't allowed to see.
+  // Only applies once role-guard has loaded; before that, allow (initial paint).
+  const role = window.VeratoriRole && window.VeratoriRole.current();
+  if (role && role.ready && !window.VeratoriRole.canAccess(id)) {
+    console.warn('[role] access denied to franchise', id);
+    return;
+  }
   currentView = id;
   document.getElementById('veraView').classList.add('hidden');
   document.getElementById('franView').classList.remove('hidden');
@@ -1079,14 +1212,14 @@ function renderFranchise(f) {
         ${f.status === 'live' ? 'Operational' : f.status === 'warn' ? 'Attention required' : 'Immediate attention required'}
       </div>
       <div class="fran-topbar-actions">
-        <a href="${f.id === 'cam' ? 'index.html?loc=cam' : 'index.html'}" class="fran-btn">
+        <a href="index.html?loc=${f.id}" class="fran-btn">
           <svg viewBox="0 0 24 24"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg>
           Live Dashboard
         </a>
-        <a href="ai-analytics.html" class="fran-btn">
-          <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2z"/></svg>
-          Full Report
-        </a>
+        <button class="fran-btn" onclick="openReportModal('${f.id}','${f.name}')">
+          <svg viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>
+          Generate Weekly Report
+        </button>
         <button class="fran-btn primary" onclick="showVera(); setTimeout(()=>askVera('Give me a full analysis of ${f.name} — performance, alerts, and recommendations.'), 300)">
           <svg viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
           Ask VERA
@@ -1132,7 +1265,7 @@ function renderFranchise(f) {
         <div class="section-panel">
           <div class="section-head">
             <span class="section-head-title">Active Alerts</span>
-            <a href="${f.id === 'cam' ? 'index.html?loc=cam' : 'index.html'}" class="section-head-link">View dashboard</a>
+            <a href="index.html?loc=${f.id}" class="section-head-link">View dashboard</a>
           </div>
           ${alertsHtml}
         </div>
@@ -1300,8 +1433,416 @@ document.addEventListener('keydown', e => {
 });
 
 
-// Init
-showFranchise('canal');
+// ── Weekly Report — calendar week picker + docx/pdf fetch ──
+// Resolved per report request from the franchise being reported on — so a
+// weekly report for "Canal Street" hits canal.cam.veratori.com, not localhost.
+const REPORT_API_BASE = ''; // legacy var, no longer used; kept to avoid touching unrelated code
+function reportApiBaseFor(franchiseId) {
+  return window.getApiBase(franchiseId);
+}
+let RPT = { franchiseId:null, franchiseName:null, year:null, month:null, selected:null, format:'docx' };
+
+function toggleReportFormat(e) {
+  if (e) e.stopPropagation();
+  const menu = document.getElementById('rptFmtMenu');
+  menu.classList.toggle('open');
+  // Mark currently-selected option
+  menu.querySelectorAll('.rpt-fmt-opt').forEach(el => {
+    el.classList.toggle('active', el.dataset.fmt === RPT.format);
+  });
+}
+function setReportFormat(fmt) {
+  RPT.format = fmt;
+  document.getElementById('rptFmt').textContent = fmt;
+  document.getElementById('rptFmtMenu').classList.remove('open');
+}
+// Click-outside closes the format menu
+document.addEventListener('click', (e) => {
+  const menu = document.getElementById('rptFmtMenu');
+  const toggle = document.getElementById('rptFmtToggle');
+  if (!menu || !toggle) return;
+  if (menu.classList.contains('open') && !menu.contains(e.target) && !toggle.contains(e.target)) {
+    menu.classList.remove('open');
+  }
+});
+
+function openReportModal(franchiseId, franchiseName) {
+  RPT.franchiseId   = franchiseId;
+  RPT.franchiseName = franchiseName;
+  const today = new Date();
+  RPT.year  = today.getFullYear();
+  RPT.month = today.getMonth();
+  RPT.selected = isoWeekOf(today);
+  document.getElementById('rptOverlay').classList.add('open');
+  document.getElementById('rptTitle').textContent = `Weekly Report — ${franchiseName}`;
+  renderCalendar();
+}
+function closeReportModal() {
+  document.getElementById('rptOverlay').classList.remove('open');
+}
+function rptMonthShift(delta) {
+  RPT.month += delta;
+  if (RPT.month < 0)  { RPT.month = 11; RPT.year--; }
+  if (RPT.month > 11) { RPT.month = 0;  RPT.year++; }
+  renderCalendar();
+}
+
+// ISO week — Mon as week start. Returns {year, week, monday, sunday}.
+function isoWeekOf(date) {
+  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+  const dow = d.getUTCDay() || 7;   // 1..7, Mon=1
+  d.setUTCDate(d.getUTCDate() + 4 - dow);
+  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+  const week = Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+  // Monday of this week
+  const monday = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+  const md = monday.getUTCDay() || 7;
+  monday.setUTCDate(monday.getUTCDate() - md + 1);
+  const sunday = new Date(monday); sunday.setUTCDate(sunday.getUTCDate() + 6);
+  return {
+    year:    d.getUTCFullYear(),
+    week,
+    iso:     `${d.getUTCFullYear()}-W${String(week).padStart(2,'0')}`,
+    monday,
+    sunday,
+  };
+}
+function fmtRange(monday, sunday) {
+  const opts = { month:'short', day:'numeric' };
+  const a = monday.toLocaleDateString('en-US', {...opts, timeZone:'UTC'});
+  const b = sunday.toLocaleDateString('en-US', {...opts, year:'numeric', timeZone:'UTC'});
+  return `${a} – ${b}`;
+}
+
+function renderCalendar() {
+  const monthNames = ['January','February','March','April','May','June',
+                      'July','August','September','October','November','December'];
+  document.getElementById('rptCalMonth').textContent = `${monthNames[RPT.month]} ${RPT.year}`;
+
+  const today = new Date();
+  const todayISO = isoWeekOf(today).iso;
+
+  // First Monday on or before the 1st of the displayed month
+  const first = new Date(RPT.year, RPT.month, 1);
+  const firstDow = first.getDay() || 7;
+  const gridStart = new Date(first); gridStart.setDate(first.getDate() - (firstDow - 1));
+
+  const cells = ['<div class="rpt-cal-dow">Mon</div><div class="rpt-cal-dow">Tue</div><div class="rpt-cal-dow">Wed</div><div class="rpt-cal-dow">Thu</div><div class="rpt-cal-dow">Fri</div><div class="rpt-cal-dow">Sat</div><div class="rpt-cal-dow">Sun</div>'];
+
+  for (let w = 0; w < 6; w++) {
+    const weekStart = new Date(gridStart); weekStart.setDate(gridStart.getDate() + w * 7);
+    const wIso = isoWeekOf(weekStart).iso;
+    const isSelectedRow = (wIso === RPT.selected.iso);
+
+    for (let d = 0; d < 7; d++) {
+      const cur = new Date(weekStart); cur.setDate(weekStart.getDate() + d);
+      const dim = cur.getMonth() !== RPT.month;
+      const future = cur > today && wIso !== todayISO;
+      const isToday = cur.toDateString() === today.toDateString();
+      const cls = ['rpt-cal-day'];
+      if (d === 0) cls.push('week-start');
+      if (d === 6) cls.push('week-end');
+      if (dim) cls.push('dim');
+      if (isToday) cls.push('today');
+      if (future) cls.push('future');
+      if (isSelectedRow) cls.push('selected');
+      cells.push(`<div class="${cls.join(' ')}" data-week="${wIso}" data-future="${future}">${cur.getDate()}</div>`);
+    }
+  }
+
+  document.getElementById('rptCal').innerHTML = cells.join('');
+  applyRowHighlighting();
+  updateSelectedLabel();
+
+  // Wire row hover + click — week-level, not day-level
+  const days = document.querySelectorAll('#rptCal .rpt-cal-day');
+  days.forEach(el => {
+    el.addEventListener('mouseenter', () => hoverWeek(el.dataset.week));
+    el.addEventListener('mouseleave', () => hoverWeek(null));
+    el.addEventListener('click', () => {
+      if (el.dataset.future === 'true') return;
+      const ymd = el.dataset.week;
+      const [y, w] = ymd.split('-W');
+      // Reconstruct monday/sunday from ISO
+      const jan4 = new Date(Date.UTC(Number(y), 0, 4));
+      const jan4dow = jan4.getUTCDay() || 7;
+      const monday = new Date(jan4); monday.setUTCDate(jan4.getUTCDate() - jan4dow + 1 + (Number(w) - 1) * 7);
+      const sunday = new Date(monday); sunday.setUTCDate(monday.getUTCDate() + 6);
+      RPT.selected = { iso: ymd, year: Number(y), week: Number(w), monday, sunday };
+      renderCalendar();
+    });
+  });
+}
+
+function hoverWeek(weekIso) {
+  document.querySelectorAll('#rptCal .rpt-cal-day').forEach(el => {
+    el.classList.remove('rpt-hover');
+  });
+  if (!weekIso) return;
+  document.querySelectorAll(`#rptCal .rpt-cal-day[data-week="${weekIso}"]`).forEach(el => {
+    if (el.dataset.future !== 'true') el.classList.add('rpt-hover');
+  });
+}
+
+function applyRowHighlighting() {
+  // Custom hover behaviour applied via class (CSS uses :hover but we also override
+  // when JS adds .rpt-hover via hoverWeek for whole-row effect).
+}
+
+function updateSelectedLabel() {
+  const sel = RPT.selected;
+  document.getElementById('rptSelLabel').textContent =
+    `Week ${sel.week} · ${fmtRange(sel.monday, sel.sunday)}`;
+  document.getElementById('rptGoBtn').disabled = false;
+}
+
+async function generateWeeklyReport() {
+  if (!RPT.selected) return;
+  closeReportModal();
+  const overlay = document.getElementById('rptProgress');
+  overlay.classList.add('open');
+  const labelEl = document.getElementById('rptProgressLabel');
+  const subEl   = document.getElementById('rptProgressSub');
+  const isPdf   = RPT.format === 'pdf';
+  labelEl.textContent = `Gathering data for ${RPT.franchiseName}…`;
+  subEl.textContent   = isPdf
+    ? 'Filling Tori template, then converting to PDF — Word will run in the background.'
+    : 'Filling the Tori template — this takes a few seconds.';
+
+  try {
+    const path = isPdf ? '/report.pdf' : '/report.docx';
+    const url  = `${reportApiBaseFor(RPT.franchiseId)}${path}?franchise=${encodeURIComponent(RPT.franchiseId)}&week=${RPT.selected.iso}`;
+    labelEl.textContent = isPdf ? 'Filling template & converting to PDF…' : 'Filling template & rendering charts…';
+    const resp = await fetch(url, {credentials:'include'});
+    if (!resp.ok) {
+      const text = await resp.text();
+      throw new Error(`Server returned ${resp.status}: ${text.slice(0, 200)}`);
+    }
+    const blob = await resp.blob();
+    const ext  = isPdf ? 'pdf' : 'docx';
+    const fname = `Veratori_Weekly_Report_${RPT.franchiseId}_${RPT.selected.iso}.${ext}`;
+    const blobUrl = URL.createObjectURL(blob);
+
+    // Trigger the download
+    const a = document.createElement('a');
+    a.href = blobUrl;
+    a.download = fname;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => a.remove(), 100);
+
+    // PDFs additionally open in the next tab for instant preview
+    if (isPdf) {
+      window.open(blobUrl, '_blank', 'noopener');
+    }
+
+    // Revoke the blob URL eventually — after the new tab has had time to load it
+    setTimeout(() => URL.revokeObjectURL(blobUrl), isPdf ? 30000 : 2000);
+
+    labelEl.textContent = isPdf ? 'Downloaded — opening preview tab…' : 'Downloaded ✓';
+    setTimeout(() => overlay.classList.remove('open'), 900);
+  } catch (err) {
+    console.error('[Report] generation failed', err);
+    labelEl.textContent = 'Could not generate report — is the camera server running?';
+    subEl.textContent   = String(err.message || err).slice(0, 140);
+    setTimeout(() => overlay.classList.remove('open'), 3200);
+  }
+}
+
+// Hover row highlighting via CSS class added in renderCalendar (rpt-hover)
+// Use a small additional CSS injection so the row glow works:
+(function injectRowHoverCSS(){
+  const s = document.createElement('style');
+  s.textContent = '#rptCal .rpt-cal-day.rpt-hover:not(.future) { background:rgba(118,185,0,0.12); color:#fff; }';
+  document.head.appendChild(s);
+})();
+
+// ── Multi-tenant role gating ──────────────────────────────────────
+// Wait for Firebase auth to resolve, then hide any franchise sidebar item
+// the signed-in user isn't authorised to see. Owners see everything;
+// managers see only the franchises in their custom-claim list.
+async function applyRoleGuard() {
+  const profile = await window.VeratoriRole.load();
+  const allowed = window.VeratoriRole.allowedFranchises();
+  const allowSet = new Set(allowed);
+
+  // Hide sidebar items the user can't access
+  document.querySelectorAll('.fi[id^="fi-"]').forEach(el => {
+    const id = el.id.replace(/^fi-/, '');
+    if (!allowSet.has(id)) el.style.display = 'none';
+  });
+
+  // Pick the first allowed franchise. If the user has zero allowed (new account
+  // missing role claims), render an empty-state message instead of leaking.
+  if (allowed.length === 0) {
+    const main = document.querySelector('.fran-view') || document.querySelector('main');
+    if (main) {
+      main.innerHTML = `
+        <div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--text-3);text-align:center;padding:40px">
+          <div>
+            <div style="font-size:14px;font-weight:600;color:var(--text-1);margin-bottom:6px">No locations assigned</div>
+            <div style="font-size:11px;line-height:1.5">Your account hasn't been assigned to a franchise yet.<br>Contact your Veratori administrator.</div>
+            <div style="font-size:10px;color:var(--text-4);margin-top:14px">Signed in as ${profile.email || '—'}</div>
+          </div>
+        </div>`;
+    }
+    return;
+  }
+  showFranchise(allowed[0]);
+
+  // Surface role state in the sidebar footer for quick visual confirmation
+  const footer = document.querySelector('.sidebar-foot');
+  if (footer && profile.role) {
+    const banner = document.createElement('div');
+    banner.style.cssText = 'font-size:9.5px;color:#475569;margin-top:10px;text-transform:uppercase;letter-spacing:.05em;text-align:center;';
+    banner.textContent = profile.role === 'owner'
+      ? `Owner · ${allowed.length} location${allowed.length === 1 ? '' : 's'}`
+      : `Manager · ${allowed.length} location${allowed.length === 1 ? '' : 's'}`;
+    footer.appendChild(banner);
+  }
+}
+applyRoleGuard();
+
+// ── Live Firestore overlay ─────────────────────────────────────────
+// Streams today's sales + active alerts from Firestore and merges them onto
+// the hardcoded FRANCHISES mock. When the sync agent on a Jetson is running,
+// that franchise's revenue/units/alerts come from real data; otherwise the
+// mock is preserved so the dashboard still demos cleanly.
+//
+// Manager queries are scoped by franchise_id to satisfy firestore.rules.
+// Owner queries are unscoped (rules permit reads across all franchises).
+async function initFirestoreOverlay() {
+  try {
+    const profile = await window.VeratoriRole.load();
+    if (!profile || profile.role === 'guest') return;
+
+    const db = firebase.firestore();
+
+    // Today 00:00 in the viewer's local time. Acceptable approximation —
+    // all NYC franchises and the dashboard run in EST, and the sync agent
+    // writes the row's local-iso timestamp's epoch_ms.
+    const todayStartMs = new Date(new Date().setHours(0, 0, 0, 0)).getTime();
+
+    const allowed = window.VeratoriRole.allowedFranchises();
+    const isOwner = profile.role === 'owner';
+
+    // Build sales query — managers get one query per franchise (Firestore
+    // 'in' filter supports up to 30 values, so we could batch, but keeping
+    // per-franchise listeners makes the merge logic trivial).
+    const salesQueries = isOwner
+      ? [ db.collection('sales').where('ts_epoch_ms', '>=', todayStartMs) ]
+      : allowed.map(fid => db.collection('sales')
+                              .where('franchise_id', '==', fid)
+                              .where('ts_epoch_ms',  '>=', todayStartMs));
+
+    const alertsQueries = isOwner
+      ? [ db.collection('alerts').where('resolved_at', '==', null) ]
+      : allowed.map(fid => db.collection('alerts')
+                              .where('franchise_id', '==', fid)
+                              .where('resolved_at',  '==', null));
+
+    // Snapshot of derived per-franchise rollup, keyed by franchise id.
+    const liveRollup = {};
+
+    function rerenderIfVisible(franchiseId) {
+      if (currentView === franchiseId && FRANCHISES[franchiseId]) {
+        renderFranchise(FRANCHISES[franchiseId]);
+      }
+    }
+
+    function applySalesSnapshot(snap) {
+      // Recompute per-franchise totals from scratch each snapshot.
+      const totals = {};
+      snap.forEach(doc => {
+        const d  = doc.data();
+        const id = d.franchise_id;
+        if (!totals[id]) totals[id] = { units: 0, revenue: 0 };
+        totals[id].units   += Number(d.quantity || 0);
+        totals[id].revenue += Number(d.price_usd || 0) * Number(d.quantity || 1);
+      });
+      Object.keys(totals).forEach(id => {
+        if (!FRANCHISES[id]) return;
+        const t = totals[id];
+        FRANCHISES[id].units = t.units;
+        FRANCHISES[id].rev   = '$' + t.revenue.toLocaleString('en-US', { maximumFractionDigits: 0 });
+        liveRollup[id] = Object.assign(liveRollup[id] || {}, t);
+        rerenderIfVisible(id);
+      });
+    }
+
+    function applyAlertsSnapshot(snap) {
+      const byFranchise = {};
+      snap.forEach(doc => {
+        const d  = doc.data();
+        const id = d.franchise_id;
+        if (!byFranchise[id]) byFranchise[id] = [];
+        byFranchise[id].push({
+          type: d.alert_type === 'critical' ? 'critical' : 'warning',
+          text: d.message || (d.product_name + ' alert'),
+          time: d.timestamp_est || '',
+        });
+      });
+      Object.keys(byFranchise).forEach(id => {
+        if (!FRANCHISES[id]) return;
+        FRANCHISES[id].alerts = byFranchise[id];
+        rerenderIfVisible(id);
+      });
+    }
+
+    salesQueries.forEach(q  => q.onSnapshot(applySalesSnapshot,
+      err => console.warn('[firestore] sales subscription error:', err.code || err.message)));
+    alertsQueries.forEach(q => q.onSnapshot(applyAlertsSnapshot,
+      err => console.warn('[firestore] alerts subscription error:', err.code || err.message)));
+
+    console.info('[firestore] live overlay attached',
+      { role: profile.role, franchises: isOwner ? '*' : allowed });
+  } catch (e) {
+    console.warn('[firestore] overlay init failed (mock data preserved):', e);
+  }
+}
+initFirestoreOverlay();
 </script>
+
+<!-- ─── Weekly Report Modal ─── -->
+<div class="rpt-overlay" id="rptOverlay" onclick="if(event.target===this) closeReportModal()">
+  <div class="rpt-modal">
+    <div class="rpt-title" id="rptTitle">Weekly Report</div>
+    <div class="rpt-sub">
+      Select a specific week to generate TORI report
+      <span class="rpt-fmt-toggle" id="rptFmtToggle" onclick="toggleReportFormat(event)" title="Click to switch format">
+        .<span id="rptFmt">docx</span>
+        <div class="rpt-fmt-menu" id="rptFmtMenu" onclick="event.stopPropagation()">
+          <div class="rpt-fmt-opt" data-fmt="docx" onclick="setReportFormat('docx')">.docx <span class="rpt-fmt-hint">Microsoft Word — editable</span></div>
+          <div class="rpt-fmt-opt" data-fmt="pdf"  onclick="setReportFormat('pdf')">.pdf <span class="rpt-fmt-hint">Opens in next tab after download</span></div>
+        </div>
+      </span>
+    </div>
+    <div class="rpt-cal-head">
+      <button class="rpt-cal-nav" onclick="rptMonthShift(-1)" title="Previous month">
+        <svg viewBox="0 0 24 24"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>
+      </button>
+      <div class="rpt-cal-month" id="rptCalMonth"></div>
+      <button class="rpt-cal-nav" onclick="rptMonthShift(1)" title="Next month">
+        <svg viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6z"/></svg>
+      </button>
+    </div>
+    <div class="rpt-cal" id="rptCal"></div>
+    <div class="rpt-selected-label">
+      <span class="lbl">Selected window</span>
+      <span class="val" id="rptSelLabel">—</span>
+    </div>
+    <div class="rpt-buttons">
+      <button class="rpt-btn" onclick="closeReportModal()">Cancel</button>
+      <button class="rpt-btn primary" id="rptGoBtn" onclick="generateWeeklyReport()">Generate</button>
+    </div>
+  </div>
+</div>
+
+<div class="rpt-progress" id="rptProgress">
+  <div class="rpt-spinner"></div>
+  <div class="rpt-progress-label" id="rptProgressLabel">Gathering data…</div>
+  <div class="rpt-progress-sub" id="rptProgressSub">Filling the Tori template — this takes a few seconds.</div>
+</div>
+
 </body>
 </html>
